@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V15 • Nightmare - အထပ်တိုင်း ကြောက်စရာ ပြည့် + သရဲ ၅+ ကောင်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V16 • သရဲ အစစ် ၄ မျိုး - Blood / Woman / Darkness / Girl Animated</p>
 </div>
 
 <!-- Pause -->
@@ -802,18 +802,21 @@ let player=null, monster=null, playerMixer=null, monsterMixer=null;
 let charScaleFactor=1.0;
 const PLAYER_BASE=0.55, MONSTER_BASE=0.90; // V10 bigger ghost (was 0.70, ~2.3m -> ~3.0m)
 let playerInner=null, monsterInner=null;
-function normalizeGroup(grp,scale){
-  grp.scale.setScalar(scale); grp.position.set(0,0,0); return grp;
+function normalizeGroup(grp,scale,yOffset,rotX){
+  grp.scale.setScalar(scale); grp.position.set(0,yOffset||0,0); if(rotX) grp.rotation.x=rotX; return grp;
 }
 // V3 FIX: .clone() on a skinned GLB breaks its skeleton -> model collapses/invisible.
 // So load the original GLB twice (second load hits browser cache) and wrap each
 // model in an outer group, so the inner foot-offset survives per-frame position sets.
-function loadOne(src,baseScale,targetH,dark){
+function loadOne(src,baseScale,targetH,dark,opts){
+  opts=opts||{};
   return new Promise(res=>{
     loader.load(src, gltf=>{
-      const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor);
+      const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor,opts.yOffset||0,opts.rotX||0);
+      if(opts.real){ inner.userData.baseScale=baseScale; }
       const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
-      if(dark){
+      if(opts.real){ /* real ghost texture kept as-is, no pale recolor */ }
+      else if(dark){
         // V10 ghost, not a man: pale white, translucent, floating sheet, hollow black eyes + red pupils + black mouth + long hair
         inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xe8e8e8); o.material.transparent=true; o.material.opacity=0.88; o.material.roughness=1; } });
         const eyeY=targetH*0.92;
@@ -875,6 +878,9 @@ async function loadGhost(){
 let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){
   const defs=[
+    {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:11, floatY:0.1, chaseTime:5, sound:'moan'},
+    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:12, floatY:0.3, chaseTime:6, sound:'growl'},
+    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[28,12], wps:[[28,12],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
     {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10, floatY:0.3, chaseTime:4.5, sound:'scream'},
     {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-24,16], wps:[[-24,16],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8, floatY:0.1, chaseTime:3.5, sound:'giggle'},
     {name:'Nurse Ghost', scale:0.75, color:0xdddddd, opacity:0.9, eye:0x000000, pos:[24,-12], wps:[[24,-12],[16,-6],[0,0],[20,0]], speed:2.8, radius:11, floatY:0.25, chaseTime:5, sound:'whisper', cap:true},
@@ -883,10 +889,16 @@ async function loadWanderingGhosts(){
     {name:'Old Ghost', scale:0.85, color:0x999999, opacity:0.85, eye:0x000000, pos:[-28,20], wps:[[-28,20],[-20,12],[0,0],[-16,0]], speed:2.2, radius:11, floatY:0.1, chaseTime:5, sound:'moan', cane:true},
   ];
   for(const def of defs){
-    const build=(gltf)=>{
-      const inner=gltf.scene; normalizeGroup(inner,def.scale);
+    const build=(gltf,useReal)=>{
+      const inner=gltf.scene; normalizeGroup(inner,def.scale,def.yOffset||0,def.rotX||0);
       const outer=new THREE.Group(); outer.add(inner);
-      inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
+      if(def.real && useReal){ /* keep original ghost texture */ }
+      else inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
+      if(def.real && useReal){
+        let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
+        outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
+        return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
+      }
       const eyeMat=new THREE.MeshBasicMaterial({color:def.eye});
       const eyeY2=2.07*def.scale/0.70;
       for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8),eyeMat); e.position.set(sx,eyeY2,0.18); outer.add(e); if(def.eye===0x000000){ const pup=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,eyeY2,0.27); outer.add(pup); } }
@@ -899,7 +911,9 @@ async function loadWanderingGhosts(){
       outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
       return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
     };
-    let g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
+    let g=null;
+    if(def.src){ g=await new Promise(res=>{ loader.load(def.src, gltf=>res(build(gltf,true)), undefined, ()=>res(null)); }); }
+    if(!g) g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf,false)), undefined, ()=>res(null)); });
     if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
     if(g) wanderingGhosts.push(g);
   }
@@ -909,7 +923,8 @@ async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
   let p=await loadOne('cesium-man.glb',PLAYER_BASE,1.8,false);
   if(!p)p=await loadOne(CDN,PLAYER_BASE,1.8,false);
-  let m=await loadOne('cesium-man.glb',MONSTER_BASE,2.97,true);
+  let m=await loadOne('ghost-blood.glb',2.8,2.8,false,{real:true,yOffset:1.4,rotX:-Math.PI/2});
+  if(!m)m=await loadOne('cesium-man.glb',MONSTER_BASE,2.97,true);
   if(!m)m=await loadOne(CDN,MONSTER_BASE,2.97,true);
   if(!p||!m)return false;
   player=p.outer; playerMixer=p.mixer; playerInner=p.inner;
@@ -919,7 +934,7 @@ async function loadCharacter(){
 function setCharSize(factor){
   charScaleFactor=Math.max(0.4,Math.min(2.0,factor));
   if(playerInner)playerInner.scale.setScalar(PLAYER_BASE*charScaleFactor);
-  if(monsterInner)monsterInner.scale.setScalar(MONSTER_BASE*charScaleFactor);
+  if(monsterInner)monsterInner.scale.setScalar((monsterInner.userData.baseScale||MONSTER_BASE)*charScaleFactor);
   toast('👤 Character အရွယ်: '+charScaleFactor.toFixed(1)+'x');
 }
 let playerPos=new THREE.Vector3(-18,0,12), monsterPos=new THREE.Vector3(20,0,20);
