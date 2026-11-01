@@ -90,7 +90,7 @@ canvas{display:block}
   </div>
   <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
   Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
-  <p style="font-size:12px;color:#888;margin-top:10px">V7 • #1 ကြောက်စရာ: လူသေကောင် + သွေး + အူ + ယင် + လောက် + သရဲ ၂ ကောင် + V6 Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
+  <p style="font-size:12px;color:#888;margin-top:10px">V8 • အစစ်နဲ့တူ: လူသေကောင် အသားရောင် + သွေး + အူ ၂ မျိုး + လက်/ခြေ လက်ချောင်း + ယင် အတောင် + လောက် အပိုင်း + V7 #1 ကြောက်စရာ: လူသေကောင် + သွေး + အူ + ယင် + လောက် + သရဲ ၂ ကောင် + V6 Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
 </div>
 
 <!-- Pause -->
@@ -315,26 +315,78 @@ for(const c of corpseDefs) makeBloodPool(c.x,c.z,1.4+Math.random()*0.4);
 for(const idx of [1,4]){
   const c=corpseDefs[idx]; const hdX=-Math.sin(c.yaw), hdZ=-Math.cos(c.yaw);
   const ax=c.x+hdX*0.3, az=c.z+hdZ*0.3;
-  const pts=[new THREE.Vector3(ax,0.35,az),new THREE.Vector3(ax+0.3,0.32,az+0.1),new THREE.Vector3(ax+0.4,0.32,az-0.2),new THREE.Vector3(ax+0.1,0.32,az-0.4),new THREE.Vector3(ax-0.3,0.32,az-0.2),new THREE.Vector3(ax-0.2,0.32,az+0.2)];
-  const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),20,0.07,8), new THREE.MeshStandardMaterial({color:0x9a1626,roughness:0.25}));
-  scene.add(tube);
-}
-for(const [idx,ox,oz] of [[0,1.2,0.6],[2,-1.0,0.8]]){
-  const c=corpseDefs[idx]; const lx=c.x+ox, lz=c.z+oz;
-  const limb=new THREE.Mesh(new THREE.CapsuleGeometry(0.12,0.6,4,8), new THREE.MeshStandardMaterial({color:0x4a2a1a,roughness:0.8}));
-  limb.rotation.z=Math.PI/2; limb.position.set(lx,0.14,lz); scene.add(limb);
-  const end=new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8), new THREE.MeshBasicMaterial({color:0x8a1010}));
-  end.position.set(lx+0.35,0.14,lz); scene.add(end); makeBloodPool(lx,lz,0.5);
-}
-for(const c of corpseDefs){
-  for(let i=0;i<10;i++){
-    const f=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6), new THREE.MeshBasicMaterial({color:0x000000}));
-    scene.add(f); flies.push({mesh:f,cx:c.x,cz:c.z,phase:Math.random()*6.28,r:0.4+Math.random()*0.6,speed:3+Math.random()*4});
+  // wound hole: intestines actually emerge from this dark hole in the belly, not floating
+  const wound=new THREE.Mesh(new THREE.CircleGeometry(0.28,16), new THREE.MeshBasicMaterial({color:0x2a0505}));
+  wound.rotation.x=-Math.PI/2; wound.position.set(ax,0.42,az); scene.add(wound);
+  // small intestine: thin, pink, tight coil, wet gloss
+  const ptsS=[new THREE.Vector3(ax,0.44,az),new THREE.Vector3(ax+0.25,0.42,az+0.15),new THREE.Vector3(ax+0.45,0.42,az-0.05),new THREE.Vector3(ax+0.3,0.42,az-0.3),new THREE.Vector3(ax,0.42,az-0.35),new THREE.Vector3(ax-0.3,0.42,az-0.15),new THREE.Vector3(ax-0.2,0.42,az+0.2)];
+  const tubeS=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ptsS),30,0.05,8), new THREE.MeshStandardMaterial({color:0xd48a8a,roughness:0.15}));
+  scene.add(tubeS);
+  // large intestine: thicker, darker red, outer loop
+  const ptsL=[new THREE.Vector3(ax-0.4,0.41,az+0.3),new THREE.Vector3(ax+0.1,0.41,az+0.45),new THREE.Vector3(ax+0.55,0.41,az+0.1),new THREE.Vector3(ax+0.4,0.41,az-0.4),new THREE.Vector3(ax-0.3,0.41,az-0.45),new THREE.Vector3(ax-0.55,0.41,az,0)];
+  const tubeL=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ptsL),30,0.09,8), new THREE.MeshStandardMaterial({color:0x7a1a1a,roughness:0.3}));
+  scene.add(tubeL);
+  for(const [dx,dz] of [[0.3,0.2],[-0.2,-0.3],[0.5,-0.1]]){
+    const drip=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:0x8a1010}));
+    drip.position.set(ax+dx,0.42,az+dz); scene.add(drip);
   }
-  for(let i=0;i<8;i++){
-    const mg=new THREE.Mesh(new THREE.CapsuleGeometry(0.03,0.12,4,8), new THREE.MeshStandardMaterial({color:0xe8dcc0,roughness:0.6}));
-    mg.rotation.x=Math.PI/2; mg.position.set(c.x+(Math.random()-0.5)*1.2,0.05,c.z+(Math.random()-0.5)*1.2); scene.add(mg);
-    maggots.push({mesh:mg,phase:Math.random()*6.28});
+}
+function makeRealLimb(type,x,z,yaw){
+  const g=new THREE.Group(); g.position.set(x,0.15,z); g.rotation.y=yaw;
+  const skin=new THREE.MeshStandardMaterial({color:0x8a6a55,roughness:0.8});
+  const blood=new THREE.MeshBasicMaterial({color:0x8a1010});
+  const bone=new THREE.MeshBasicMaterial({color:0xe8e0d0});
+  const add=(mesh,px,py,pz,rz=0)=>{ mesh.position.set(px,py,pz); if(rz) mesh.rotation.z=rz; g.add(mesh); return mesh; };
+  // cut end: muscle + protruding bone (same for arm and leg)
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.13,10,10),blood),-0.55,0,0);
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.18,8),bone); add(b,-0.65,0,0,Math.PI/2);
+  if(type==='arm'){
+    const up=new THREE.Mesh(new THREE.CapsuleGeometry(0.11,0.4,4,8),skin); add(up,-0.25,0,0,Math.PI/2);
+    const fo=new THREE.Mesh(new THREE.CapsuleGeometry(0.09,0.4,4,8),skin); add(fo,0.25,0,0,Math.PI/2);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,10),skin); hand.scale.set(1.2,0.5,1); add(hand,0.55,0,0);
+    for(let i=0;i<4;i++){ const f=new THREE.Mesh(new THREE.CapsuleGeometry(0.02,0.08,4,8),skin); add(f,0.72,0,-0.06+i*0.04,Math.PI/2); }
+    const th=new THREE.Mesh(new THREE.CapsuleGeometry(0.02,0.07,4,8),skin); add(th,0.5,0,0.14,Math.PI/2);
+  } else {
+    const th2=new THREE.Mesh(new THREE.CapsuleGeometry(0.14,0.5,4,8),skin); add(th2,-0.3,0,0,Math.PI/2);
+    const ca=new THREE.Mesh(new THREE.CapsuleGeometry(0.11,0.5,4,8),skin); add(ca,0.3,0,0,Math.PI/2);
+    const ft=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.1,0.13),skin); add(ft,0.68,0,0);
+    for(let i=0;i<5;i++){ const toe=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8),skin); add(toe,0.85,0,-0.08+i*0.04); }
+  }
+  scene.add(g); return g;
+}
+makeRealLimb('arm', corpseDefs[0].x+1.2, corpseDefs[0].z+0.6, 0.5);
+makeRealLimb('leg', corpseDefs[2].x-1.0, corpseDefs[2].z+0.8, 2.0);
+makeBloodPool(corpseDefs[0].x+1.2, corpseDefs[0].z+0.6, 0.5);
+makeBloodPool(corpseDefs[2].x-1.0, corpseDefs[2].z+0.8, 0.5);
+// V8 maggot texture: cream with segment rings + dark head (canvas, horizontal lines = rings along length)
+let maggotTex=null;
+{
+  const cv=document.createElement('canvas'); cv.width=64; cv.height=256; const g=cv.getContext('2d');
+  g.fillStyle='#e8dcc0'; g.fillRect(0,0,64,256);
+  g.fillStyle='#8a6a4a'; g.fillRect(0,0,64,18);
+  g.fillStyle='rgba(120,90,60,.7)'; for(let y=30;y<256;y+=22) g.fillRect(0,y,64,3);
+  maggotTex=new THREE.CanvasTexture(cv); maggotTex.colorSpace=THREE.SRGBColorSpace;
+}
+let buzzAcc=0;
+for(const c of corpseDefs){
+  for(let i=0;i<6;i++){
+    const grp=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:0x111111}));
+    body.scale.set(1,0.7,1.4); grp.add(body);
+    const eyeMat=new THREE.MeshBasicMaterial({color:0x880000});
+    for(const sx of [-0.03,0.03]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.02,6,6),eyeMat); e.position.set(sx,0.02,0.08); grp.add(e); }
+    const wing=new THREE.Mesh(new THREE.PlaneGeometry(0.2,0.09), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,side:THREE.DoubleSide}));
+    wing.rotation.x=-Math.PI/2; wing.position.y=0.05; grp.add(wing);
+    scene.add(grp);
+    flies.push({grp,wing,cx:c.x,cz:c.z,phase:Math.random()*6.28,r:0.4+Math.random()*0.6,speed:3+Math.random()*4});
+  }
+  for(let i=0;i<6;i++){
+    const grp=new THREE.Group();
+    const mg=new THREE.Mesh(new THREE.CapsuleGeometry(0.035,0.14,4,8), new THREE.MeshStandardMaterial({map:maggotTex,roughness:0.6}));
+    mg.rotation.x=Math.PI/2; grp.add(mg);
+    grp.position.set(c.x+(Math.random()-0.5)*1.2,0.05,c.z+(Math.random()-0.5)*1.2);
+    scene.add(grp);
+    maggots.push({grp,cx:c.x,cz:c.z,phase:Math.random()*6.28,ang:Math.random()*6.28,speed:0.15+Math.random()*0.25});
   }
 }
 let dustPoints=null;
@@ -417,7 +469,7 @@ function loadCorpse(src,scale){
     loader.load(src, gltf=>{
       const inner=gltf.scene; normalizeGroup(inner,scale);
       const outer=new THREE.Group(); outer.add(inner);
-      inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x2a1515); o.material.roughness=1; } });
+      inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x8a7a68); o.material.roughness=0.9; } }); // V8 pale corpse skin (was black shadow 0x2a1515)
       res(outer);
     }, undefined, ()=>res(null));
   });
@@ -428,7 +480,14 @@ async function loadCorpses(){
     if(!outer) outer=await loadCorpse('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb',PLAYER_BASE);
     if(!outer) continue;
     const wrap=new THREE.Group(); wrap.position.set(c.x,0,c.z); wrap.rotation.y=c.yaw;
-    outer.rotation.x=-Math.PI/2; outer.position.set(0,0.25,0.9); wrap.add(outer); scene.add(wrap); corpseWrappers.push(wrap);
+    outer.rotation.x=-Math.PI/2; if(corpseWrappers.length===2) outer.rotation.z=0.5; // surgery corpse lies twisted on its side
+    outer.position.set(0,0.25,0.9); wrap.add(outer);
+    // blood patches on the chest/belly (wrapper local: Y up, Z along body, head -Z)
+    for(const [bx,bz,br] of [[0,-0.2,0.35],[0.15,0.3,0.25],[-0.1,0.1,0.2]]){
+      const bp=new THREE.Mesh(new THREE.CircleGeometry(br,14), new THREE.MeshBasicMaterial({color:0x5a0808,transparent:true,opacity:0.85}));
+      bp.rotation.x=-Math.PI/2; bp.position.set(bx,0.47,bz); wrap.add(bp);
+    }
+    scene.add(wrap); corpseWrappers.push(wrap);
   }
 }
 async function loadGhost(){
@@ -735,8 +794,22 @@ function update(dt){
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
   if(!medkitTaken){ medkitMesh.rotation.y+=dt; if(Math.hypot(12-playerPos.x,14-playerPos.z)<1.8 && S.hearts<3){ medkitTaken=true; medkitMesh.visible=false; S.hearts++; beep(660,.15); setTimeout(()=>beep(880,.2),120); toast('💊 ဆေးရပြီ! အသက် +1'); } }
   // V7 living horror: flies swarm, maggots wiggle, dust drifts, red emergency pulses
-  for(const f of flies){ f.mesh.position.set(f.cx+Math.cos(t*f.speed+f.phase)*f.r, 0.5+Math.sin(t*3+f.phase)*0.3, f.cz+Math.sin(t*f.speed*0.9+f.phase)*f.r); }
-  for(const mg of maggots){ mg.mesh.rotation.z=Math.sin(t*3+mg.phase)*0.4; mg.mesh.position.y=0.05+Math.abs(Math.sin(t*2+mg.phase))*0.02; }
+  for(const f of flies){
+    const fx=f.cx+Math.cos(t*f.speed+f.phase)*f.r, fz=f.cz+Math.sin(t*f.speed*0.9+f.phase)*f.r;
+    const vx=-Math.sin(t*f.speed+f.phase)*f.speed*f.r, vz=Math.cos(t*f.speed*0.9+f.phase)*f.speed*0.9*f.r;
+    f.grp.position.set(fx, 0.5+Math.sin(t*3+f.phase)*0.3, fz);
+    f.grp.rotation.y=Math.atan2(vx,vz);
+    f.wing.scale.x=1+Math.sin(t*40+f.phase)*0.35; // fast wing flutter
+  }
+  for(const mg of maggots){
+    mg.ang+=dt*mg.speed;
+    mg.grp.position.set(mg.cx+Math.cos(mg.ang)*0.5, 0.05, mg.cz+Math.sin(mg.ang)*0.5);
+    mg.grp.rotation.y=-mg.ang;
+    mg.grp.rotation.z=Math.sin(t*3+mg.phase)*0.15; // body wiggle while crawling
+  }
+  // fly buzz when standing near a corpse
+  let nearCorpse=false; for(const c of corpseDefs){ if(Math.hypot(c.x-playerPos.x,c.z-playerPos.z)<4) nearCorpse=true; }
+  if(nearCorpse){ buzzAcc+=dt; if(buzzAcc>0.4){ buzzAcc=0; beep(200+Math.random()*100,0.06,'sawtooth',0.03); } } else buzzAcc=0;
   if(dustPoints) dustPoints.rotation.y+=dt*0.01;
   emergencyLight.intensity=4+Math.sin(t*2.5)*3;
   if(shadowGhostMixer && shadowGhost && shadowGhost.visible) shadowGhostMixer.update(dt*0.8);
