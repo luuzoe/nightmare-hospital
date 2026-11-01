@@ -103,8 +103,8 @@ canvas{display:block}
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V37 • Morgue သော့ လွတ်တဲ့ နေရာ + လက် ပြန်မြင် + ခလုတ် သေး — အကုန်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း + နှေးနှေး သွား (Pause မှာ ရပ် လို့ ပြောင်းလို့ ရသည်)</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V38 • ပရိဘောဂ မတိုက် + HIDE ရွေး + အလောင်းကောင် မြင် — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -126,6 +126,7 @@ canvas{display:block}
   <div class="row">
     <button class="btn ghost" id="mapToggleBtn">🗺️ မြေပုံ: ဖွင့်</button>
     <button class="btn ghost" id="handToggleBtn">✋ လက်: ဖွင့်</button>
+    <button class="btn ghost" id="hideModeBtn">🫥 HIDE: နှေးနှေး သွား</button>
   </div>
   <div class="row">
     <button class="btn ghost" id="camSpeedBtn">📷 ကင်မရာ: ပုံမှန်</button>
@@ -191,7 +192,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 /* ============ STATE ============ */
-const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false};
+const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false, hideSneak:true};
 const KEYS_NEEDED = 3; // V12 floor15: 3 keys (tasks increase later, not start hard)
 // V12 FLOORS: 15 (top, Ep1) down to 1 (ground, Ep15 Final). Each floor: collect mission items, dodge ghosts, open south door -> descend. Harder step by step.
 const FLOOR_MISSIONS={
@@ -411,7 +412,7 @@ function updateHUD(){
   const fi=$('floorInfo'); if(fi) fi.textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
-  $('hideTag').style.display=S.hidden?'block':'none';
+  $('hideTag').style.display=S.hidden?'block':'none'; if(S.hidden && $('hideTag')) $('hideTag').textContent=S.hideSneak!==false?'🫥 ပုန်းနေသည် (နှေးနှေး သွား)':'🫥 ပုန်းနေသည် (ရပ်)';
   $('actBtn').disabled=!S.interactTarget;
   $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
@@ -920,7 +921,7 @@ doorFrame(-16,-3,false); doorFrame(-16,3,false); doorFrame(16,-3,false); doorFra
 makeBloodWriting('IT SEES YOU',-31.6,1.8,8,Math.PI/2); makeBloodWriting("DON'T TRUST",31.6,1.8,8,-Math.PI/2);
 /* ============ COLLISION HELPERS ============ */
 function collide(x,z,r,allowStair){
-  for(const w of walls.concat(props)){
+  for(const w of walls){
     const nx=Math.max(w.x-w.w/2,Math.min(x,w.x+w.w/2));
     const nz=Math.max(w.z-w.d/2,Math.min(z,w.z+w.d/2));
     const dx=x-nx,dz=z-nz; const dd=dx*dx+dz*dz;
@@ -1351,6 +1352,7 @@ $('soundBtn').addEventListener('click',toggleSound); $('muteBtn').addEventListen
 if($('mapBtn')){ $('mapBtn').addEventListener('click',()=>{ S.showMap=!S.showMap; const mm=$('minimap'); if(mm) mm.style.display=S.showMap?'block':'none'; if($('mapToggleBtn')) $('mapToggleBtn').textContent=S.showMap?'🗺️ မြေပုံ: ဖွင့်':'🗺️ မြေပုံ: ပိတ်'; }); }
 if($('mapToggleBtn')){ $('mapToggleBtn').addEventListener('click',()=>{ S.showMap=!S.showMap; const mm=$('minimap'); if(mm) mm.style.display=S.showMap?'block':'none'; $('mapToggleBtn').textContent=S.showMap?'🗺️ မြေပုံ: ဖွင့်':'🗺️ မြေပုံ: ပိတ်'; }); }
 if($('handToggleBtn')){ $('handToggleBtn').addEventListener('click',()=>{ S.showHands=!S.showHands; $('handToggleBtn').textContent=S.showHands?'✋ လက်: ဖွင့်':'✋ လက်: ပိတ်'; }); }
+if($('hideModeBtn')){ $('hideModeBtn').addEventListener('click',()=>{ S.hideSneak=!S.hideSneak; $('hideModeBtn').textContent=S.hideSneak?'🫥 HIDE: နှေးနှေး သွား':'🫥 HIDE: ရပ်'; }); }
 if($('camSpeedBtn')){ $('camSpeedBtn').addEventListener('click',()=>{ S.camSpeed=(S.camSpeed===1)?1.5:((S.camSpeed===1.5)?0.7:1); $('camSpeedBtn').textContent=S.camSpeed===1.5?'📷 ကင်မရာ: မြန်':(S.camSpeed===0.7?'📷 ကင်မရာ: နှေး':'📷 ကင်မရာ: ပုံမှန်'); }); }
 if($('volBtn')){ $('volBtn').addEventListener('click',()=>{ S.volume=(S.volume===1)?1.2:((S.volume===1.2)?0.4:1); $('volBtn').textContent=S.volume===1.2?'🔊 အသံ: ကျယ်':(S.volume===0.4?'🔊 အသံ: တိုး':'🔊 အသံ: ပုံမှန်'); }); }
 if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.75)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
@@ -1387,11 +1389,11 @@ function update(dt){
   if(keysDown['d']||keysDown['arrowright'])ix+=1;
   S.run = runHeld || !!keysDown['shift'];
   const il=Math.hypot(ix,iy); if(il>1){ix/=il;iy/=il;}
-  const moving=il>0.08;
+  const moving=il>0.08 && (!S.hidden || S.hideSneak!==false);
   // stamina
   const running=moving && S.run && S.stamina>0 && !S.hidden;
   if(running)S.stamina=Math.max(0,S.stamina-(30+(15-S.floor)*1)*dt); else S.stamina=Math.min(100,S.stamina+12*dt); // V12 harder down: drain +1/floor
-  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il))*(S.hidden?0.5:1); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
+  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il))*(S.hidden && S.hideSneak!==false?0.5:1); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
   // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
   // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
   // joystick up = -iy = forward amount, joystick right = ix = right amount.
