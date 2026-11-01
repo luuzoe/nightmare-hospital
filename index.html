@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Nightmare Hospital — ဆေးရုံဟောင်း</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#050505;color:#eee;font-family:system-ui,-apple-system,"Noto Sans Myanmar",sans-serif;touch-action:none}
@@ -47,7 +48,7 @@ canvas{display:block}
 /* ---------- Controls ---------- */
 #joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
-#btns{position:absolute;right:16px;bottom:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
+#btns{position:absolute;right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
 .abtn{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
 .abtn.big{width:76px;height:76px;background:#c81e1e;font-size:15px}
 .abtn.active{background:#0a6c3c}
@@ -89,6 +90,7 @@ canvas{display:block}
   </div>
   <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
   Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
+  <p style="font-size:12px;color:#888;margin-top:10px">V3 • Control + Character မြင်ရအောင် + အသံ + Auto Landscape ပြင်ပြီး • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
 </div>
 
 <!-- Pause -->
@@ -167,6 +169,18 @@ function beep(freq,dur=0.15,type='sine',vol=0.12){ if(!S.sound)return; const c=a
 function pickupSound(){ beep(880,.12); setTimeout(()=>beep(1320,.18),90); }
 function doorSound(){ beep(220,.2,'square',.08); setTimeout(()=>beep(330,.25,'square',.08),120); }
 function scareSound(){ if(!S.sound)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(120,c.currentTime); o.frequency.exponentialRampToValueAtTime(45,c.currentTime+0.8); g.gain.setValueAtTime(.18,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.9); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.9); }
+let ambientGain=null, ambientStarted=false;
+function startAmbient(){
+  if(ambientStarted)return; const c=ac(); if(!c)return; ambientStarted=true;
+  try{
+    const o=c.createOscillator(); o.type='sine'; o.frequency.value=48;
+    ambientGain=c.createGain(); ambientGain.gain.value=S.sound?0.04:0;
+    const lfo=c.createOscillator(); lfo.frequency.value=0.25; const lg=c.createGain(); lg.gain.value=0.015;
+    lfo.connect(lg); lg.connect(ambientGain.gain); o.connect(ambientGain); ambientGain.connect(c.destination);
+    o.start(); lfo.start();
+  }catch(e){}
+}
+document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
 
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
@@ -305,30 +319,36 @@ function normalizeGroup(grp,targetH){
   const box2=new THREE.Box3().setFromObject(grp);
   grp.position.y-=box2.min.y; return grp;
 }
-function loadCharacter(){
+// V3 FIX: .clone() on a skinned GLB breaks its skeleton -> model collapses/invisible.
+// So load the original GLB twice (second load hits browser cache) and wrap each
+// model in an outer group, so the inner foot-offset survives per-frame position sets.
+function loadOne(src,targetH,dark){
   return new Promise(res=>{
-    loader.load('cesium-man.glb', gltf=>{
-      const p=gltf.scene.clone(); normalizeGroup(p,1.8); scene.add(p); player=p;
-      if(gltf.animations.length){ playerMixer=new THREE.AnimationMixer(p); playerMixer.clipAction(gltf.animations[0]).play(); }
-      const m=gltf.scene.clone(); normalizeGroup(m,2.25); scene.add(m); monster=m;
-      m.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); o.material.roughness=1; } });
-      // red eyes on monster head
-      const eyeMat=new THREE.MeshBasicMaterial({color:0xff0000});
-      for(const sx of [-0.13,0.13]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),eyeMat); e.position.set(sx,2.05,0.18); m.add(e); }
-      if(gltf.animations.length){ monsterMixer=new THREE.AnimationMixer(m); monsterMixer.clipAction(gltf.animations[0]).play(); }
-      res(true);
-    }, undefined, ()=>{
-      loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>{
-        const p=gltf.scene.clone(); normalizeGroup(p,1.8); scene.add(p); player=p;
-        if(gltf.animations.length){ playerMixer=new THREE.AnimationMixer(p); playerMixer.clipAction(gltf.animations[0]).play(); }
-        const m=gltf.scene.clone(); normalizeGroup(m,2.25); scene.add(m); monster=m;
-        m.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); } });
-        res(true);
-      }, undefined, ()=>res(false));
-    });
+    loader.load(src, gltf=>{
+      const inner=gltf.scene; normalizeGroup(inner,targetH);
+      const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
+      if(dark){
+        inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); o.material.roughness=1; } });
+        const eyeMat=new THREE.MeshBasicMaterial({color:0xff0000});
+        for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),eyeMat); e.position.set(sx,targetH*0.92,0.2); outer.add(e); }
+      }
+      let mixer=null;
+      if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
+      res({outer,mixer});
+    }, undefined, ()=>res(null));
   });
 }
-let playerPos=new THREE.Vector3(-20,0,18), monsterPos=new THREE.Vector3(20,0,20);
+async function loadCharacter(){
+  const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
+  let p=await loadOne('cesium-man.glb',1.8,false);
+  if(!p)p=await loadOne(CDN,1.8,false);
+  let m=await loadOne('cesium-man.glb',2.25,true);
+  if(!m)m=await loadOne(CDN,2.25,true);
+  if(!p||!m)return false;
+  player=p.outer; playerMixer=p.mixer; monster=m.outer; monsterMixer=m.mixer;
+  return true;
+}
+let playerPos=new THREE.Vector3(-18,0,12), monsterPos=new THREE.Vector3(20,0,20);
 let playerAngle=Math.PI, monsterAngle=0, monsterState='patrol', patrolIdx=0, lastSeen=null;
 const patrolPts=[[20,20],[20,8],[0,0],[-20,-15],[20,-15],[-20,10],[0,0]];
 const flash=new THREE.SpotLight(0xfff2cc,30,18,0.55,0.5,1); scene.add(flash); scene.add(flash.target);
@@ -385,13 +405,14 @@ function doInteract(){
 /* ============ GAME FLOW ============ */
 function resetGame(){
   S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.invuln=0; S.chase=false; S.time=0; S.dead=false; S.won=false; S.yaw=Math.PI;
-  playerPos.set(-20,0,18); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
+  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   setObjective('Ward သော့ကို ရှာပါ');
   updateHUD();
 }
 function startGame(){
-  ac(); resetGame(); S.playing=true; S.paused=false;
+  ac(); tryAutoLandscape(); startAmbient(); beep(440,.15); setTimeout(()=>beep(660,.2),150);
+  resetGame(); S.playing=true; S.paused=false;
   $('startScreen').classList.add('hidden'); $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden');
   $('hud').classList.add('on'); $('load').style.display='none';
   if(typeof checkOrientation==='function')checkOrientation();
@@ -415,7 +436,7 @@ function loseHeart(){
   S.hearts--; S.invuln=3; scareSound();
   const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
   toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
-  playerPos.set(-20,0,18); monsterPos.set(20,0,20); monsterState='patrol'; S.chase=false; S.hidden=false;
+  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; S.chase=false; S.hidden=false;
   if(S.hearts<=0) endGame(false); updateHUD();
 }
 $('startBtn').addEventListener('click',startGame);
@@ -425,8 +446,13 @@ $('restartBtn').addEventListener('click',()=>{ $('pauseScreen').classList.add('h
 $('againBtn').addEventListener('click',()=>{ $('endScreen').classList.add('hidden'); startGame(); });
 function toggleSound(){
   S.sound=!S.sound;
+  if(ambientGain)ambientGain.gain.value=S.sound?0.04:0;
   $('soundBtn').textContent=S.sound?'🔊 အသံ: ဖွင့်':'🔇 အသံ: ပိတ်';
   $('muteBtn').textContent=S.sound?'🔊':'🔇';
+}
+function tryAutoLandscape(){
+  try{ if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+  try{ if(screen.orientation && screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{}); }catch(e){}
 }
 $('soundBtn').addEventListener('click',toggleSound); $('muteBtn').addEventListener('click',toggleSound);
 // Landscape: fullscreen + orientation lock (needs a user tap on Android Chrome)
@@ -446,7 +472,7 @@ addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.upd
 
 /* ============ UPDATE LOOP ============ */
 const clock=new THREE.Clock();
-let heartBeatAcc=0;
+let heartBeatAcc=0, stepAcc=0;
 function update(dt){
   if(!S.playing||S.paused) return;
   S.time+=dt;
@@ -477,10 +503,22 @@ function update(dt){
   }
   if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; }
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
-  // camera: behind player
+  // footsteps while walking/running (so the game is never silent)
+  if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; beep(65,.07,'sine',.07); } } else stepAcc=0;
+  // camera: behind player, pulled in if a wall would block the view (V3 FIX:
+  // old camera went through/ outside walls, hiding the player behind a wall)
   const camDist=6.2, camH=3.6;
   const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
-  camera.position.lerp(new THREE.Vector3(cx,camH,cz),1-Math.pow(0.001,dt));
+  let useX=cx, useZ=cz, found=false;
+  for(let tt=1; tt>=0.3; tt-=0.1){
+    const px=playerPos.x+(cx-playerPos.x)*tt, pz=playerPos.z+(cz-playerPos.z)*tt;
+    let blocked=false;
+    for(const w of walls){ if(Math.abs(px-w.x)<w.w/2+0.3 && Math.abs(pz-w.z)<w.d/2+0.3){ blocked=true; break; } }
+    if(!blocked){ useX=px; useZ=pz; found=true; break; }
+  }
+  if(!found){ useX=playerPos.x+(cx-playerPos.x)*0.3; useZ=playerPos.z+(cz-playerPos.z)*0.3; }
+  useX=Math.max(-31,Math.min(31,useX)); useZ=Math.max(-23,Math.min(23,useZ));
+  camera.position.set(useX,camH,useZ);
   camera.lookAt(playerPos.x,1.2,playerPos.z);
   flash.position.set(playerPos.x,2.2,playerPos.z);
   flash.target.position.set(playerPos.x+Math.sin(playerAngle)*5,1,playerPos.z+Math.cos(playerAngle)*5);
