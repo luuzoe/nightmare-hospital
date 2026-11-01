@@ -103,8 +103,8 @@ canvas{display:block}
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • အဖြူ သရဲ emoji မရှိတော့</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V42 • အဖြူ သရဲ emoji ဖြုတ် + ပေါက် frame + Ep1 သရဲ လိုက်တာ လျှော့ — အကုန်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • Ep1: သော့ အခန်းထဲမှာပဲ, သရဲ မလိုက်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V43 • Ep1 ပြန်လုပ်: သော့ ၃ ချောင်း စတဲ့ အခန်းထဲမှာပဲ + Ep1 သရဲ မလိုက် — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -641,9 +641,9 @@ for(const [x,z] of [[0,-12],[0,12],[55,0]]){
 
 /* ============ KEYS ============ */
 const keyDefs=[
-  {id:1,x:-24,z:-16,room:'Ward',label:'Ward သော့'},
-  {id:2,x:24,z:-16,room:'Surgery',label:'Surgery သော့'},
-  {id:3,x:20,z:22,room:'Morgue',label:'Morgue သော့'},
+  {id:1,x:-24,z:20,room:'Start',label:'သော့ 1'},
+  {id:2,x:-10,z:16,room:'Start',label:'သော့ 2'},
+  {id:3,x:-20,z:6,room:'Start',label:'သော့ 3'},
   {id:4,x:10,z:12,room:'Pharmacy',label:'Pharmacy သော့'},
   {id:5,x:-28,z:20,room:'Reception',label:'Reception သော့'},
 ]; // V12: 5 keys, last 2 in Pharmacy corner + Reception corner
@@ -653,7 +653,7 @@ for(const k of keyDefs){
   const ring=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.07,8,20), new THREE.MeshStandardMaterial({color:0xffd700,emissive:0x664400,metalness:.7,roughness:.3}));
   const stem=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.5,0.08), ring.material);
   stem.position.y=-0.4; grp.add(ring,stem); grp.position.set(k.x,1.1,k.z); scene.add(grp);
-  keyMeshes.push({def:k,mesh:grp,taken:false});
+  grp.scale.set(1.6,1.6,1.6); keyMeshes.push({def:k,mesh:grp,taken:false});
 }
 // V12 Stage 2 items (like keys, but new tasks in new room)
 const itemDefs=[
@@ -1508,7 +1508,7 @@ function update(dt){
   // interact / hide targets
   S.interactTarget=null; S.hideTarget=null;
   for(const km of keyMeshes){
-    if(!km.taken && Math.hypot(km.def.x-playerPos.x,km.def.z-playerPos.z)<1.8){ S.interactTarget={type:'key',km,label:km.def.label}; break; }
+    if(!km.taken && Math.hypot(km.def.x-playerPos.x,km.def.z-playerPos.z)<3.0){ S.interactTarget={type:'key',km,label:km.def.label}; break; }
   }
   // V12 missions interact: items (order/dark/timed/final), switches (order), corpse (order), switchFloor (final)
   if(!S.interactTarget){
@@ -1581,7 +1581,7 @@ function update(dt){
   // ---- monster AI ----
   const mDist=Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z);
   // V5 SCARE SYSTEM: ghost scares from different places, does NOT catch instantly.
-  if(!S.paused && monsterState!=='scare' && monsterState!=='chase' && !S.hidden && S.invuln<=0){
+  if(!S.paused && S.floor!==15 && monsterState!=='scare' && monsterState!=='chase' && !S.hidden && S.invuln<=0){
     S.nextScare-=dt;
     if(S.nextScare<=0 && mDist>8){
       let sx=playerPos.x, sz=playerPos.z, foundSpot=false;
@@ -1620,7 +1620,7 @@ function update(dt){
     const loseAfter=(S.hideLocker?2.5:5.0)+(15-S.floor)*0.2; // V12 harder down: monster stays even longer
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
   } else S.hideTimer=0;
-  const canSee=!S.hidden && monsterState!=='scare' && mDist<(S.floor===15?16:24) && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V42 Ep1: 16m, later floors 24m
+  const canSee=!S.hidden && S.floor!==15 && monsterState!=='scare' && mDist<24 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V43 Ep1: monster never chases, tutorial floor
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
@@ -1692,7 +1692,7 @@ function update(dt){
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
       else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 1.0); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
-      if(!S.hidden && S.invuln<=0 && (S.escaping || (wd<((wg.def.radius+(wg.def.radiusBoost||0))*(S.floor===15?0.65:1)) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
+      if(!S.hidden && S.floor!==15 && S.invuln<=0 && (S.escaping || (wd<((wg.def.radius+(wg.def.radiusBoost||0))) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
         wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else wanderingScream(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
     }
@@ -1747,7 +1747,7 @@ function update(dt){
   }
   for(let ri=0; ri<redLamps.length; ri++){ const s=1+Math.sin(t*5+ri*1.7)*0.35; redLamps[ri].scale.set(s,s,s); redLamps[ri].material.opacity=0.5+Math.sin(t*5+ri)*0.3; }
   // V18 front jumpscare: ghost appears suddenly 2.5m in front of player, in your face (FPP = fills screen)
-  if(S.playing && !S.paused && !S.hidden && S.invuln<=0){
+  if(S.playing && !S.paused && S.floor!==15 && !S.hidden && S.invuln<=0){
     S.frontScareTimer-=dt;
     if(S.frontScareTimer<=0){
       S.frontScareTimer=45+Math.random()*30; // V25 scarier, more frequent front jumpscare
