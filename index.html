@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V17 • Dead Body အစစ် + သွေးအစစ်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V18 • FPP + သရဲရှေ့တည့်တည့် ပေါ်လာ + ကွင်းဖျောက် + သော့လမ်းကြောင်း</p>
 </div>
 
 <!-- Pause -->
@@ -115,6 +115,9 @@ canvas{display:block}
   <div class="row">
     <button class="btn ghost" id="sizeDownBtn">👤− Character သေး</button>
     <button class="btn ghost" id="sizeUpBtn">👤+ Character ကြီး</button>
+  </div>
+  <div class="row">
+    <button class="btn ghost" id="fppBtn">👁️ FPP (အခု) — TPP ပြောင်း</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN • 🫥 HIDE</p>
 </div>
@@ -144,6 +147,7 @@ canvas{display:block}
       <div id="keys">🔑 0 / 3</div>
       <div id="floorInfo">🏢 15 လွှာ • Ep1</div>
       <div id="objective">🎯 Ward သော့ ရှာပါ</div>
+      <div id="ghostCount">👻 သရဲ —</div>
       <div id="compass">🧭 —</div>
     </div>
     <div style="display:flex;gap:8px">
@@ -173,7 +177,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 /* ============ STATE ============ */
-const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:12, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:25};
+const S = {fpp:true, frontScareTimer:30, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:12, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:25};
 const KEYS_NEEDED = 3; // V12 floor15: 3 keys (tasks increase later, not start hard)
 // V12 FLOORS: 15 (top, Ep1) down to 1 (ground, Ep15 Final). Each floor: collect mission items, dodge ghosts, open south door -> descend. Harder step by step.
 const FLOOR_MISSIONS={
@@ -318,7 +322,7 @@ function applyFloorLayout(){
 function setActiveGhosts(){
   if(!wanderingGhosts.length) return;
   const fd=15-S.floor; const n=wanderingGhosts.length;
-  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+1)%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+3)%n].def.name, wanderingGhosts[(fd+4)%n].def.name];
+  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+1)%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+3)%n].def.name, wanderingGhosts[(fd+4)%n].def.name]; S.activeGhostCount=active.length;
   for(const wg of wanderingGhosts){
     if(active.includes(wg.def.name)){ wg.state='patrol'; wg.cooldown=0; wg.outer.visible=true; const wp=wg.def.wps[0]; if(wp) wg.outer.position.set(wp[0],0,wp[1]); }
     else { wg.state='patrol'; wg.cooldown=9999; wg.outer.visible=false; }
@@ -341,6 +345,7 @@ function updateHUD(){
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
   $('hideTag').style.display=S.hidden?'block':'none';
+  const gc=$('ghostCount'); if(gc) gc.textContent='👻 သရဲ '+((S.activeGhostCount||5)+1)+' ကောင် + Monster လှည့်နေ';
   $('actBtn').disabled=!S.interactTarget;
   $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
@@ -757,6 +762,49 @@ function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if
 // V14 objective beacon: tall gold pillar, visible through walls/fog, always points to next objective
 const beacon=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,7,12), new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.6,depthTest:false,fog:false}));
 beacon.renderOrder=999; beacon.position.set(0,3.5,24); scene.add(beacon);
+// V18 gap frames: green glowing door frames so gaps are obvious, not hidden dark holes
+function makeGapFrame(cx,cz,alongX){
+  const mat=new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.85});
+  const len=alongX?8:6, th=0.35;
+  for(const s of [-1,1]){
+    const pil=new THREE.Mesh(new THREE.BoxGeometry(alongX?th:th,3.4,alongX?th:th),mat);
+    if(alongX) pil.position.set(cx+s*len/2,1.7,cz); else pil.position.set(cx,1.7,cz+s*len/2);
+    scene.add(pil);
+  }
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(alongX?len+0.4:th,0.3,alongX?th:len+0.4),mat);
+  beam.position.set(cx,3.3,cz); scene.add(beam);
+}
+for(const gx of [-16,0,16]){ makeGapFrame(gx,-3,true); makeGapFrame(gx,3,true); }
+makeGapFrame(-4,0,false); makeGapFrame(4,0,false);
+// V18 gold path dots pool (BFS route to objective, visible through walls)
+const pathDots=[];
+for(let i=0;i<30;i++){
+  const d=new THREE.Mesh(new THREE.CircleGeometry(0.35,12), new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.9,depthTest:false,fog:false}));
+  d.rotation.x=-Math.PI/2; d.renderOrder=998; d.visible=false; scene.add(d); pathDots.push(d);
+}
+function computePathDots(tx,tz){
+  // BFS on 1m grid, walkable = collide() does not push out
+  const sx=Math.round(playerPos.x), sz=Math.round(playerPos.z), ex=Math.round(tx), ez=Math.round(tz);
+  const key=(x,z)=>x+','+z; const q=[[sx,sz]]; const parent={}; parent[key(sx,sz)]=null; const seen=new Set([key(sx,sz)]);
+  let found=null;
+  while(q.length){
+    const [x,z]=q.shift();
+    if(Math.abs(x-ex)<=1 && Math.abs(z-ez)<=1){ found=[x,z]; break; }
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, nz=z+dz; if(seen.has(key(nx,nz))) continue;
+      if(nx<-31||nx>69||nz<-23||nz>23) continue;
+      let bw=false; for(const w of walls){ if(Math.abs(nx-w.x)<w.w/2+0.5 && Math.abs(nz-w.z)<w.d/2+0.5){ bw=true; break; } } if(bw) continue;
+      seen.add(key(nx,nz)); parent[key(nx,nz)]=[x,z]; q.push([nx,nz]);
+    }
+  }
+  if(!found) return;
+  const path=[]; let cur=found;
+  while(cur){ path.push(cur); cur=parent[key(cur[0],cur[1])]; }
+  path.reverse();
+  let di=0;
+  for(let i=2;i<path.length && di<pathDots.length;i+=2){ const [px,pz]=path[i]; pathDots[di].position.set(px,0.12,pz); pathDots[di].visible=true; di++; }
+  for(let j=di;j<pathDots.length;j++) pathDots[j].visible=false;
+}
 // V14 realistic details: lamps, IV stands, wheelchairs, stretchers, posters, debris, door frames (visual only, no collision)
 for(const [lx,lz] of [[-18,-12],[18,-12],[-18,12],[18,12],[0,0]]){ const lamp=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.12,0.7), new THREE.MeshBasicMaterial({color:0xfff2cc})); lamp.position.set(lx,3.35,lz); scene.add(lamp); }
 function ivStand(x,z){ const g=new THREE.Group(); const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,1.9,8), new THREE.MeshStandardMaterial({color:0x888888})); pole.position.y=0.95; const top=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.06,0.06), pole.material); top.position.y=1.9; const bag=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.35,0.08), new THREE.MeshStandardMaterial({color:0xffe0a0})); bag.position.set(0.25,1.7,0); g.add(pole,top,bag); g.position.set(x,0,z); scene.add(g); }
@@ -816,7 +864,7 @@ function loadOne(src,baseScale,targetH,dark,opts){
       const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor,opts.yOffset||0,opts.rotX||0);
       if(opts.real){ inner.userData.baseScale=baseScale; }
       const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
-      if(opts.real){ /* real ghost texture kept as-is, no pale recolor */ }
+      if(opts.real){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x440000); } }); }
       else if(dark){
         // V10 ghost, not a man: pale white, translucent, floating sheet, hollow black eyes + red pupils + black mouth + long hair
         inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xe8e8e8); o.material.transparent=true; o.material.opacity=0.88; o.material.roughness=1; } });
@@ -910,7 +958,7 @@ async function loadWanderingGhosts(){
     const build=(gltf,useReal)=>{
       const inner=gltf.scene; normalizeGroup(inner,def.scale,def.yOffset||0,def.rotX||0);
       const outer=new THREE.Group(); outer.add(inner);
-      if(def.real && useReal){ /* keep original ghost texture */ }
+      if(def.real && useReal){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x330000); } }); }
       else inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
       if(def.real && useReal){
         let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
@@ -970,8 +1018,8 @@ function findPath(sx,sz,tx,tz){
 }
 const flash=new THREE.SpotLight(0xfff2cc,130,22,0.50,0.35,1); // V5 strong narrow flashlight tunnel
 const monsterGlow=new THREE.PointLight(0xff0000,6,7,1.5); scene.add(monsterGlow);
-const playerRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.65,24), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.7,side:THREE.DoubleSide})); playerRing.rotation.x=-Math.PI/2; scene.add(playerRing);
-const monsterRing=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
+const playerRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.65,24), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.7,side:THREE.DoubleSide})); playerRing.rotation.x=-Math.PI/2; playerRing.visible=false; scene.add(playerRing);
+const monsterRing=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; monsterRing.visible=false; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
 
 /* ============ CONTROLS ============ */
 const joyEl=$('joy'), knob=$('knob');
@@ -1199,6 +1247,7 @@ function checkOrientation(){
 $('dismissRotate').addEventListener('click',()=>{ rotateDismissed=true; checkOrientation(); });
 $('sizeDownBtn').addEventListener('click',()=>setCharSize(charScaleFactor-0.1));
 $('sizeUpBtn').addEventListener('click',()=>setCharSize(charScaleFactor+0.1));
+$('fppBtn').addEventListener('click',()=>{ S.fpp=!S.fpp; $('fppBtn').textContent=S.fpp?'👁️ FPP (အခု) — TPP ပြောင်း':'👁️ TPP (အခု) — FPP ပြောင်း'; });
 $('landBtn').addEventListener('click',async()=>{
   try{ await document.documentElement.requestFullscreen(); }catch(e){}
   try{ await screen.orientation.lock('landscape'); toast('⛶ Landscape Fullscreen ဖွင့်ပြီ'); }
@@ -1242,30 +1291,35 @@ function update(dt){
   if(S.inStair){ playerPos.y=stairY(playerPos.z); if(moving){ const sidx=Math.floor((playerPos.z-25)/1.05); if(sidx!==S._lastStep){ S._lastStep=sidx; footstepSound(); } } }
   else playerPos.y=0;
   if(moving && floorMission().type==='distance' && !S.missionDone){ S.distance+=speed*dt; }
-  if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; player.visible=!S.hidden; }
-  playerRing.visible=!S.hidden; // V9: ring also hid, otherwise user sees green ring and thinks hide failed
+  if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; player.visible=S.fpp?false:!S.hidden; }
+  playerRing.visible=false; monsterRing.visible=false; // V18 user: hide bottom rings
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
   // footsteps while walking/running (so the game is never silent)
   if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; footstepSound(); } } else stepAcc=0;
-  // camera: behind player, pulled in if a wall would block the view (V3 FIX:
-  // old camera went through/ outside walls, hiding the player behind a wall)
-  const camDist=4.5, camH=playerPos.y+1.9;
-  const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
-  let useX=cx, useZ=cz, found=false;
-  for(let tt=1; tt>=0.3; tt-=0.1){
-    const px=playerPos.x+(cx-playerPos.x)*tt, pz=playerPos.z+(cz-playerPos.z)*tt;
-    let blocked=false;
-    for(const w of walls){ if(Math.abs(px-w.x)<w.w/2+0.3 && Math.abs(pz-w.z)<w.d/2+0.3){ blocked=true; break; } }
-    if(!blocked){ useX=px; useZ=pz; found=true; break; }
+  // V18 FPP default: camera at eye, no TPP pull-in, camera cannot go through walls (it is at player)
+  if(S.fpp){
+    camera.position.set(playerPos.x+Math.sin(S.yaw)*0.2, playerPos.y+1.65, playerPos.z+Math.cos(S.yaw)*0.2);
+    if(S.chase||S.scare||wanderingScare||S.escaping||S.blackout>0){ const sh=S.scare?0.45:(S.chase||S.escaping?0.25:(S.blackout>0?0.20:0.35)); camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; }
+    camera.lookAt(playerPos.x+Math.sin(S.yaw)*10, playerPos.y+1.55, playerPos.z+Math.cos(S.yaw)*10);
+  } else {
+    const camDist=4.5, camH=playerPos.y+1.9;
+    const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
+    let useX=cx, useZ=cz, found=false;
+    for(let tt=1; tt>=0.3; tt-=0.1){
+      const px=playerPos.x+(cx-playerPos.x)*tt, pz=playerPos.z+(cz-playerPos.z)*tt;
+      let blocked=false;
+      for(const w of walls){ if(Math.abs(px-w.x)<w.w/2+0.3 && Math.abs(pz-w.z)<w.d/2+0.3){ blocked=true; break; } }
+      if(!blocked){ useX=px; useZ=pz; found=true; break; }
+    }
+    if(!found){ useX=playerPos.x+(cx-playerPos.x)*0.3; useZ=playerPos.z+(cz-playerPos.z)*0.3; }
+    useX=Math.max(-31,Math.min(69,useX)); useZ=Math.max(-23,Math.min(S.inStair?38.5:23,useZ));
+    camera.position.set(useX,camH,useZ);
+    if(S.chase||S.scare||wanderingScare||S.escaping||S.blackout>0){ const sh=S.scare?0.45:(S.chase||S.escaping?0.25:(S.blackout>0?0.20:0.35)); camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; }
+    camera.lookAt(playerPos.x,playerPos.y+1.35,playerPos.z);
   }
-  if(!found){ useX=playerPos.x+(cx-playerPos.x)*0.3; useZ=playerPos.z+(cz-playerPos.z)*0.3; }
-  useX=Math.max(-31,Math.min(69,useX)); useZ=Math.max(-23,Math.min(S.inStair?38.5:23,useZ));
-  camera.position.set(useX,camH,useZ);
-  if(S.chase||S.scare||wanderingScare||S.escaping||S.blackout>0){ const sh=S.scare?0.45:(S.chase||S.escaping?0.25:(S.blackout>0?0.20:0.35)); camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; } // V12 stronger shake
-  camera.lookAt(playerPos.x,playerPos.y+1.35,playerPos.z);
   const wantFov=S.chase?75:62; if(camera.fov!==wantFov){ camera.fov=wantFov; camera.updateProjectionMatrix(); }
   playerRing.position.set(playerPos.x,playerPos.y+0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?18:8; // V12 ghost glow stronger
-  flash.position.set(playerPos.x,playerPos.y+2.2,playerPos.z);
+  flash.position.set(playerPos.x,playerPos.y+(S.fpp?1.65:2.2),playerPos.z);
   flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,playerPos.y+1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
   const t=performance.now()/1000;
@@ -1441,7 +1495,7 @@ function update(dt){
     } else if(wg.state==='scare'){
       wanderingScare=true; wg.scareTimer-=dt;
       wg.outer.rotation.y=Math.atan2(playerPos.x-wg.outer.position.x, playerPos.z-wg.outer.position.z);
-      if(wg.scareTimer<=0){ wg.state='patrol'; wg.cooldown=12+Math.random()*6; wg.outer.visible=false; toast('👻 '+wg.def.name+' ပျောက်သွားပြီ…'); }
+      if(wg.scareTimer<=0){ wg.state='patrol'; wg.cooldown=3+Math.random()*3; wg.outer.visible=false; toast('👻 '+wg.def.name+' ပျောက်သွားပြီ… (ခဏနေ ပြန်ပေါ်မယ်)'); }
     } else if(wg.cooldown>0){
       wg.cooldown-=dt; wg.outer.visible=false;
       if(wg.cooldown<=0){ const wp=wg.def.wps[Math.floor(Math.random()*wg.def.wps.length)]; wg.outer.position.set(wp[0],0,wp[1]); wg.outer.visible=true; wg.wpIdx=0; }
@@ -1471,6 +1525,28 @@ function update(dt){
     if(ap.visible){ ap.mesh.rotation.y=Math.atan2(playerPos.x-ap.mesh.position.x, playerPos.z-ap.mesh.position.z); ap.mesh.position.y=Math.sin(t*2+ai)*0.1; }
   }
   for(let ri=0; ri<redLamps.length; ri++){ const s=1+Math.sin(t*5+ri*1.7)*0.35; redLamps[ri].scale.set(s,s,s); redLamps[ri].material.opacity=0.5+Math.sin(t*5+ri)*0.3; }
+  // V18 front jumpscare: ghost appears suddenly 2.5m in front of player, in your face (FPP = fills screen)
+  if(S.playing && !S.paused && !S.hidden && S.invuln<=0){
+    S.frontScareTimer-=dt;
+    if(S.frontScareTimer<=0){
+      S.frontScareTimer=35+Math.random()*20;
+      const fx=playerPos.x+Math.sin(S.yaw)*2.5, fz=playerPos.z+Math.cos(S.yaw)*2.5;
+      const fp=collide(fx,fz,0.5);
+      if(Math.hypot(fp[0]-playerPos.x,fp[1]-playerPos.z)>1.2 && !lineBlocked(playerPos.x,playerPos.z,fp[0],fp[1])){
+        if(monsterState!=='chase'){
+          monsterPos.set(fp[0],0,fp[1]); monsterAngle=Math.atan2(playerPos.x-fp[0],playerPos.z-fp[1]); monsterState='scare'; S.scare=true; S.scareTimer=1.5;
+        } else {
+          const actWg=wanderingGhosts.find(wg=>wg.outer && wg.outer.visible && wg.state==='patrol');
+          if(actWg){ actWg.outer.position.set(fp[0],0,fp[1]); actWg.outer.rotation.y=Math.atan2(playerPos.x-fp[0],playerPos.z-fp[1]); actWg.state='scare'; actWg.scareTimer=1.5; wanderingScare=true; }
+        }
+        S.ghostFaceUntil=S.time+1.0; screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200); toast('👻 သရဲ ရှေ့တည့်တည့် ပေါ်လာပြီ!');
+      }
+    }
+  }
+  const gf=$('ghostFace'); if(gf) gf.style.display=(S.time<S.ghostFaceUntil || (S.chase && Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z)<3))?'block':'none';
+  // V18 path dots: recompute every 2s to beacon target
+  S.pathTimer-=dt;
+  if(S.pathTimer<=0){ S.pathTimer=2.0; try{ computePathDots(S.beaconX,S.beaconZ); }catch(e){} }
   // V14 anti-stuck: pushing joystick 2s without moving = wall, warn + point to beacon
   if(S.playing && !S.paused && S.joy.active){
     S.stuckTimer+=dt;
@@ -1488,7 +1564,7 @@ function update(dt){
     if(nd2<12 && S.heartTimer<=0){ heartbeatSound(); S.heartTimer=Math.max(0.45,nd2*0.07); }
     S.randScareTimer-=dt;
     if(S.randScareTimer<=0){ S.randScareTimer=20+Math.random()*20; if(Math.random()<0.6) screamSound(); else if(Math.random()<0.5) whisperSound(); else growlSound(); }
-    const gf=$('ghostFace'); if(gf) gf.style.display=(S.chase && nd2<3)?'block':'none';
+    const gf=$('ghostFace'); if(gf && S.time>=S.ghostFaceUntil) gf.style.display=(S.chase && nd2<3)?'block':'none';
   }
   // V12 FINAL ESCAPE progress: 8s near exit door, pauses if away/hidden, win at 100%
   if(S.escaping && S.playing && !S.paused){
