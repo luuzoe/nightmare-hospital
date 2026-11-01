@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V18 • FPP + သရဲရှေ့တည့်တည့် ပေါ်လာ + ကွင်းဖျောက် + သော့လမ်းကြောင်း</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V19 • Room1 error တွေ ပြင် — အလောင်း/သရဲ ထပ်နေတာ + နံရံ ပေါက်အသစ်</p>
 </div>
 
 <!-- Pause -->
@@ -301,7 +301,7 @@ function applyFloorLayout(){
   const fd=15-S.floor;
   const dx=((fd%3)-1)*3, dz=((fd%3)-1)*1.5;
   let pi=0;
-  const partSlots=[[-20,-18],[20,-18],[-20,18],[20,18]];
+  const partSlots=[[-22,-18],[20,-18],[-20,18],[20,18]];
   const partSlots2=[[-14,-12],[14,-12],[-14,12],[14,12]];
   const partSlots3=[[-24,-8],[24,-8],[-24,8],[24,8]];
   const allSlots=[partSlots,partSlots2,partSlots3];
@@ -454,9 +454,9 @@ addWall(-27,24,10,0.6); addWall(-9,24,14,0.6); addWall(17,24,30,0.6); addWall(-3
 for(const z of [-3,3]){
   for(const [a,b] of [[-32,-20],[-12,-4],[4,12],[20,32]]) addWall((a+b)/2,z,b-a,0.6);
 }
-// vertical corridor walls x=-4 and x=4, gap -3..3
+// vertical corridor walls x=-4 and x=4, gaps -3..3 (middle), -14..-10 (north, V19), 10..14 (south, V19) - north-centre was a dead end before
 for(const x of [-4,4]){
-  addWall(x,-13.5,0.6,21); addWall(x,13.5,0.6,21);
+  addWall(x,-19,0.6,10); addWall(x,-6.5,0.6,7); addWall(x,6.5,0.6,7); addWall(x,19,0.6,10);
 }
 // exit door visual (south centre)
 const exitDoor=new THREE.Mesh(new THREE.BoxGeometry(4,3.2,0.4), new THREE.MeshStandardMaterial({color:0x7a1010,roughness:.8,emissive:0x330000}));
@@ -591,8 +591,8 @@ const medkitMesh=new THREE.Group();
 }
 /* ============ V7 GORE + GRAPHICS: corpses, blood, intestines, limbs, flies, maggots, dust ============ */
 const corpseDefs=[
-  {x:2,z:0,yaw:Math.PI/2}, {x:-18,z:-12,yaw:0.5}, {x:24,z:-10,yaw:2.2},
-  {x:-24,z:16,yaw:1.0}, {x:26,z:16,yaw:2.8}, {x:0,z:-12,yaw:0},
+  {x:-20,z:-20,yaw:Math.PI/2}, {x:-18,z:-12,yaw:0.5}, {x:24,z:-10,yaw:2.2},
+  {x:-24,z:12,yaw:1.0}, {x:26,z:16,yaw:2.8}, {x:0,z:-20,yaw:0},
 ];
 const flies=[], maggots=[];
 let bloodTex=null;
@@ -776,6 +776,8 @@ function makeGapFrame(cx,cz,alongX){
 }
 for(const gx of [-16,0,16]){ makeGapFrame(gx,-3,true); makeGapFrame(gx,3,true); }
 makeGapFrame(-4,0,false); makeGapFrame(4,0,false);
+function makeVGapFrame(x,z){ const mat=new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.85}); for(const s of [-2,2]){ const pil=new THREE.Mesh(new THREE.BoxGeometry(0.35,3.4,0.35),mat); pil.position.set(x,1.7,z+s); scene.add(pil); } const beam=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.3,4.4),mat); beam.position.set(x,3.3,z); scene.add(beam); }
+makeVGapFrame(-4,-12); makeVGapFrame(4,-12); makeVGapFrame(-4,12); makeVGapFrame(4,12);
 // V18 gold path dots pool (BFS route to objective, visible through walls)
 const pathDots=[];
 for(let i=0;i<30;i++){
@@ -942,17 +944,17 @@ async function loadGhost(){
   if(g){ shadowGhost=g.outer; shadowGhostMixer=g.mixer; }
 }
 let wanderingGhosts=[], wanderingScare=false;
-async function loadWanderingGhosts(){
+async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်နေသည်…');
   const defs=[
     {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:11, floatY:0.1, chaseTime:5, sound:'moan'},
     {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:12, floatY:0.3, chaseTime:6, sound:'growl'},
-    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[28,12], wps:[[28,12],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
-    {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10, floatY:0.3, chaseTime:4.5, sound:'scream'},
-    {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-24,16], wps:[[-24,16],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8, floatY:0.1, chaseTime:3.5, sound:'giggle'},
-    {name:'Nurse Ghost', scale:0.75, color:0xdddddd, opacity:0.9, eye:0x000000, pos:[24,-12], wps:[[24,-12],[16,-6],[0,0],[20,0]], speed:2.8, radius:11, floatY:0.25, chaseTime:5, sound:'whisper', cap:true},
+    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-22,-12], wps:[[-22,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10, floatY:0.3, chaseTime:4.5, sound:'scream'},
+    {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-26,20], wps:[[-26,20],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8, floatY:0.1, chaseTime:3.5, sound:'giggle'},
+    {name:'Nurse Ghost', scale:0.75, color:0xdddddd, opacity:0.9, eye:0x000000, pos:[20,-20], wps:[[20,-20],[16,-6],[0,0],[20,0]], speed:2.8, radius:11, floatY:0.25, chaseTime:5, sound:'whisper', cap:true},
     {name:'Shadow Ghost', scale:1.10, color:0x111111, opacity:0.95, eye:0xff0000, pos:[24,12], wps:[[24,12],[16,12],[0,0],[20,12]], speed:2.0, radius:12, floatY:0.4, chaseTime:6, sound:'growl'},
     {name:'Crawl Ghost', scale:0.50, color:0x8a7a68, opacity:0.9, eye:0xffff00, pos:[0,12], wps:[[0,12],[10,12],[-10,12],[0,0]], speed:4.0, radius:9, floatY:0.05, chaseTime:3, sound:'growl', crawl:true},
-    {name:'Old Ghost', scale:0.85, color:0x999999, opacity:0.85, eye:0x000000, pos:[-28,20], wps:[[-28,20],[-20,12],[0,0],[-16,0]], speed:2.2, radius:11, floatY:0.1, chaseTime:5, sound:'moan', cane:true},
+    {name:'Old Ghost', scale:0.85, color:0x999999, opacity:0.85, eye:0x000000, pos:[-20,12], wps:[[-20,12],[-16,12],[0,0],[-16,0]], speed:2.2, radius:11, floatY:0.1, chaseTime:5, sound:'moan', cane:true},
   ];
   for(const def of defs){
     const build=(gltf,useReal)=>{
@@ -983,7 +985,7 @@ async function loadWanderingGhosts(){
     if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
     if(g) wanderingGhosts.push(g);
   }
-  if(typeof setActiveGhosts==='function') setActiveGhosts();
+  if(typeof setActiveGhosts==='function') setActiveGhosts(); toast('👻 သရဲတွေ အဆင်သင့် — '+wanderingGhosts.length+' ကောင်');
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
@@ -1003,7 +1005,7 @@ function setCharSize(factor){
   if(monsterInner)monsterInner.scale.setScalar((monsterInner.userData.baseScale||MONSTER_BASE)*charScaleFactor);
   toast('👤 Character အရွယ်: '+charScaleFactor.toFixed(1)+'x');
 }
-let playerPos=new THREE.Vector3(-18,0,12), monsterPos=new THREE.Vector3(20,0,20);
+let playerPos=new THREE.Vector3(-18,0,12), monsterPos=new THREE.Vector3(20,0,16);
 let playerAngle=Math.PI, monsterAngle=0, monsterState='patrol', patrolIdx=0, lastSeen=null;
 const patrolPts=[[20,20],[20,8],[0,0],[-20,-15],[20,-15],[-20,10],[0,0],[36,0],[55,0],[65,0]]; // V12 patrols old + east wing
 // V9 monster pathfinding: corridor + door-gap nodes, BFS. Old straight-line chase got stuck on walls.
@@ -1130,7 +1132,7 @@ function resetGame(){
   for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
   for(const wg of wanderingGhosts){ if(wg.def.origWps){ wg.def.wps=wg.def.origWps; } else { wg.def.origWps=wg.def.wps.slice(); } wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; wg.def.speedBoost=0; wg.def.radiusBoost=0; const wp0=wg.def.wps[0]; if(wp0) wg.outer.position.set(wp0[0],0,wp0[1]); wg.outer.visible=true; }
   setObjective('Ep1 • သော့ 3 ချောင်း ရှာပါ');
-  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
+  playerPos.set(-18,0,12); monsterPos.set(20,0,16); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
   startFloorMission();
@@ -1181,7 +1183,7 @@ function goToNextFloor(){
 function doFloorChange(){
   if(S.floor<=1) return;
   S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0; S._landing=false;
-  playerPos.set(-19,0,20); playerPos.y=0; S.yaw=Math.PI; monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
+  playerPos.set(-19,0,20); playerPos.y=0; S.yaw=Math.PI; monsterPos.set(20,0,16); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
   S.doorOpen=false; S.doorAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof openEntranceDoor==='function') openEntranceDoor();
   // medkit respawns each floor (survival across 15 floors needs it)
   medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
@@ -1219,7 +1221,7 @@ function loseHeart(){
   const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
   toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
   if(S.escaping){ cancelEscape(); toast('💔 ဖမ်းခံရလို့ တံခါး ပြန်ပိတ်သွားပြီ! တောင်တံခါးကို ပြန်သွားပြီး ပြန်ဖွင့်ပါ'); }
-  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
+  playerPos.set(-18,0,12); monsterPos.set(20,0,16); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
   if(S.hearts<=0) endGame(false); updateHUD();
 }
 $('startBtn').addEventListener('click',startGame);
@@ -1427,7 +1429,7 @@ function update(dt){
     monsterAngle=Math.atan2(playerPos.x-monsterPos.x, playerPos.z-monsterPos.z);
     if(shadowGhost && shadowGhost.visible){ shadowGhost.rotation.y=Math.atan2(playerPos.x-shadowGhost.position.x, playerPos.z-shadowGhost.position.z); shadowGhost.position.y=0.4+Math.sin(t*3)*0.1; }
     S.scareTimer-=dt;
-    if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; S.shadowScare=false; if(shadowGhost) shadowGhost.visible=false; monsterPos.set(20,0,20); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
+    if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; S.shadowScare=false; if(shadowGhost) shadowGhost.visible=false; monsterPos.set(20,0,16); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
   }
   // V9 HIDE LOSE-TRACK: if hidden while chased, monster loses you after 3s (1.5s at locker), even if close.
   // Old code only lost you if mDist>3, so a monster standing on your hide spot never left -> hide felt broken.
