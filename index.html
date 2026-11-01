@@ -63,6 +63,7 @@ canvas{display:block}
 .abtn:disabled{opacity:.35}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:30;font-size:17px;padding:20px;text-align:center}
+#floorBanner{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font-size:42px;font-weight:900;color:#ffd166;text-shadow:0 0 20px #ff0000,2px 2px 0 #000;z-index:45;display:none;text-align:center}#floorBanner.on{display:block}
 #stairScreen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#fff;z-index:40;text-align:center;padding:24px}
 #stairScreen.on{display:flex}
 #stairBar{width:260px;height:20px;background:#222;border:2px solid #ff2222;border-radius:12px;overflow:hidden;margin-top:16px}#stairFill{height:100%;width:0%;background:#c81e1e}
@@ -99,7 +100,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V12.1 • 15 ထပ် + လှေကားကနေ ဆင်း + Ep1-10+</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V13 • လှေကား အစစ် + အထပ်တိုင်း မြေပုံ/မစ်ရှင်/သရဲ မတူ</p>
 </div>
 
 <!-- Pause -->
@@ -133,6 +134,7 @@ canvas{display:block}
   <p style="font-size:13px;color:#888">အောက်ထပ်မှာ သရဲတွေ ပိုများပြီး ပိုမြန်သည်…</p>
 </div>
 
+<div id="floorBanner"></div>
 <!-- HUD -->
 <div id="hud">
   <div id="topbar">
@@ -170,7 +172,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 /* ============ STATE ============ */
-const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:12, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
+const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:12, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0};
 const KEYS_NEEDED = 3; // V12 floor15: 3 keys (tasks increase later, not start hard)
 // V12 FLOORS: 15 (top, Ep1) down to 1 (ground, Ep15 Final). Each floor: collect mission items, dodge ghosts, open south door -> descend. Harder step by step.
 const FLOOR_MISSIONS={
@@ -184,10 +186,10 @@ const FLOOR_MISSIONS={
   8:{ep:8,type:'timed',label:'အချိန်မီ ပစ္စည်း',need:6,timer:90},
   7:{ep:9,type:'hide',label:'ပုန်း',need:30},
   6:{ep:10,type:'corpse',label:'လူသေကောင်',need:3},
-  5:{ep:11,type:'order',label:'ဆေး',need:7},
-  4:{ep:12,type:'survive',label:'ရှင်သန်',need:90,timer:90},
-  3:{ep:13,type:'lockers',label:'Locker',need:5,dwell:3},
-  2:{ep:14,type:'timed',label:'အချိန်မီ ပစ္စည်း',need:8,timer:75},
+  5:{ep:11,type:'rooms',label:'အခန်း',need:4},
+  4:{ep:12,type:'distance',label:'လမ်းလျှောက်',need:180},
+  3:{ep:13,type:'darklockers',label:'မှောင် Locker',need:5,dwell:3},
+  2:{ep:14,type:'timedorder',label:'အချိန်မီ အစဉ်',need:8,timer:75},
   1:{ep:15,type:'final',label:'ထွက်ပေါက်',need:8,switch:true},
 }; // V12 each floor DIFFERENT task: keys / order / switches / survive / lockers / lure / dark / timed / hide / corpse, then harder repeats + final // V12 tasks INCREASE down: 3 -> 8, plus Switch task from floor 8 down, plus Final Escape at floor 1
 function floorMission(){ return FLOOR_MISSIONS[S.floor]||FLOOR_MISSIONS[15]; }
@@ -197,7 +199,9 @@ function missionComplete(){
   if(fm.type==='keys') return S.keys>=fm.need;
   if(fm.type==='order'||fm.type==='dark'||fm.type==='timed') return S.items>=fm.need;
   if(fm.type==='switches') return S.switchIdx>=fm.need;
-  if(fm.type==='survive'||fm.type==='lockers'||fm.type==='lure'||fm.type==='hide') return S.missionDone;
+  if(fm.type==='survive'||fm.type==='lockers'||fm.type==='lure'||fm.type==='hide'||fm.type==='distance'||fm.type==='darklockers') return S.missionDone;
+  if(fm.type==='rooms') return S.visited.length>=fm.need;
+  if(fm.type==='timedorder') return S.items>=fm.need;
   if(fm.type==='corpse') return S.corpseIdx>=fm.need;
   if(fm.type==='final') return S.items>=fm.need && S.switchOn;
   return false;
@@ -208,7 +212,9 @@ function missionProgressText(){
   if(fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='final') return S.items+'/'+fm.need;
   if(fm.type==='switches') return S.switchIdx+'/'+fm.need;
   if(fm.type==='survive'||fm.type==='timed') return Math.max(0,Math.ceil(S.missionTimer))+'s';
-  if(fm.type==='lockers') return S.visited.length+'/'+fm.need;
+  if(fm.type==='lockers'||fm.type==='darklockers'||fm.type==='rooms') return S.visited.length+'/'+fm.need;
+  if(fm.type==='distance') return Math.floor(S.distance)+'/'+fm.need+'m';
+  if(fm.type==='timedorder') return S.items+'/'+fm.need;
   if(fm.type==='lure') return S.missionDone?'ပြီးပြီ':'မပြီးသေးဘူး';
   if(fm.type==='hide') return Math.floor(S.hideTotal)+'/'+fm.need+'s';
   if(fm.type==='corpse') return S.corpseIdx+'/'+fm.need;
@@ -216,14 +222,17 @@ function missionProgressText(){
 }
 function startFloorMission(){
   const fm=floorMission();
-  S.missionDone=false; S.missionTimer=fm.timer||0; S.hideTotal=0; S.switchIdx=0; S.corpseIdx=0; S.dwell=0; S.visited=[]; S.switchOn=false;
+  S.missionDone=false; S.missionTimer=fm.timer||0; S.hideTotal=0; S.switchIdx=0; S.corpseIdx=0; S.dwell=0; S.visited=[]; S.switchOn=false; S.distance=0;
   // dark floor: narrow flash + extra fog, other floors restore
-  if(typeof flash!=='undefined' && flash){ flash.angle=fm.type==='dark'?0.30:0.45; }
-  if(scene.fog) scene.fog.density=0.09+(15-S.floor)*0.003+(fm.type==='dark'?0.04:0);
+  if(typeof flash!=='undefined' && flash){ flash.angle=(fm.type==='dark'||fm.type==='darklockers')?0.30:0.45; }
+  if(scene.fog) scene.fog.density=0.09+(15-S.floor)*0.003+((fm.type==='dark'||fm.type==='darklockers')?0.04:0);
+  if(typeof applyFloorLayout==='function') applyFloorLayout();
+  if(typeof updatePlaques==='function') updatePlaques();
+  if(typeof setActiveGhosts==='function') setActiveGhosts();
   // items/keys activation by type
   if(fm.type==='keys'){
     for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
-  } else if(fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='final'){
+  } else if(fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='final'||fm.type==='timedorder'){
     setupFloorItems();
   } else {
     for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
@@ -240,6 +249,10 @@ function startFloorMission(){
   else if(fm.type==='timed') obj='Ep'+fm.ep+' • '+fm.timer+' စက္ကန့်အတွင်း ပစ္စည်း '+fm.need+' ခု ယူပါ!';
   else if(fm.type==='hide') obj='Ep'+fm.ep+' • သရဲ အနား 15m အတွင်း စုစုပေါင်း '+fm.need+' စက္ကန့် ပုန်းပါ';
   else if(fm.type==='corpse') obj='Ep'+fm.ep+' • လူသေကောင် '+fm.need+' ကောင် အစဉ်လိုက် ထိပါ';
+  else if(fm.type==='rooms') obj='Ep'+fm.ep+' • အခန်း ၄ ခု လုံး သွားပါ (NW/NE/SW/SE)';
+  else if(fm.type==='distance') obj='Ep'+fm.ep+' • စုစုပေါင်း '+fm.need+'m လမ်းလျှောက်ပါ';
+  else if(fm.type==='darklockers') obj='Ep'+fm.ep+' • မှောင်ထဲမှာ Locker '+fm.need+' ခု မှာ ၃ စက္ကန့်စီ ရပ်ပါ';
+  else if(fm.type==='timedorder') obj='Ep'+fm.ep+' • '+fm.timer+' စက္ကန့်အတွင်း အစဉ်လိုက် ပစ္စည်း '+fm.need+' ခု ယူပါ!';
   else if(fm.type==='final') obj='Ep15 FINAL • ပစ္စည်း '+fm.need+' ခု အစဉ်လိုက် + Switch + Final Escape';
   setObjective(obj);
 }
@@ -255,19 +268,78 @@ function setupFloorItems(){
   });
   S.items=0;
 }
+// V13: rooms differ per floor (labels + furniture + light + tint), ghosts differ per floor
+const ROOM_ZONES=[{x:-20,z:-12},{x:20,z:-12},{x:-20,z:12},{x:20,z:12}];
+const ROOM_SETS=[
+ ['လူနာဆောင်','ခွဲစိတ်ခန်း','ဧည့်ခန်း','ဆေးဆိုင်'],
+ ['ICU','အော်ပရေး ခန်း','လော်ဘီ','ဓာတ်ခွဲခန်း'],
+ ['အရေးပေါ်','X-Ray','စောင့်ခန်း','ပစ္စည်းသိုလှောင်'],
+ ['ကလေးဆောင်','မီးဖွားဆောင်','ရုံးခန်း','ဆေးဆိုင်'],
+ ['သီးသန့်ဆောင်','ကျောက်ကပ်ဆောင်','စားသောက်ခန်း','သေဆုံးခန်း'],
+];
+const FLOOR_LIGHTS=[0xffd9a0,0xa0ffd9,0xffa0a0,0xa0c8ff,0xffe080];
+function makePlaque(){
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=128;
+  const ctx=cv.getContext('2d'); const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3.4,0.85), new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+  mesh.userData.set=(txt)=>{ ctx.fillStyle='#1a0505'; ctx.fillRect(0,0,512,128); ctx.strokeStyle='#ff2222'; ctx.lineWidth=8; ctx.strokeRect(4,4,504,120); ctx.fillStyle='#ffd166'; ctx.font='bold 44px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(txt,256,64); tex.needsUpdate=true; };
+  return mesh;
+}
+let entrancePlaque=null, exitPlaque=null, roomPlaques=[];
+function updatePlaques(){
+  if(entrancePlaque) entrancePlaque.userData.set('အထပ် '+S.floor+' • ဝင်ပေါက်');
+  if(exitPlaque) exitPlaque.userData.set('အထပ် '+S.floor+' • ထွက်ပေါက် ↓');
+  const set=ROOM_SETS[S.floor%5];
+  roomPlaques.forEach((pl,i)=>{ if(pl) pl.userData.set('အထပ် '+S.floor+' • '+set[i]); });
+}
+function applyFloorLayout(){
+  const fd=15-S.floor;
+  const dx=((fd%3)-1)*3, dz=((fd%3)-1)*1.5;
+  let pi=0;
+  const partSlots=[[-20,-18],[20,-18],[-20,18],[20,18]];
+  const partSlots2=[[-14,-12],[14,-12],[-14,12],[14,12]];
+  const partSlots3=[[-24,-8],[24,-8],[-24,8],[24,8]];
+  const allSlots=[partSlots,partSlots2,partSlots3];
+  for(const pr of props){
+    if(!pr.mesh) continue;
+    if(pr.label==='partition'){
+      const slot=allSlots[pi%3][fd%4]; pi++;
+      pr.x=slot[0]; pr.z=slot[1]; pr.mesh.position.x=slot[0]; pr.mesh.position.z=slot[1];
+    } else if(['bed','surgery','cabinet','desk','shelf','slab','bed2','cabinet2','desk2','shelf2'].includes(pr.label)){
+      pr.x=pr.ox+dx; pr.z=pr.oz+dz; pr.mesh.position.x=pr.x; pr.mesh.position.z=pr.z;
+    }
+  }
+  const lc=FLOOR_LIGHTS[fd%5];
+  for(let i=0;i<5 && i<lights.length;i++){ try{ lights[i].color.set(lc); }catch(e){} }
+}
+function setActiveGhosts(){
+  if(!wanderingGhosts.length) return;
+  const fd=15-S.floor; const n=wanderingGhosts.length;
+  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+4)%n].def.name];
+  for(const wg of wanderingGhosts){
+    if(active.includes(wg.def.name)){ wg.state='patrol'; wg.cooldown=0; wg.outer.visible=true; const wp=wg.def.wps[0]; if(wp) wg.outer.position.set(wp[0],0,wp[1]); }
+    else { wg.state='patrol'; wg.cooldown=9999; wg.outer.visible=false; }
+  }
+}
+function showFloorBanner(txt){ const fb=$('floorBanner'); if(!fb) return; fb.textContent=txt; fb.classList.add('on'); setTimeout(()=>fb.classList.remove('on'),3000); }
+function stairY(z){ if(z<25) return 0; if(z>=37.6) return -3.08; const idx=Math.min(11,Math.floor((z-25)/1.05)); return -idx*0.28; }
+let exitBlock=null, entranceBlock=null;
+function closeExitDoor(){ S.doorOpen=false; if(exitBlock && !walls.includes(exitBlock)) walls.push(exitBlock); }
+function closeEntranceDoor(){ S.entranceOpen=false; if(entranceBlock && !walls.includes(entranceBlock)) walls.push(entranceBlock); }
+function openEntranceDoor(){ S.entranceOpen=true; S.entranceTimer=2.5; if(entranceBlock){ const i=walls.indexOf(entranceBlock); if(i>=0) walls.splice(i,1); } doorSound(); }
 const $ = id => document.getElementById(id);
 let toastTimer=null;
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
 function setObjective(t){ $('objective').textContent='🎯 '+t; }
 function updateHUD(){
   $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts));
-  $('keys').textContent=S.floor===15?('🔑 '+S.keys+' / 3'):('📦 '+S.items+' / '+floorMission().need);
+  { const fmH=floorMission(); if(fmH.type==='keys') $('keys').textContent='🔑 '+S.keys+' / 3'; else if(['order','dark','timed','final','timedorder'].includes(fmH.type)) $('keys').textContent='📦 '+S.items+' / '+fmH.need; else $('keys').textContent='🎯 '+missionProgressText(); }
   const fi=$('floorInfo'); if(fi) fi.textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
   $('hideTag').style.display=S.hidden?'block':'none';
   $('actBtn').disabled=!S.interactTarget;
-  $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ'):'✋ ယူ';
+  $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
 
 /* ============ AUDIO (synth, no files) ============ */
@@ -368,7 +440,7 @@ const ceil=new THREE.Mesh(new THREE.PlaneGeometry(64,48), new THREE.MeshStandard
 ceil.rotation.x=Math.PI/2; ceil.position.set(0,3.4,0); scene.add(ceil); ceil.visible=false; // V5: no big ceiling plane in view
 // outer walls (south has exit gap -2..2 for the exit door)
 addWall(0,-24,64.6,0.6);
-addWall(-17,24,30,0.6); addWall(17,24,30,0.6); addWall(-32,0,0.6,48.6); addWall(32,-13.5,0.6,21); addWall(32,13.5,0.6,21); // V12 east wall gap z-3..3 to east wing corridor
+addWall(-27,24,10,0.6); addWall(-9,24,14,0.6); addWall(17,24,30,0.6); addWall(-32,0,0.6,48.6); addWall(32,-13.5,0.6,21); addWall(32,13.5,0.6,21); // V12 east wall gap z-3..3 to east wing corridor
 // horizontal corridor walls z=-3 and z=3, doors at -20..-12, 12..20, centre gap -4..4
 for(const z of [-3,3]){
   for(const [a,b] of [[-32,-20],[-12,-4],[4,12],[20,32]]) addWall((a+b)/2,z,b-a,0.6);
@@ -382,6 +454,24 @@ const exitDoor=new THREE.Mesh(new THREE.BoxGeometry(4,3.2,0.4), new THREE.MeshSt
 exitDoor.position.set(0,1.6,24); scene.add(exitDoor);
 const exitGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1), new THREE.MeshBasicMaterial({color:0xff2222}));
 exitGlow.position.set(0,2.6,23.7); exitGlow.rotation.y=Math.PI; scene.add(exitGlow);
+// V13 entrance door (south, x=-19 gap) + plaques + walkable stairwell
+const entranceDoor=new THREE.Mesh(new THREE.BoxGeometry(6,3.2,0.4), new THREE.MeshStandardMaterial({color:0x1a5a2a,roughness:.8,emissive:0x003300}));
+entranceDoor.position.set(-19,1.6,24); scene.add(entranceDoor);
+const entranceGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1), new THREE.MeshBasicMaterial({color:0x22ff88}));
+entranceGlow.position.set(-19,2.6,23.7); entranceGlow.rotation.y=Math.PI; scene.add(entranceGlow);
+exitBlock={x:0,z:24,w:4,d:0.6}; walls.push(exitBlock);
+entranceBlock={x:-19,z:24,w:6,d:0.6}; walls.push(entranceBlock);
+entrancePlaque=makePlaque(); entrancePlaque.position.set(-19,3.9,23.7); scene.add(entrancePlaque);
+exitPlaque=makePlaque(); exitPlaque.position.set(0,3.9,23.7); scene.add(exitPlaque);
+for(const [rx,rz] of [[-20,-12],[20,-12],[-20,12],[20,12]]){ const rp=makePlaque(); rp.position.set(rx,3.6,rz); scene.add(rp); roomPlaques.push(rp); }
+updatePlaques();
+// stairwell: side walls (collision + tall visuals), top landing, 12 steps down, landing floor + landing door
+walls.push({x:-2.3,z:31.5,w:0.6,d:15}); walls.push({x:2.3,z:31.5,w:0.6,d:15}); walls.push({x:0,z:39.3,w:5.2,d:0.6});
+for(const sx of [-2.3,2.3]){ const sw=new THREE.Mesh(new THREE.BoxGeometry(0.6,6.5,15), new THREE.MeshStandardMaterial({map:wallTex,roughness:.95})); sw.position.set(sx,-0.6,31.5); scene.add(sw); }
+const stairTop=new THREE.Mesh(new THREE.PlaneGeometry(4,1), new THREE.MeshStandardMaterial({map:floorTex,roughness:.9})); stairTop.rotation.x=-Math.PI/2; stairTop.position.set(0,0,24.5); scene.add(stairTop);
+for(let i=0;i<12;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(4,0.28,1.05), new THREE.MeshStandardMaterial({color:0x444444,roughness:.9})); st.position.set(0,-i*0.28-0.14,25.5+i*1.05); scene.add(st); }
+const landFloor=new THREE.Mesh(new THREE.PlaneGeometry(5,2.5), new THREE.MeshStandardMaterial({map:floorTex,roughness:.9})); landFloor.rotation.x=-Math.PI/2; landFloor.position.set(0,-3.08,38.3); scene.add(landFloor);
+const landDoor=new THREE.Mesh(new THREE.BoxGeometry(4,3.2,0.4), new THREE.MeshStandardMaterial({color:0x7a1010,roughness:.8,emissive:0x330000})); landDoor.position.set(0,-1.48,39); scene.add(landDoor);
 // V12 STAGE 2 NEW ROOM: east wing x40..70, z-15..15, reached only via south door portal (old east wall blocks walking there).
 // Floor + walls + props are built at load; player cannot walk there in Stage 1 (old wall x=32 blocks, fog hides it).
 const floor2=new THREE.Mesh(new THREE.PlaneGeometry(30,30), new THREE.MeshStandardMaterial({map:floorTex,roughness:.9}));
@@ -399,7 +489,7 @@ exitGlow2.position.set(69.7,2.6,0); exitGlow2.rotation.y=-Math.PI/2; scene.add(e
 const props=[];
 function addProp(cx,cz,w,d,h,color,label){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color,roughness:.9}));
-  m.position.set(cx,h/2,cz); scene.add(m); props.push({x:cx,z:cz,w,d,label}); return m;
+  m.position.set(cx,h/2,cz); scene.add(m); props.push({x:cx,z:cz,w,d,label,mesh:m,ox:cx,oz:cz}); return m;
 }
 // Ward beds NW, Surgery table NE, Reception desk SW, Pharmacy shelves + Morgue slabs SE
 addProp(-26,-18,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-20,-20,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-14,-16,2.2,1.1,0.7,0x7a7e7a,'bed');
@@ -410,6 +500,7 @@ addProp(20,20,2.2,1.1,0.7,0x6a6a6a,'slab'); addProp(26,20,2.2,1.1,0.7,0x6a6a6a,'
 // Stage 2 room props: beds, cabinet, desk, shelf
 addProp(46,-12,2.2,1.1,0.7,0x8a8f8a,'bed2'); addProp(48,12,2.2,1.1,0.7,0x8a8f8a,'bed2');
 addProp(62,-12,1.2,2.5,1.8,0x4a4a4a,'cabinet2'); addProp(55,12,3,1.2,1.0,0x5a4632,'desk2'); addProp(62,5,1,4,2.0,0x3a4a3a,'shelf2');
+addProp(-20,-18,5,0.6,2.2,0x3a3a3a,'partition'); addProp(-14,-12,0.6,5,2.2,0x3a3a3a,'partition'); addProp(20,18,5,0.6,2.2,0x3a3a3a,'partition');
 
 // lockers = hiding spots
 const hideSpots=[{x:-28,z:-12},{x:28,z:-12},{x:-28,z:12},{x:28,z:12},{x:-14,z:-20}];
@@ -634,7 +725,7 @@ let nextTwitch=25, twitchUntil=0;
 function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if(km.taken)continue; const d=Math.hypot(km.def.x-px,km.def.z-pz); if(d<bd){bd=d;best=km;} } return {km:best,d:bd}; }
 
 /* ============ COLLISION HELPERS ============ */
-function collide(x,z,r){
+function collide(x,z,r,allowStair){
   for(const w of walls.concat(props)){
     const nx=Math.max(w.x-w.w/2,Math.min(x,w.x+w.w/2));
     const nz=Math.max(w.z-w.d/2,Math.min(z,w.z+w.d/2));
@@ -644,7 +735,7 @@ function collide(x,z,r){
       const dist=Math.sqrt(dd); x=nx+dx/dist*r; z=nz+dz/dist*r;
     }
   }
-  x=Math.max(-31,x); x=Math.min(69,x); z=Math.max(-23,z); z=Math.min(23,z); // V12 overall: old map + corridor + east wing (was 31, blocked east wing)
+  if(allowStair && x>=-2.3 && x<=2.3 && z>24){ x=Math.max(-2,x); x=Math.min(2,x); z=Math.max(-23,z); z=Math.min(38.5,z); } else { x=Math.max(-31,x); x=Math.min(69,x); z=Math.max(-23,z); z=Math.min(23,z); }
   return [x,z];
 }
 function lineBlocked(x1,z1,x2,z2){
@@ -738,8 +829,12 @@ async function loadGhost(){
 let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){
   const defs=[
-    {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10},
-    {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-24,16], wps:[[-24,16],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8},
+    {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10, floatY:0.3, chaseTime:4.5, sound:'scream'},
+    {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-24,16], wps:[[-24,16],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8, floatY:0.1, chaseTime:3.5, sound:'giggle'},
+    {name:'Nurse Ghost', scale:0.75, color:0xdddddd, opacity:0.9, eye:0x000000, pos:[24,-12], wps:[[24,-12],[16,-6],[0,0],[20,0]], speed:2.8, radius:11, floatY:0.25, chaseTime:5, sound:'whisper', cap:true},
+    {name:'Shadow Ghost', scale:1.10, color:0x111111, opacity:0.95, eye:0xff0000, pos:[24,12], wps:[[24,12],[16,12],[0,0],[20,12]], speed:2.0, radius:12, floatY:0.4, chaseTime:6, sound:'growl'},
+    {name:'Crawl Ghost', scale:0.50, color:0x8a7a68, opacity:0.9, eye:0xffff00, pos:[0,12], wps:[[0,12],[10,12],[-10,12],[0,0]], speed:4.0, radius:9, floatY:0.05, chaseTime:3, sound:'growl', crawl:true},
+    {name:'Old Ghost', scale:0.85, color:0x999999, opacity:0.85, eye:0x000000, pos:[-28,20], wps:[[-28,20],[-20,12],[0,0],[-16,0]], speed:2.2, radius:11, floatY:0.1, chaseTime:5, sound:'moan', cane:true},
   ];
   for(const def of defs){
     const build=(gltf)=>{
@@ -751,6 +846,9 @@ async function loadWanderingGhosts(){
       for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),eyeMat); e.position.set(sx,eyeY2,0.18); outer.add(e); if(def.eye===0x000000){ const pup=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,eyeY2,0.27); outer.add(pup); } }
       const mouthW=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.12,0.05),eyeMat); mouthW.position.set(0,eyeY2*0.89,0.22); outer.add(mouthW);
       if(def.name==='Ghost Girl'){ for(const hx of [-0.26,0.26]){ const hair=new THREE.Mesh(new THREE.BoxGeometry(0.13,1.0,0.09),new THREE.MeshBasicMaterial({color:0x000000})); hair.position.set(hx,eyeY2-0.3,0.15); outer.add(hair); } const sheetW=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.2,16,1,true), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,side:THREE.DoubleSide})); sheetW.position.set(0,0.6,0); outer.add(sheetW); }
+      if(def.cap){ const cap=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.12,0.4),new THREE.MeshBasicMaterial({color:0xffffff})); cap.position.set(0,eyeY2+0.35,0); outer.add(cap); const cross=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.05),new THREE.MeshBasicMaterial({color:0xff0000})); cross.position.set(0,eyeY2+0.35,0.22); outer.add(cross); }
+      if(def.cane){ const cane=new THREE.Mesh(new THREE.BoxGeometry(0.07,1.4,0.07),new THREE.MeshBasicMaterial({color:0x5a4632})); cane.position.set(0.4,0.7,0.3); outer.add(cane); }
+      if(def.crawl){ outer.rotation.x=0.7; }
       let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
       outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
       return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
@@ -759,6 +857,7 @@ async function loadWanderingGhosts(){
     if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
     if(g) wanderingGhosts.push(g);
   }
+  if(typeof setActiveGhosts==='function') setActiveGhosts();
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
@@ -853,7 +952,7 @@ function doInteract(){
     else { setObjective('သော့စုံပြီ! တောင်တံခါး သွား, အောက်ထပ် ဆင်း'); toast('🎉 သော့စုံပြီ! တောင်ဘက် တံခါးကို သွားပါ'); }
   } else if(t.type==='item'){
     const fmO=floorMission();
-    if((fmO.type==='order'||fmO.type==='final')){
+    if((fmO.type==='order'||fmO.type==='final'||fmO.type==='timedorder')){
       const nextIm=itemMeshes.find(im=>!im.taken);
       if(nextIm && t.im!==nextIm){ toast('❌ အစဉ်လိုက် ယူပါ: '+nextIm.def.label+' အရင်'); return; }
     }
@@ -890,7 +989,8 @@ function doInteract(){
       const fmE=floorMission();
       toast('🔒 တံခါးပိတ်နေသည် — လုပ်စရာ ကျန်သေးသည်: '+missionProgressText()+' (လိုအပ်: '+fmE.need+')');
     } else if(S.floor===1){ S.escapeDoorX=0; S.escapeDoorZ=24; startEscape(); }
-    else { goToNextFloor(); }
+    else if(S.doorOpen){ toast('🚪 တံခါး ပွင့်နေပြီ! လှေကားကနေ တစ်ထစ်ချင်း ဆင်းပါ'); }
+    else { S.doorOpen=true; if(exitBlock){ const i=walls.indexOf(exitBlock); if(i>=0) walls.splice(i,1); } doorSound(); toast('🚪 တံခါး ပွင့်ပြီ! လှေကားကနေ တစ်ထစ်ချင်း ဆင်းပါ'); }
   }
 }
 
@@ -903,7 +1003,7 @@ function resetGame(){
   for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
   for(const wg of wanderingGhosts){ if(wg.def.origWps){ wg.def.wps=wg.def.origWps; } else { wg.def.origWps=wg.def.wps.slice(); } wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; wg.def.speedBoost=0; wg.def.radiusBoost=0; const wp0=wg.def.wps[0]; if(wp0) wg.outer.position.set(wp0[0],0,wp0[1]); wg.outer.visible=true; }
   setObjective('Ep1 • သော့ 3 ချောင်း ရှာပါ');
-  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30;
+  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
   startFloorMission();
@@ -947,20 +1047,15 @@ function goToStage2(){
 // V12 FLOOR DESCENT: one floor down, harder step by step. Resets player/monster/ghosts, new mission items, medkit respawns, fog/speed ramp.
 function goToNextFloor(){
   if(S.floor<=1) return;
-  if(S._stairing) return; S._stairing=true;
-  const fromFloor=S.floor, toFloor=S.floor-1, fromEp=16-fromFloor, toEp=16-toFloor;
-  S.paused=true;
-  const ss=$('stairScreen'); if(ss) ss.classList.add('on');
-  const st=$('stairText'); if(st) st.textContent='လှေကားကနေ ဆင်းနေသည်…';
-  const sub=$('stairSub'); if(sub) sub.textContent='Ep'+fromEp+' • အထပ် '+fromFloor+'  →  Ep'+toEp+' • အထပ် '+toFloor;
-  const sf=$('stairFill'); if(sf) sf.style.width='0%';
-  let step=0; const stepTimer=setInterval(()=>{ footstepSound(); step++; if(sf) sf.style.width=Math.min(100,step*12)+'%'; },350);
-  setTimeout(()=>{ clearInterval(stepTimer); if(ss) ss.classList.remove('on'); S._stairing=false; S.paused=false; doFloorChange(); },3000);
+  if(S._landingFade) return; S._landingFade=true;
+  S.paused=true; const ss=$('stairScreen'); if(ss) ss.classList.add('on'); const st=$('stairText'); if(st) st.textContent='အထပ် '+(S.floor-1)+' သို့ ဝင်နေသည်…'; const sub=$('stairSub'); if(sub) sub.textContent='Ep'+(16-S.floor)+' → Ep'+(17-S.floor);
+  setTimeout(()=>{ if(ss) ss.classList.remove('on'); S._landingFade=false; S.paused=false; doFloorChange(); },900);
 }
 function doFloorChange(){
   if(S.floor<=1) return;
-  S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0;
-  playerPos.set(-18,0,12); S.yaw=Math.PI; monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
+  S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0; S._landing=false;
+  playerPos.set(-19,0,20); playerPos.y=0; S.yaw=Math.PI; monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
+  S.doorOpen=false; S.doorAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof openEntranceDoor==='function') openEntranceDoor();
   // medkit respawns each floor (survival across 15 floors needs it)
   medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
   // keys only on floor15; mission setup handles items/keys per floor type
@@ -973,6 +1068,7 @@ function doFloorChange(){
   if(ambientGain) ambientGain.gain.value=S.sound?(0.04+floorDown*0.005):0; // V12 ambient louder down
   const fm=floorMission();
   toast('⬇️ Ep'+fm.ep+' • အထပ် '+S.floor+' သို့ ဆင်းပြီ! '+fm.label+' '+fm.need+' ခု'+(fm.switch?' + Switch':'')+' လုပ်ပါ');
+  if(typeof showFloorBanner==='function') showFloorBanner('🏢 အထပ် '+S.floor+' • Ep'+fm.ep);
   updateHUD();
 }
 // V12 FINAL ESCAPE: not instant win. Door takes 8s to unlock, all ghosts rage-chase you, progress pauses if you leave the door, resets if caught.
@@ -1059,10 +1155,14 @@ function update(dt){
   let mx=0,mz=0;
   if(moving){ mx=(-iy*sin - ix*cos); mz=(-iy*cos + ix*sin); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
   if(moving){
-    const np=collide(playerPos.x+mx*speed*dt, playerPos.z+mz*speed*dt, 0.45);
+    const np=collide(playerPos.x+mx*speed*dt, playerPos.z+mz*speed*dt, 0.45, true);
     playerPos.x=np[0]; playerPos.z=np[1];
     playerAngle=Math.atan2(mx,mz);
   }
+  S.inStair=(playerPos.z>24 && playerPos.x>=-2.5 && playerPos.x<=2.5);
+  if(S.inStair){ playerPos.y=stairY(playerPos.z); if(moving){ const sidx=Math.floor((playerPos.z-25)/1.05); if(sidx!==S._lastStep){ S._lastStep=sidx; footstepSound(); } } }
+  else playerPos.y=0;
+  if(moving && floorMission().type==='distance' && !S.missionDone){ S.distance+=speed*dt; }
   if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; player.visible=!S.hidden; }
   playerRing.visible=!S.hidden; // V9: ring also hid, otherwise user sees green ring and thinks hide failed
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
@@ -1070,7 +1170,7 @@ function update(dt){
   if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; footstepSound(); } } else stepAcc=0;
   // camera: behind player, pulled in if a wall would block the view (V3 FIX:
   // old camera went through/ outside walls, hiding the player behind a wall)
-  const camDist=4.5, camH=1.9; // V5 close eye-level, not far top-down
+  const camDist=4.5, camH=playerPos.y+1.9;
   const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
   let useX=cx, useZ=cz, found=false;
   for(let tt=1; tt>=0.3; tt-=0.1){
@@ -1080,18 +1180,25 @@ function update(dt){
     if(!blocked){ useX=px; useZ=pz; found=true; break; }
   }
   if(!found){ useX=playerPos.x+(cx-playerPos.x)*0.3; useZ=playerPos.z+(cz-playerPos.z)*0.3; }
-  useX=Math.max(-31,Math.min(69,useX)); useZ=Math.max(-23,Math.min(23,useZ)); // V12 overall bounds: old map + corridor + east wing (wall pull-in still applies)
+  useX=Math.max(-31,Math.min(69,useX)); useZ=Math.max(-23,Math.min(S.inStair?38.5:23,useZ));
   camera.position.set(useX,camH,useZ);
   if(S.chase||S.scare||wanderingScare||S.escaping||S.blackout>0){ const sh=S.scare?0.45:(S.chase||S.escaping?0.25:(S.blackout>0?0.20:0.35)); camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; } // V12 stronger shake
-  camera.lookAt(playerPos.x,1.35,playerPos.z);
+  camera.lookAt(playerPos.x,playerPos.y+1.35,playerPos.z);
   const wantFov=S.chase?75:62; if(camera.fov!==wantFov){ camera.fov=wantFov; camera.updateProjectionMatrix(); }
-  playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?18:8; // V12 ghost glow stronger
-  flash.position.set(playerPos.x,2.2,playerPos.z);
-  flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
+  playerRing.position.set(playerPos.x,playerPos.y+0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?18:8; // V12 ghost glow stronger
+  flash.position.set(playerPos.x,playerPos.y+2.2,playerPos.z);
+  flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,playerPos.y+1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
   const t=performance.now()/1000;
   lights.forEach((L,i)=>{ if(S.blackout>0){ L.intensity=0; } else if(S.scare||S.chase||wanderingScare){ L.intensity=Math.random()<(S.scare?0.4:0.3)?0:14; } else { L.intensity=7+Math.sin(t*13+i*2)*2+(Math.random()<0.08?-6:0); } }); // V12 blackout + flicker
   if(moving && $('hint')) $('hint').style.display='none';
+  // V13 door animation + entrance auto-close + landing trigger
+  if(S.doorOpen) S.doorAnim=Math.min(1,S.doorAnim+dt*2); else S.doorAnim=Math.max(0,S.doorAnim-dt*2);
+  if(typeof exitDoor!=='undefined') exitDoor.position.x=S.doorAnim*4.0;
+  if(S.entranceOpen){ S.entranceAnim=Math.min(1,S.entranceAnim+dt*2); S.entranceTimer-=dt; if(S.entranceTimer<=0) closeEntranceDoor(); }
+  else S.entranceAnim=Math.max(0,S.entranceAnim-dt*2);
+  if(typeof entranceDoor!=='undefined') entranceDoor.position.x=-19+S.entranceAnim*6.0;
+  if(S.doorOpen && S.floor>1 && !S._landing && playerPos.z>=37.5){ S._landing=true; goToNextFloor(); }
   // interact / hide targets
   S.interactTarget=null; S.hideTarget=null;
   for(const km of keyMeshes){
@@ -1100,7 +1207,7 @@ function update(dt){
   // V12 missions interact: items (order/dark/timed/final), switches (order), corpse (order), switchFloor (final)
   if(!S.interactTarget){
     const fmI=floorMission();
-    if(fmI.type==='order'||fmI.type==='dark'||fmI.type==='timed'||fmI.type==='final'){
+    if(fmI.type==='order'||fmI.type==='dark'||fmI.type==='timed'||fmI.type==='final'||fmI.type==='timedorder'){
       for(const im of itemMeshes){ if(!im.taken && Math.hypot(im.def.x-playerPos.x,im.def.z-playerPos.z)<1.8){ S.interactTarget={type:'item',im,label:im.def.label}; break; } }
     }
     if(!S.interactTarget && fmI.type==='switches'){
@@ -1118,7 +1225,7 @@ function update(dt){
     if(!S.interactTarget && S.switchOn && Math.hypot(70-playerPos.x,0-playerPos.z)<2.5) S.interactTarget={type:'exit2',label:S.escaping?'🚪 ဖွင့်နေသည်…':'🚪 Final Escape ဖွင့်'};
   }
   const ed=Math.hypot(0-playerPos.x,24-playerPos.z);
-  if(ed<2.5 && !S.interactTarget) S.interactTarget={type:'exit',label:missionComplete()?(S.floor===1?'🚪 Final Escape ဖွင့်':'🚪 အောက်ထပ် ဆင်း'):'🚪 တံခါး (ပိတ်ထားသည်)'};
+  if(ed<2.5 && !S.interactTarget) S.interactTarget={type:'exit',label:missionComplete()?(S.floor===1?'🚪 Final Escape ဖွင့်':(S.doorOpen?'🚪 လှေကား ဆင်း':'🚪 တံခါး ဖွင့်')):'🚪 တံခါး (ပိတ်ထားသည်)'};
   let hd=1e9,hs=null; for(const h of hideSpots){ const d=Math.hypot(h.x-playerPos.x,h.z-playerPos.z); if(d<hd){hd=d;hs=h;} }
   if(hd<2.0)S.hideTarget=hs;
   // compass: mission-aware (order -> next in order, switches -> next switch, corpse -> next corpse, lockers -> next locker, lure -> Surgery, else south door)
@@ -1127,7 +1234,7 @@ function update(dt){
   const fmC=floorMission();
   if(fmC.type==='keys'){
     if(S.keys<KEYS_NEEDED && nk.km){ tx=nk.km.def.x; tz=nk.km.def.z; tlabel='နောက်သော့'; }
-  } else if(fmC.type==='order'||fmC.type==='dark'||fmC.type==='timed'||fmC.type==='final'){
+  } else if(fmC.type==='order'||fmC.type==='dark'||fmC.type==='timed'||fmC.type==='final'||fmC.type==='timedorder'){
     const ni=itemMeshes.find(im=>!im.taken);
     if(ni){ tx=ni.def.x; tz=ni.def.z; tlabel='နောက်ပစ္စည်း'; }
     else if(fmC.type==='final' && !S.switchOn){ tx=68; tz=5; tlabel='Switch'; }
@@ -1138,7 +1245,12 @@ function update(dt){
   } else if(fmC.type==='corpse'){
     const cd=corpseDefs[S.corpseIdx];
     if(cd){ tx=cd.x; tz=cd.z; tlabel='လူသေကောင်'; } else { tx=0; tz=24; tlabel='အောက်ထပ် တံခါး'; }
-  } else if(fmC.type==='lockers'){
+  } else if(fmC.type==='rooms'){
+    const rz=ROOM_ZONES[S.visited.length];
+    if(rz){ tx=rz.x; tz=rz.z; tlabel='နောက်အခန်း'; } else { tx=0; tz=24; tlabel='အောက်ထပ် တံခါး'; }
+  } else if(fmC.type==='distance'){
+    tx=0; tz=0; tlabel='လမ်းလျှောက်';
+  } else if(fmC.type==='lockers'||fmC.type==='darklockers'){
     const lk=hideSpots[S.visited.length];
     if(lk){ tx=lk.x; tz=lk.z; tlabel='Locker'; } else { tx=0; tz=24; tlabel='အောက်ထပ် တံခါး'; }
   } else if(fmC.type==='lure'){
@@ -1254,16 +1366,17 @@ function update(dt){
       wg.cooldown-=dt; wg.outer.visible=false;
       if(wg.cooldown<=0){ const wp=wg.def.wps[Math.floor(Math.random()*wg.def.wps.length)]; wg.outer.position.set(wp[0],0,wp[1]); wg.outer.visible=true; wg.wpIdx=0; }
     } else {
-      wg.outer.visible=true; wg.outer.position.y=(wg.def.name==='Ghost Girl'?0.3:0.1)+Math.sin(t*2.5)*0.06;
+      wg.outer.visible=true; wg.outer.position.y=(wg.def.floatY||0.1)+Math.sin(t*2.5)*0.06;
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
       else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 0.5); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
       if(!S.hidden && S.invuln<=0 && (S.escaping || (wd<(wg.def.radius+(wg.def.radiusBoost||0)) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
-        wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.name==='Child Ghost'?3.5:4.5); if(wg.def.name==='Child Ghost' && typeof giggleSound==='function') giggleSound(); else screamSound(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
+        wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else screamSound(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
     }
     if(wg.mixer && wg.outer.visible) wg.mixer.update(dt*0.9);
   }
+  if(S.playing && !S.paused){ S.whisperTimer-=dt; if(S.whisperTimer<=0){ let nd=1e9; for(const wg of wanderingGhosts){ if(wg.outer && wg.outer.visible){ const d=Math.hypot(wg.outer.position.x-playerPos.x,wg.outer.position.z-playerPos.z); if(d<nd) nd=d; } } if(nd<6 && !S.hidden){ whisperSound(); } S.whisperTimer=3; } }
   // V12 FINAL ESCAPE progress: 8s near exit door, pauses if away/hidden, win at 100%
   if(S.escaping && S.playing && !S.paused){
     const distExit=Math.hypot(playerPos.x-S.escapeDoorX, playerPos.z-S.escapeDoorZ);
@@ -1284,25 +1397,31 @@ function update(dt){
       S.missionTimer-=dt; const sec=Math.max(0,Math.ceil(S.missionTimer));
       if(sec!==S._lastSec){ S._lastSec=sec; setObjective('Ep'+fmP.ep+' • ရှင်သန်ပါ: '+sec+'s ကျန်'); }
       if(S.missionTimer<=0){ S.missionDone=true; setObjective('ရှင်သန်ပြီ! တောင်တံခါး သွား'); toast('🎉 ရှင်သန်ပြီ! တောင်တံခါးကို သွားပါ'); }
-    } else if(fmP.type==='timed' && !missionComplete()){
+    } else if((fmP.type==='timed'||fmP.type==='timedorder') && !missionComplete()){
       S.missionTimer-=dt; const sec2=Math.max(0,Math.ceil(S.missionTimer));
-      if(sec2!==S._lastSec){ S._lastSec=sec2; setObjective('Ep'+fmP.ep+' • '+sec2+'s အတွင်း ပစ္စည်း '+S.items+'/'+fmP.need); }
+      if(sec2!==S._lastSec){ S._lastSec=sec2; setObjective('Ep'+fmP.ep+' • '+sec2+'s အတွင်း '+(fmP.type==='timedorder'?'အစဉ်လိုက် ':'')+'ပစ္စည်း '+S.items+'/'+fmP.need); }
       if(S.missionTimer<=0){ setupFloorItems(); S.missionTimer=fmP.timer; screamSound(); toast('⏰ အချိန်ကုန်ပြီ! ပစ္စည်း ပြန်စ!'); monsterPos.set(playerPos.x+9,0,playerPos.z); }
-    } else if(fmP.type==='lockers' && !S.missionDone){
+    } else if((fmP.type==='lockers'||fmP.type==='darklockers') && !S.missionDone){
       const lk=hideSpots[S.visited.length];
       if(lk){
         const ld=Math.hypot(lk.x-playerPos.x,lk.z-playerPos.z);
-        if(ld<2.0){ S.dwell+=dt; if(S.dwell>=(fmP.dwell||2)){ S.visited.push(lk); S.dwell=0; pickupSound(); toast('🔒 Locker '+(S.visited.length)+'/'+fmP.need); if(S.visited.length>=fmP.need){ S.missionDone=true; setObjective('Locker စုံပြီ! တောင်တံခါး သွား'); } } }
+        if(ld<2.0){ S.dwell+=dt; if(S.dwell>=(fmP.dwell||2)){ S.visited.push(lk); S.dwell=0; pickupSound(); toast('🔒 Locker '+(S.visited.length)+'/'+fmP.need); if(S.visited.length>=fmP.need){ S.missionDone=true; setObjective(fmP.type==='darklockers'?'မှောင် Locker စုံပြီ! တောင်တံခါး သွား':'Locker စုံပြီ! တောင်တံခါး သွား'); } } }
         else S.dwell=0;
       }
     } else if(fmP.type==='lure' && !S.missionDone){
       if(Math.hypot(monsterPos.x-20,monsterPos.z+16)<3.0 && Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z)<12){ S.missionDone=true; setObjective('သရဲကို ဆွဲခေါ်ပြီ! တောင်တံခါး သွား'); toast('🎉 သရဲကို Surgery သို့ ဆွဲခေါ်ပြီ!'); } // must lure (player near), not patrol auto-complete
+    } else if(fmP.type==='rooms' && !S.missionDone){
+      const rz=ROOM_ZONES[S.visited.length];
+      if(rz && Math.hypot(rz.x-playerPos.x,rz.z-playerPos.z)<5){ S.visited.push(rz); pickupSound(); toast('🏥 အခန်း '+(S.visited.length)+'/'+fmP.need); if(S.visited.length>=fmP.need){ S.missionDone=true; setObjective('အခန်းစုံပြီ! တောင်တံခါး သွား'); } }
+    } else if(fmP.type==='distance' && !S.missionDone){
+      const dm=Math.floor(S.distance); if(dm!==S._lastSec){ S._lastSec=dm; setObjective('Ep'+fmP.ep+' • လမ်းလျှောက်ပြီ: '+dm+'/'+fmP.need+'m'); }
+      if(S.distance>=fmP.need){ S.missionDone=true; setObjective('လမ်းလျှောက်ပြီ! တောင်တံခါး သွား'); toast('🎉 '+fmP.need+'m လမ်းလျှောက်ပြီ!'); }
     } else if(fmP.type==='hide' && !S.missionDone){
       if(S.hidden && Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z)<15){ S.hideTotal+=dt; const hs=Math.floor(S.hideTotal); if(hs!==S._lastSec){ S._lastSec=hs; setObjective('Ep'+fmP.ep+' • ပုန်းပြီ: '+hs+'/'+fmP.need+'s'); } if(S.hideTotal>=fmP.need){ S.missionDone=true; setObjective('ပုန်းပြီ! တောင်တံခါး သွား'); toast('🎉 '+fmP.need+'s ပုန်းပြီ!'); } }
     }
     // Blackout: every ~30-45s, lights out 2s, scream, flashlight only = very scary hospital
     if(S.blackout>0){ S.blackout-=dt; }
-    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=2.0; S.blackoutTimer=30+Math.random()*15; screamSound(); toast('⚡ မီး ပျက်သွားပြီ!'); } }
+    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=2.5; S.blackoutTimer=Math.max(20,35-(15-S.floor))+Math.random()*10; screamSound(); toast('⚡ မီး ပျက်သွားပြီ!'); } }
   }
   // key bob
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
