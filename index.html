@@ -48,9 +48,9 @@ canvas{display:block}
 /* ---------- Controls ---------- */
 #joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
-#btns{position:absolute;right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
+#btns{position:absolute;right:max(28px, env(safe-area-inset-right));bottom:max(28px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
 .abtn{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
-.abtn.big{width:76px;height:76px;background:#c81e1e;font-size:15px}
+.abtn.big{width:68px;height:68px;background:#c81e1e;font-size:14px}
 .abtn.active{background:#0a6c3c}
 .abtn:disabled{opacity:.35}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
@@ -60,9 +60,9 @@ canvas{display:block}
 @media (orientation:landscape) and (max-height:520px){
   #joy{width:104px;height:104px;left:12px;bottom:12px}
   #knob{left:28px;top:28px;width:48px;height:48px}
-  #btns{right:12px;bottom:12px;gap:8px}
+  #btns{right:20px;bottom:20px;gap:8px}
   .abtn{width:56px;height:56px;font-size:12px}
-  .abtn.big{width:64px;height:64px}
+  .abtn.big{width:60px;height:60px}
   #staminaWrap{bottom:118px;width:120px}
   #hint{bottom:128px}
   #toast{top:64px}
@@ -90,7 +90,7 @@ canvas{display:block}
   </div>
   <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
   Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
-  <p style="font-size:12px;color:#888;margin-top:10px">V3 • Control + Character မြင်ရအောင် + အသံ + Auto Landscape ပြင်ပြီး • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
+  <p style="font-size:12px;color:#888;margin-top:10px">V4 • Character အရွယ် အမှန် (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
 </div>
 
 <!-- Pause -->
@@ -121,6 +121,8 @@ canvas{display:block}
       <div id="compass">🧭 —</div>
     </div>
     <div style="display:flex;gap:8px">
+      <button class="iconbtn" id="sizeDownBtn" title="Character သေး">👤−</button>
+      <button class="iconbtn" id="sizeUpBtn" title="Character ကြီး">👤+</button>
       <button class="iconbtn" id="landBtn" title="Landscape + Fullscreen">⛶</button>
       <button class="iconbtn" id="muteBtn" title="အသံ">🔊</button>
       <button class="iconbtn" id="pauseBtn" title="ရပ်">⏸</button>
@@ -313,19 +315,23 @@ function lineBlocked(x1,z1,x2,z2){
 /* ============ CHARACTERS (real GLB from website) ============ */
 const loader=new GLTFLoader();
 let player=null, monster=null, playerMixer=null, monsterMixer=null;
-function normalizeGroup(grp,targetH){
-  const box=new THREE.Box3().setFromObject(grp); const size=new THREE.Vector3(); box.getSize(size);
-  const s=targetH/Math.max(0.1,size.y); grp.scale.setScalar(s);
-  const box2=new THREE.Box3().setFromObject(grp);
-  grp.position.y-=box2.min.y; return grp;
+// V4 FIX (same bug as Wan Lone v12): Box3 auto-scale does NOT match a skinned
+// GLB's world height (geometry Y ~1.14 vs skinned world ~3x) -> ~5m giant, head cut off.
+// So NO Box3 scale: fixed scale, position (0,0,0). CesiumMan at scale 1.0 is ~3.3m
+// skinned, so 0.55 -> ~1.8m real human. Live size buttons let Zaw tune in-game.
+let charScaleFactor=1.0;
+const PLAYER_BASE=0.55, MONSTER_BASE=0.70;
+let playerInner=null, monsterInner=null;
+function normalizeGroup(grp,scale){
+  grp.scale.setScalar(scale); grp.position.set(0,0,0); return grp;
 }
 // V3 FIX: .clone() on a skinned GLB breaks its skeleton -> model collapses/invisible.
 // So load the original GLB twice (second load hits browser cache) and wrap each
 // model in an outer group, so the inner foot-offset survives per-frame position sets.
-function loadOne(src,targetH,dark){
+function loadOne(src,baseScale,targetH,dark){
   return new Promise(res=>{
     loader.load(src, gltf=>{
-      const inner=gltf.scene; normalizeGroup(inner,targetH);
+      const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor);
       const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
       if(dark){
         inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); o.material.roughness=1; } });
@@ -334,19 +340,26 @@ function loadOne(src,targetH,dark){
       }
       let mixer=null;
       if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
-      res({outer,mixer});
+      res({outer,mixer,inner});
     }, undefined, ()=>res(null));
   });
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
-  let p=await loadOne('cesium-man.glb',1.8,false);
-  if(!p)p=await loadOne(CDN,1.8,false);
-  let m=await loadOne('cesium-man.glb',2.25,true);
-  if(!m)m=await loadOne(CDN,2.25,true);
+  let p=await loadOne('cesium-man.glb',PLAYER_BASE,1.8,false);
+  if(!p)p=await loadOne(CDN,PLAYER_BASE,1.8,false);
+  let m=await loadOne('cesium-man.glb',MONSTER_BASE,2.25,true);
+  if(!m)m=await loadOne(CDN,MONSTER_BASE,2.25,true);
   if(!p||!m)return false;
-  player=p.outer; playerMixer=p.mixer; monster=m.outer; monsterMixer=m.mixer;
+  player=p.outer; playerMixer=p.mixer; playerInner=p.inner;
+  monster=m.outer; monsterMixer=m.mixer; monsterInner=m.inner;
   return true;
+}
+function setCharSize(factor){
+  charScaleFactor=Math.max(0.4,Math.min(2.0,factor));
+  if(playerInner)playerInner.scale.setScalar(PLAYER_BASE*charScaleFactor);
+  if(monsterInner)monsterInner.scale.setScalar(MONSTER_BASE*charScaleFactor);
+  toast('👤 Character အရွယ်: '+charScaleFactor.toFixed(1)+'x');
 }
 let playerPos=new THREE.Vector3(-18,0,12), monsterPos=new THREE.Vector3(20,0,20);
 let playerAngle=Math.PI, monsterAngle=0, monsterState='patrol', patrolIdx=0, lastSeen=null;
@@ -462,6 +475,8 @@ function checkOrientation(){
   rh.style.display=(S.playing && !S.paused && !rotateDismissed && innerHeight>innerWidth)?'block':'none';
 }
 $('dismissRotate').addEventListener('click',()=>{ rotateDismissed=true; checkOrientation(); });
+$('sizeDownBtn').addEventListener('click',()=>setCharSize(charScaleFactor-0.1));
+$('sizeUpBtn').addEventListener('click',()=>setCharSize(charScaleFactor+0.1));
 $('landBtn').addEventListener('click',async()=>{
   try{ await document.documentElement.requestFullscreen(); }catch(e){}
   try{ await screen.orientation.lock('landscape'); toast('⛶ Landscape Fullscreen ဖွင့်ပြီ'); }
@@ -507,7 +522,7 @@ function update(dt){
   if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; beep(65,.07,'sine',.07); } } else stepAcc=0;
   // camera: behind player, pulled in if a wall would block the view (V3 FIX:
   // old camera went through/ outside walls, hiding the player behind a wall)
-  const camDist=6.2, camH=3.6;
+  const camDist=7.0, camH=3.2;
   const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
   let useX=cx, useZ=cz, found=false;
   for(let tt=1; tt>=0.3; tt-=0.1){
