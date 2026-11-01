@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V27 • လက်အစစ် + cone သရဲ ဖျက် + Ghost Girl မတ်တပ်ရပ်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V28 • Ghost Girl အသစ် (Saori) — လှဲနေတဲ့ အဟောင်း အစားထိုး</p>
 </div>
 
 <!-- Pause -->
@@ -939,7 +939,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
   const defs=[
     {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:13, floatY:0.1, chaseTime:5, sound:'moan'},
     {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:14, floatY:0.3, chaseTime:6, sound:'growl'},
-    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Girl', src:'ghost-saori.glb', real:true, scale:0.2, yOffset:0.79, rotX:Math.PI/2, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'}, // V28: replaces lying Ghost Girl Animated with Zaw-sent Saori girl (no anim, head at -Z so rotX +PI/2 stands it up, scale 0.2 => 1.84m)
     {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:13, floatY:0.1, chaseTime:5, sound:'growl'},
     {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
