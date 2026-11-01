@@ -13,11 +13,13 @@ canvas{display:block}
 /* ---------- Screens ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:radial-gradient(ellipse at center,#2a0505 0%,#0a0000 55%,#000 100%);z-index:20}
 .screen.hidden{display:none}
-.screen h1{font-size:44px;line-height:1.1;margin:8px 0;color:#ff2d2d;text-shadow:0 0 24px rgba(255,0,0,.6);letter-spacing:1px}
+.screen h1{font-size:52px;line-height:1.1;margin:8px 0;color:#ff2d2d;text-shadow:0 0 24px rgba(255,0,0,.8),0 0 60px rgba(255,0,0,.4);letter-spacing:1px;animation:flicker 3s infinite}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.4}94%{opacity:1}96%{opacity:.6}97%{opacity:1}}
 .screen h2{font-size:30px;margin:8px 0;color:#ff4444}
 .screen p{max-width:520px;line-height:1.7;color:#ddd;font-size:16px}
 .badge{display:inline-block;padding:6px 12px;border:1px solid #ff4444;border-radius:20px;color:#ffb3b3;font-size:13px;margin-bottom:10px}
-.btn{margin-top:16px;padding:16px 34px;font-size:19px;font-weight:700;border:0;border-radius:14px;background:#c81e1e;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,0,0,.35)}
+.btn{margin-top:16px;padding:18px 38px;font-size:20px;font-weight:800;border:0;border-radius:14px;background:#c81e1e;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,0,0,.5);animation:btnpulse 1.6s infinite}
+@keyframes btnpulse{50%{box-shadow:0 6px 36px rgba(255,0,0,.9);transform:scale(1.03)}}
 .btn:active{transform:scale(.97)}
 .btn.ghost{background:#222;border:1px solid #555;box-shadow:none}
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
@@ -27,15 +29,15 @@ canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
 #hud.on{display:block}
 #topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:8px;gap:8px}
-.panel{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 10px;backdrop-filter:blur(4px);max-width:340px}
+.panel{background:rgba(20,0,0,.75);border:1px solid rgba(255,0,0,.5);border-radius:12px;padding:6px 10px;backdrop-filter:blur(4px);max-width:340px}
 #hearts{font-size:17px;letter-spacing:2px}
 #keys{font-size:13px;margin-top:2px}
 #objective{font-size:13px;line-height:1.3;max-width:300px}
 #compass{font-size:12px;color:#ffd166;margin-top:2px}
-.iconbtn{pointer-events:auto;width:48px;height:48px;border-radius:50%;border:1px solid #555;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}
-#toast{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #ff4444;color:#fff;padding:10px 16px;border-radius:12px;font-size:16px;white-space:nowrap;opacity:0;transition:opacity .25s}
+.iconbtn{pointer-events:auto;width:48px;height:48px;border-radius:50%;border:1px solid #ff4444;background:rgba(20,0,0,.75);color:#fff;font-size:20px;cursor:pointer}
+#toast{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:rgba(40,0,0,.85);border:1px solid #ff2222;color:#ffdddd;padding:10px 16px;border-radius:12px;font-size:16px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s;text-shadow:0 0 8px red}
 #toast.show{opacity:1}
-#chase{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:#c81e1e;color:#fff;padding:8px 16px;border-radius:20px;font-weight:800;display:none;animation:pulse .7s infinite}
+#chase{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:#c81e1e;color:#fff;padding:10px 18px;border-radius:20px;font-weight:900;font-size:18px;box-shadow:0 0 24px red;display:none;animation:pulse .7s infinite}
 @keyframes pulse{50%{transform:translateX(-50%) scale(1.06)}}
 #hideTag{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);background:#0a6c3c;color:#fff;padding:8px 14px;border-radius:20px;display:none;font-weight:700}
 #vignette{position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,0);transition:box-shadow .3s;pointer-events:none}
@@ -81,18 +83,15 @@ canvas{display:block}
 
 <!-- Start -->
 <div id="startScreen" class="screen">
-  <div class="badge">👻 အကြောက်ဆုံးဂိမ်း #1 • 📱 ဖုန်းနဲ့ တိုက်ရိုက်ဆော့လို့ရသည်</div>
+  <div class="badge">👻 #1 ကြောက်စရာ</div>
   <h1>Nightmare<br>Hospital</h1>
-  <p><b>ဆေးရုံဟောင်း</b> ထဲမှာ ပိတ်မိနေပြီ။ လူသေကောင်တွေ၊ သွေးတွေ၊ အူတွေနဲ့ သရဲတွေ ပြည့်နေသည်။ Monster က လိုက်နေသည်။<br>
-  <b>သော့ ၃ ချောင်း</b> ရှာပြီး တောင်ဘက် အဓိက တံခါးကနေ လွတ်မြောက်ပါ။<br>
-  ပြေးပါ၊ ပုန်းပါ၊ အသံကို နားထောင်ပါ။ ဖမ်းခံရရင် အသက် ၁ ခု လျော့မည်။</p>
+  <p>🔑 ၃ ချောင်း ရှာ • 🚪 တောင်တံခါးက ထွက် • 👻 သရဲ လိုက်နေသည်</p>
   <div class="row">
     <button class="btn" id="startBtn">▶ စဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
-  Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
-  <p style="font-size:12px;color:#888;margin-top:10px">V9 • အသံ သရဲ အစစ် + Joystick ပြင် + Hide နေရာတိုင်း + သရဲ ၄ ကောင် + သွေး ကြောက်စရာ + Monster လမ်းကြောင်း + V8 အစစ်နဲ့တူ: လူသေကောင် အသားရောင် + သွေး + အူ ၂ မျိုး + လက်/ခြေ လက်ချောင်း + ယင် အတောင် + လောက် အပိုင်း + V7 #1 ကြောက်စရာ: လူသေကောင် + သွေး + အူ + ယင် + လောက် + သရဲ ၂ ကောင် + V6 Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V10 • သရဲ ပိုကြီး + ပိုလိုက် + အသံ ပိုကြောက်</p>
 </div>
 
 <!-- Pause -->
@@ -107,7 +106,7 @@ canvas{display:block}
     <button class="btn ghost" id="sizeDownBtn">👤− Character သေး</button>
     <button class="btn ghost" id="sizeUpBtn">👤+ Character ကြီး</button>
   </div>
-  <p class="small">ဘယ်ဘက် Joystick = လမ်း • ညာဘက် Drag = Camera • RUN = ပြေး (Stamina ကုန်) • HIDE = Locker / အိပ်ရာနားမှာ ပုန်း • ယူ/ဖွင့် = သော့၊ တံခါး</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN • 🫥 HIDE</p>
 </div>
 
 <!-- End -->
@@ -152,7 +151,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 /* ============ STATE ============ */
-const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:18, scareTimer:0, catchTimer:0, nextScare:22, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
+const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:12, scareTimer:0, catchTimer:0, nextScare:22, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
 const KEYS_NEEDED = 3;
 const $ = id => document.getElementById(id);
 let toastTimer=null;
@@ -195,11 +194,12 @@ function playTone(freqStart,freqEnd,dur,type,vol,vibRate){
 }
 function thump(vol){ playTone(55,40,0.16,'sine',vol||0.25,0); }
 function footstepSound(){ playNoise(0.09,'lowpass',300,1,0.12,0); }
-function growlSound(){ playTone(75,55,0.9,'sawtooth',0.12,9); playNoise(0.9,'lowpass',200,1,0.08,9); }
-function moanSound(){ playTone(280,170,2.0,'sine',0.07,5); playNoise(2.0,'bandpass',500,2,0.04,3); }
+function growlSound(){ playTone(75,55,0.9,'sawtooth',0.20,9); playNoise(0.9,'lowpass',200,1,0.15,9); }
+function giggleSound(){ playTone(900,1200,0.4,'sine',0.12,10); setTimeout(()=>playTone(1100,800,0.4,'sine',0.10,12),250); setTimeout(()=>playTone(1000,1300,0.3,'sine',0.10,10),550); } // child ghost giggle
+function moanSound(){ playTone(280,170,2.0,'sine',0.12,5); playNoise(2.0,'bandpass',500,2,0.08,3); }
 function pickupSound(){ beep(880,.12); setTimeout(()=>beep(1320,.18),90); }
 function doorSound(){ playTone(180,320,0.5,'sawtooth',0.07,0); playNoise(0.5,'bandpass',600,2,0.03,0); } // creak, not beep
-function scareSound(){ playTone(120,45,0.9,'sawtooth',0.18,0); playNoise(0.9,'lowpass',400,1,0.12,0); thump(0.3); }
+function scareSound(){ playTone(120,45,0.9,'sawtooth',0.28,0); playNoise(0.9,'lowpass',400,1,0.20,0); thump(0.4); }
 let ambientGain=null, ambientStarted=false;
 function startAmbient(){
   if(ambientStarted)return; const c=ac(); if(!c)return; ambientStarted=true;
@@ -215,8 +215,8 @@ function startAmbient(){
   }catch(e){}
 }
 document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
-function whisperSound(){ playNoise(1.2,'bandpass',1200,1.5,0.12,7); playNoise(1.0,'bandpass',800,2,0.08,11); playTone(220,160,1.2,'sine',0.05,6); } // breathy shhh, not beeps
-function screamSound(){ playNoise(0.8,'highpass',1000,1,0.18,0); playTone(900,250,0.8,'sawtooth',0.15,0); setTimeout(()=>playTone(1200,400,0.5,'sawtooth',0.12,0),150); }
+function whisperSound(){ playNoise(1.2,'bandpass',1200,1.5,0.20,7); playNoise(1.0,'bandpass',800,2,0.15,11); playTone(220,160,1.2,'sine',0.08,6); } // breathy shhh, louder
+function screamSound(){ playNoise(0.8,'highpass',1000,1,0.30,0); playTone(900,250,0.8,'sawtooth',0.25,0); setTimeout(()=>playTone(1200,400,0.5,'sawtooth',0.20,0),150); }
 
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
@@ -226,10 +226,10 @@ renderer.domElement.id='game';
 document.body.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x050505);
-scene.fog=new THREE.FogExp2(0x020202,0.075); // V5 darker + denser fog = scarier, close clear via flashlight
+scene.fog=new THREE.FogExp2(0x020202,0.09); // V10 darker + denser fog
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.1,120);
-scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.28));
-const dir=new THREE.DirectionalLight(0xffe0b3,0.15); dir.position.set(10,20,10); scene.add(dir);
+scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.20)); // V10 darker
+const dir=new THREE.DirectionalLight(0xffe0b3,0.10); dir.position.set(10,20,10); scene.add(dir);
 
 /* Textures: painted dirty hospital tiles (not flat colour) */
 function makeTex(draw,repX=4,repY=4){
@@ -505,7 +505,7 @@ let player=null, monster=null, playerMixer=null, monsterMixer=null;
 // So NO Box3 scale: fixed scale, position (0,0,0). CesiumMan at scale 1.0 is ~3.3m
 // skinned, so 0.55 -> ~1.8m real human. Live size buttons let Zaw tune in-game.
 let charScaleFactor=1.0;
-const PLAYER_BASE=0.55, MONSTER_BASE=0.70;
+const PLAYER_BASE=0.55, MONSTER_BASE=0.90; // V10 bigger ghost (was 0.70, ~2.3m -> ~3.0m)
 let playerInner=null, monsterInner=null;
 function normalizeGroup(grp,scale){
   grp.scale.setScalar(scale); grp.position.set(0,0,0); return grp;
@@ -519,9 +519,15 @@ function loadOne(src,baseScale,targetH,dark){
       const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor);
       const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
       if(dark){
-        inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); o.material.roughness=1; } });
-        const eyeMat=new THREE.MeshBasicMaterial({color:0xff0000});
-        for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),eyeMat); e.position.set(sx,targetH*0.92,0.2); outer.add(e); }
+        // V10 ghost, not a man: pale white, translucent, floating sheet, hollow black eyes + red pupils + black mouth + long hair
+        inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xe8e8e8); o.material.transparent=true; o.material.opacity=0.88; o.material.roughness=1; } });
+        const eyeY=targetH*0.92;
+        const blackMat=new THREE.MeshBasicMaterial({color:0x000000});
+        const redMat=new THREE.MeshBasicMaterial({color:0xff0000});
+        for(const sx of [-0.14,0.14]){ const sock=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),blackMat); sock.position.set(sx,eyeY,0.18); outer.add(sock); const pup=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),redMat); pup.position.set(sx,eyeY,0.28); outer.add(pup); }
+        const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.05),blackMat); mouth.position.set(0,targetH*0.82,0.22); outer.add(mouth);
+        for(const hx of [-0.28,0.28]){ const hair=new THREE.Mesh(new THREE.BoxGeometry(0.14,1.2,0.10),blackMat); hair.position.set(hx,targetH*0.85,0.15); outer.add(hair); }
+        const sheet=new THREE.Mesh(new THREE.ConeGeometry(0.75,1.5,16,1,true), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,side:THREE.DoubleSide})); sheet.position.set(0,0.75,0); outer.add(sheet);
       }
       let mixer=null;
       if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
@@ -562,7 +568,8 @@ async function loadGhost(){
     const outer=new THREE.Group(); outer.add(inner);
     inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xdddddd); o.material.transparent=true; o.material.opacity=0.65; o.material.roughness=1; } });
     const eyeMat=new THREE.MeshBasicMaterial({color:0x000000});
-    for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),eyeMat); e.position.set(sx,2.07,0.2); outer.add(e); }
+    for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),eyeMat); e.position.set(sx,2.73,0.18); outer.add(e); const pup=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,2.73,0.28); outer.add(pup); }
+    const mouth2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.05),eyeMat); mouth2.position.set(0,2.44,0.22); outer.add(mouth2);
     let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
     outer.visible=false; scene.add(outer); return {outer,mixer};
   };
@@ -573,7 +580,7 @@ async function loadGhost(){
 let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){
   const defs=[
-    {name:'Ghost Girl', scale:0.60, color:0xdddddd, opacity:0.75, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10},
+    {name:'Ghost Girl', scale:0.70, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-18,-12], wps:[[-18,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10},
     {name:'Child Ghost', scale:0.35, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-24,16], wps:[[-24,16],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8},
   ];
   for(const def of defs){
@@ -582,10 +589,13 @@ async function loadWanderingGhosts(){
       const outer=new THREE.Group(); outer.add(inner);
       inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
       const eyeMat=new THREE.MeshBasicMaterial({color:def.eye});
-      for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),eyeMat); e.position.set(sx,2.07*def.scale/0.70,0.2); outer.add(e); }
+      const eyeY2=2.07*def.scale/0.70;
+      for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),eyeMat); e.position.set(sx,eyeY2,0.18); outer.add(e); if(def.eye===0x000000){ const pup=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,eyeY2,0.27); outer.add(pup); } }
+      const mouthW=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.12,0.05),eyeMat); mouthW.position.set(0,eyeY2*0.89,0.22); outer.add(mouthW);
+      if(def.name==='Ghost Girl'){ for(const hx of [-0.26,0.26]){ const hair=new THREE.Mesh(new THREE.BoxGeometry(0.13,1.0,0.09),new THREE.MeshBasicMaterial({color:0x000000})); hair.position.set(hx,eyeY2-0.3,0.15); outer.add(hair); } const sheetW=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.2,16,1,true), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,side:THREE.DoubleSide})); sheetW.position.set(0,0.6,0); outer.add(sheetW); }
       let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
       outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
-      return {outer,mixer,def,wpIdx:0,scareTimer:0,cooldown:0,state:'patrol'};
+      return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
     };
     let g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
     if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
@@ -596,8 +606,8 @@ async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
   let p=await loadOne('cesium-man.glb',PLAYER_BASE,1.8,false);
   if(!p)p=await loadOne(CDN,PLAYER_BASE,1.8,false);
-  let m=await loadOne('cesium-man.glb',MONSTER_BASE,2.25,true);
-  if(!m)m=await loadOne(CDN,MONSTER_BASE,2.25,true);
+  let m=await loadOne('cesium-man.glb',MONSTER_BASE,2.97,true);
+  if(!m)m=await loadOne(CDN,MONSTER_BASE,2.97,true);
   if(!p||!m)return false;
   player=p.outer; playerMixer=p.mixer; playerInner=p.inner;
   monster=m.outer; monsterMixer=m.mixer; monsterInner=m.inner;
@@ -625,7 +635,7 @@ function findPath(sx,sz,tx,tz){
 const flash=new THREE.SpotLight(0xfff2cc,80,15,0.45,0.35,1); // V5 strong narrow flashlight tunnel
 const monsterGlow=new THREE.PointLight(0xff0000,6,7,1.5); scene.add(monsterGlow);
 const playerRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.65,24), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.7,side:THREE.DoubleSide})); playerRing.rotation.x=-Math.PI/2; scene.add(playerRing);
-const monsterRing=new THREE.Mesh(new THREE.RingGeometry(0.7,0.85,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
+const monsterRing=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
 
 /* ============ CONTROLS ============ */
 const joyEl=$('joy'), knob=$('knob');
@@ -690,7 +700,7 @@ function doInteract(){
 
 /* ============ GAME FLOW ============ */
 function resetGame(){
-  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=18; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; S.shadowScare=false; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.yaw=Math.PI;
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=12; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; S.shadowScare=false; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.yaw=Math.PI;
   playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   setObjective('Ward သော့ ရှာပါ');
@@ -762,7 +772,7 @@ addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.upd
 
 /* ============ UPDATE LOOP ============ */
 const clock=new THREE.Clock();
-let heartBeatAcc=0, stepAcc=0, growlAcc=0;
+let heartBeatAcc=0, stepAcc=0, growlAcc=0, whisperAcc=0;
 function update(dt){
   if(!S.playing||S.paused) return;
   S.time+=dt;
@@ -813,12 +823,12 @@ function update(dt){
   if(S.chase||S.scare){ const sh=S.scare?0.25:0.12; camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; }
   camera.lookAt(playerPos.x,1.35,playerPos.z);
   const wantFov=S.chase?75:62; if(camera.fov!==wantFov){ camera.fov=wantFov; camera.updateProjectionMatrix(); }
-  playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.0,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?12:6;
+  playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?12:6;
   flash.position.set(playerPos.x,2.2,playerPos.z);
   flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
   const t=performance.now()/1000;
-  lights.forEach((L,i)=>{ if(S.scare||S.chase||wanderingScare){ L.intensity=Math.random()<(S.scare?0.4:0.3)?0:14; } else { L.intensity=9+Math.sin(t*13+i*2)*2+(Math.random()<0.04?-7:0); } });
+  lights.forEach((L,i)=>{ if(S.scare||S.chase||wanderingScare){ L.intensity=Math.random()<(S.scare?0.4:0.3)?0:14; } else { L.intensity=7+Math.sin(t*13+i*2)*2+(Math.random()<0.08?-6:0); } }); // V10 more flicker
   if(moving && $('hint')) $('hint').style.display='none';
   // interact / hide targets
   S.interactTarget=null; S.hideTarget=null;
@@ -868,7 +878,7 @@ function update(dt){
   }
   if(monsterState==='scare'){
     monsterAngle=Math.atan2(playerPos.x-monsterPos.x, playerPos.z-monsterPos.z);
-    if(shadowGhost && shadowGhost.visible) shadowGhost.rotation.y=Math.atan2(playerPos.x-shadowGhost.position.x, playerPos.z-shadowGhost.position.z);
+    if(shadowGhost && shadowGhost.visible){ shadowGhost.rotation.y=Math.atan2(playerPos.x-shadowGhost.position.x, playerPos.z-shadowGhost.position.z); shadowGhost.position.y=0.4+Math.sin(t*3)*0.1; }
     S.scareTimer-=dt;
     if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; S.shadowScare=false; if(shadowGhost) shadowGhost.visible=false; monsterPos.set(20,0,20); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
   }
@@ -879,17 +889,17 @@ function update(dt){
     const loseAfter=S.hideLocker?1.5:3.0;
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
   } else S.hideTimer=0;
-  const canSee=!S.hidden && monsterState!=='scare' && mDist<16 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0;
+  const canSee=!S.hidden && monsterState!=='scare' && mDist<20 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V10 sees farther
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
-    else if(mDist>20){ monsterState='patrol'; S.chase=false; }
+    else if(mDist>28){ monsterState='patrol'; S.chase=false; } // V10 gives up later, chases longer
     else if(lastSeen){ /* keep chasing last seen */ }
   }
-  let mSpeed=2.8+S.keys*0.2, target=null;
+  let mSpeed=3.2+S.keys*0.2, target=null;
   if(monsterState==='scare'){ mSpeed=0; target=null; monsterPath=[]; }
   else if(monsterState==='chase'){
-    mSpeed=5.3+S.keys*0.3; // V9 difficulty ramp: faster as you collect keys
+    mSpeed=6.2+S.keys*0.3; // V10 faster than player run (6.0) so it actually catches you
     const tp=lastSeen||playerPos;
     if(!lineBlocked(monsterPos.x,monsterPos.z,tp.x,tp.z) && Math.hypot(tp.x-monsterPos.x,tp.z-monsterPos.z)<8){ target=tp; monsterPath=[]; }
     else {
@@ -906,31 +916,36 @@ function update(dt){
     const dx=target.x-monsterPos.x, dz=target.z-monsterPos.z; const dl=Math.hypot(dx,dz);
     if(dl>0.1){ const nm=collide(monsterPos.x+dx/dl*mSpeed*dt, monsterPos.z+dz/dl*mSpeed*dt, 0.5); monsterPos.x=nm[0]; monsterPos.z=nm[1]; monsterAngle=Math.atan2(dx/dl,dz/dl); }
   }
-  if(monster){ monster.position.copy(monsterPos); monster.rotation.y=monsterAngle; }
+  if(monster){ monster.position.set(monsterPos.x,0.35+Math.sin(t*2)*0.08,monsterPos.z); monster.rotation.y=monsterAngle; } // V10 ghost floats, not walks
   if(monsterMixer)monsterMixer.update(dt*(monsterState==='chase'?1.8:0.9));
   // heartbeat / danger vignette by distance
   const danger=mDist<10 && !S.hidden;
   $('vignette').classList.toggle('danger',danger||S.chase);
   const bs=$('bloodScreen'); if(bs) bs.style.opacity=(S.chase||danger)?0.55:0;
   if(S.chase||danger){
-    heartBeatAcc+=dt; const interval=Math.max(0.35, mDist*0.07);
-    if(heartBeatAcc>interval){ heartBeatAcc=0; thump(0.25); setTimeout(()=>thump(0.18),140); }
+    heartBeatAcc+=dt; const interval=Math.max(0.28, mDist*0.05);
+    if(heartBeatAcc>interval){ heartBeatAcc=0; thump(0.35); setTimeout(()=>thump(0.25),120); }
   }
   // growl when monster is near (scary, not silent)
-  if(mDist<12 && !S.hidden && monsterState!=='scare'){ growlAcc+=dt; if(growlAcc>2){ growlAcc=0; growlSound(); } } else growlAcc=0;
+  if(mDist<12 && !S.hidden && monsterState!=='scare'){ growlAcc+=dt; if(growlAcc>1.2){ growlAcc=0; growlSound(); } } else growlAcc=0;
+  if(mDist<6 && !S.hidden && monsterState!=='scare'){ whisperAcc+=dt; if(whisperAcc>3){ whisperAcc=0; whisperSound(); } } else whisperAcc=0; // V10 close = whisper in your ear
   // V5: no instant catch - must stay within 1.4m for 0.8s, so player can run away from a scare
   if(monsterState!=='scare' && mDist<1.4 && !S.hidden && S.invuln<=0 && !S.won){
     S.catchTimer+=dt;
     if(S.catchTimer>0.8){ S.catchTimer=0; loseHeart(); }
   } else S.catchTimer=0;
   // V9 distant moan every ~18-30s so the hospital never feels silent
-  if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=18+Math.random()*12; } }
+  if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=12+Math.random()*8; } } // V10 moan more often
   // V9 wandering ghosts: patrol, scare, vanish, cooldown
   wanderingScare=false;
   for(const wg of wanderingGhosts){
     if(!wg.outer) continue;
     const wd=Math.hypot(wg.outer.position.x-playerPos.x, wg.outer.position.z-playerPos.z);
-    if(wg.state==='scare'){
+    if(wg.state==='chase'){
+      wg.chaseTimer-=dt; const cdx=playerPos.x-wg.outer.position.x, cdz=playerPos.z-wg.outer.position.z; const cdl=Math.hypot(cdx,cdz)||1;
+      const nm2=collide(wg.outer.position.x+cdx/cdl*(wg.def.speed+1.0)*dt, wg.outer.position.z+cdz/cdl*(wg.def.speed+1.0)*dt, 0.5); wg.outer.position.x=nm2[0]; wg.outer.position.z=nm2[1]; wg.outer.rotation.y=Math.atan2(cdx/cdl,cdz/cdl);
+      if(S.hidden || cdl<1.5 || wg.chaseTimer<=0){ wg.state='scare'; wg.scareTimer=2.0; wanderingScare=true; screamSound(); whisperSound(); if(navigator.vibrate) navigator.vibrate(150); toast('👻 '+wg.def.name+' မိတော့မယ်!'); }
+    } else if(wg.state==='scare'){
       wanderingScare=true; wg.scareTimer-=dt;
       wg.outer.rotation.y=Math.atan2(playerPos.x-wg.outer.position.x, playerPos.z-wg.outer.position.z);
       if(wg.scareTimer<=0){ wg.state='patrol'; wg.cooldown=12+Math.random()*6; wg.outer.visible=false; toast('👻 '+wg.def.name+' ပျောက်သွားပြီ…'); }
@@ -938,12 +953,12 @@ function update(dt){
       wg.cooldown-=dt; wg.outer.visible=false;
       if(wg.cooldown<=0){ const wp=wg.def.wps[Math.floor(Math.random()*wg.def.wps.length)]; wg.outer.position.set(wp[0],0,wp[1]); wg.outer.visible=true; wg.wpIdx=0; }
     } else {
-      wg.outer.visible=true;
+      wg.outer.visible=true; wg.outer.position.y=(wg.def.name==='Ghost Girl'?0.3:0.1)+Math.sin(t*2.5)*0.06;
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
       else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 0.5); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
       if(!S.hidden && S.invuln<=0 && wd<wg.def.radius && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)){
-        wg.state='scare'; wg.scareTimer=2.0; wanderingScare=true; screamSound(); whisperSound(); if(navigator.vibrate) navigator.vibrate(150); toast('👻 '+wg.def.name+' ပေါ်လာပြီ!');
+        wg.state='chase'; wg.chaseTimer=wg.def.name==='Child Ghost'?3.5:4.5; if(wg.def.name==='Child Ghost' && typeof giggleSound==='function') giggleSound(); else screamSound(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
     }
     if(wg.mixer && wg.outer.visible) wg.mixer.update(dt*0.9);
