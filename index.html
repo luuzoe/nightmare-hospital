@@ -79,9 +79,9 @@ canvas{display:block}
 
 <!-- Start -->
 <div id="startScreen" class="screen">
-  <div class="badge">📱 ဖုန်းနဲ့ တိုက်ရိုက်ဆော့လို့ရသည် • Website Game</div>
+  <div class="badge">👻 အကြောက်ဆုံးဂိမ်း #1 • 📱 ဖုန်းနဲ့ တိုက်ရိုက်ဆော့လို့ရသည်</div>
   <h1>Nightmare<br>Hospital</h1>
-  <p><b>ဆေးရုံဟောင်း</b> ထဲမှာ ပိတ်မိနေပြီ။ Monster က လိုက်နေသည်။<br>
+  <p><b>ဆေးရုံဟောင်း</b> ထဲမှာ ပိတ်မိနေပြီ။ လူသေကောင်တွေ၊ သွေးတွေ၊ အူတွေနဲ့ သရဲတွေ ပြည့်နေသည်။ Monster က လိုက်နေသည်။<br>
   <b>သော့ ၃ ချောင်း</b> ရှာပြီး တောင်ဘက် အဓိက တံခါးကနေ လွတ်မြောက်ပါ။<br>
   ပြေးပါ၊ ပုန်းပါ၊ အသံကို နားထောင်ပါ။ ဖမ်းခံရရင် အသက် ၁ ခု လျော့မည်။</p>
   <div class="row">
@@ -90,7 +90,7 @@ canvas{display:block}
   </div>
   <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
   Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
-  <p style="font-size:12px;color:#888;margin-top:10px">V6 • Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
+  <p style="font-size:12px;color:#888;margin-top:10px">V7 • #1 ကြောက်စရာ: လူသေကောင် + သွေး + အူ + ယင် + လောက် + သရဲ ၂ ကောင် + V6 Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
 </div>
 
 <!-- Pause -->
@@ -150,7 +150,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 /* ============ STATE ============ */
-const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, scareTimer:0, catchTimer:0, nextScare:22, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
+const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, scareTimer:0, catchTimer:0, nextScare:22, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
 const KEYS_NEEDED = 3;
 const $ = id => document.getElementById(id);
 let toastTimer=null;
@@ -186,6 +186,7 @@ function startAmbient(){
 }
 document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
 function whisperSound(){ if(!S.sound)return; for(let i=0;i<6;i++) setTimeout(()=>beep(300+Math.random()*600,0.08,'sine',0.05), i*120); }
+function screamSound(){ if(!S.sound)return; beep(1200,0.4,'sawtooth',0.15); setTimeout(()=>beep(700,0.5,'sawtooth',0.15),150); setTimeout(()=>beep(400,0.3,'sawtooth',0.1),300); }
 
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
@@ -300,6 +301,60 @@ const medkitMesh=new THREE.Group();
   const cross2=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.4,0.1), new THREE.MeshBasicMaterial({color:0xff0000}));
   cross1.position.z=0.31; cross2.position.z=0.31; medkitMesh.add(box,cross1,cross2); medkitMesh.position.set(12,0.8,14); scene.add(medkitMesh);
 }
+/* ============ V7 GORE + GRAPHICS: corpses, blood, intestines, limbs, flies, maggots, dust ============ */
+const corpseDefs=[
+  {x:2,z:0,yaw:Math.PI/2}, {x:-18,z:-12,yaw:0.5}, {x:24,z:-10,yaw:2.2},
+  {x:-24,z:16,yaw:1.0}, {x:26,z:16,yaw:2.8}, {x:0,z:-12,yaw:0},
+];
+const flies=[], maggots=[];
+function makeBloodPool(x,z,r){
+  const m=new THREE.Mesh(new THREE.CircleGeometry(r,20), new THREE.MeshStandardMaterial({color:0x4a0505,roughness:1}));
+  m.rotation.x=-Math.PI/2; m.position.set(x,0.02,z); m.scale.set(1.4,0.9,1); scene.add(m); return m;
+}
+for(const c of corpseDefs) makeBloodPool(c.x,c.z,1.4+Math.random()*0.4);
+for(const idx of [1,4]){
+  const c=corpseDefs[idx]; const hdX=-Math.sin(c.yaw), hdZ=-Math.cos(c.yaw);
+  const ax=c.x+hdX*0.3, az=c.z+hdZ*0.3;
+  const pts=[new THREE.Vector3(ax,0.35,az),new THREE.Vector3(ax+0.3,0.32,az+0.1),new THREE.Vector3(ax+0.4,0.32,az-0.2),new THREE.Vector3(ax+0.1,0.32,az-0.4),new THREE.Vector3(ax-0.3,0.32,az-0.2),new THREE.Vector3(ax-0.2,0.32,az+0.2)];
+  const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),20,0.07,8), new THREE.MeshStandardMaterial({color:0x9a1626,roughness:0.25}));
+  scene.add(tube);
+}
+for(const [idx,ox,oz] of [[0,1.2,0.6],[2,-1.0,0.8]]){
+  const c=corpseDefs[idx]; const lx=c.x+ox, lz=c.z+oz;
+  const limb=new THREE.Mesh(new THREE.CapsuleGeometry(0.12,0.6,4,8), new THREE.MeshStandardMaterial({color:0x4a2a1a,roughness:0.8}));
+  limb.rotation.z=Math.PI/2; limb.position.set(lx,0.14,lz); scene.add(limb);
+  const end=new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8), new THREE.MeshBasicMaterial({color:0x8a1010}));
+  end.position.set(lx+0.35,0.14,lz); scene.add(end); makeBloodPool(lx,lz,0.5);
+}
+for(const c of corpseDefs){
+  for(let i=0;i<10;i++){
+    const f=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6), new THREE.MeshBasicMaterial({color:0x000000}));
+    scene.add(f); flies.push({mesh:f,cx:c.x,cz:c.z,phase:Math.random()*6.28,r:0.4+Math.random()*0.6,speed:3+Math.random()*4});
+  }
+  for(let i=0;i<8;i++){
+    const mg=new THREE.Mesh(new THREE.CapsuleGeometry(0.03,0.12,4,8), new THREE.MeshStandardMaterial({color:0xe8dcc0,roughness:0.6}));
+    mg.rotation.x=Math.PI/2; mg.position.set(c.x+(Math.random()-0.5)*1.2,0.05,c.z+(Math.random()-0.5)*1.2); scene.add(mg);
+    maggots.push({mesh:mg,phase:Math.random()*6.28});
+  }
+}
+let dustPoints=null;
+{
+  const N=200, pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){ pos[i*3]=-32+Math.random()*64; pos[i*3+1]=0.2+Math.random()*3; pos[i*3+2]=-24+Math.random()*48; }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  dustPoints=new THREE.Points(g, new THREE.PointsMaterial({color:0x999999,size:0.06,transparent:true,opacity:0.4}));
+  scene.add(dustPoints);
+}
+for(const [x,y,z,ry,sx,sy] of [[-10,1.6,-2.69,0,1.2,0.8],[10,1.2,2.69,Math.PI,1.0,0.7],[-3.69,1.4,-10,Math.PI/2,1.1,0.9],[3.69,1.8,10,-Math.PI/2,0.9,0.6]]){
+  const s=new THREE.Mesh(new THREE.CircleGeometry(0.6,16), new THREE.MeshBasicMaterial({color:0x5a0808,transparent:true,opacity:0.9}));
+  s.position.set(x,y,z); s.rotation.y=ry; s.scale.set(sx,sy,1); scene.add(s);
+}
+for(const [x,z] of [[20,20],[18,16],[16,12],[15,8],[14,4],[14,1],[10,0],[6,0],[2,0]]){
+  const fp=new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.25), new THREE.MeshBasicMaterial({color:0x4a0505,transparent:true,opacity:0.85}));
+  fp.rotation.x=-Math.PI/2; fp.rotation.z=Math.random()*0.6; fp.position.set(x,0.021,z); scene.add(fp);
+}
+const emergencyLight=new THREE.PointLight(0xff0000,5,20,1.5); emergencyLight.position.set(18,3,12); scene.add(emergencyLight);
+let nextTwitch=25, twitchUntil=0;
 function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if(km.taken)continue; const d=Math.hypot(km.def.x-px,km.def.z-pz); if(d<bd){bd=d;best=km;} } return {km:best,d:bd}; }
 
 /* ============ COLLISION HELPERS ============ */
@@ -355,6 +410,40 @@ function loadOne(src,baseScale,targetH,dark){
       res({outer,mixer,inner});
     }, undefined, ()=>res(null));
   });
+}
+let shadowGhost=null, shadowGhostMixer=null, corpseWrappers=[];
+function loadCorpse(src,scale){
+  return new Promise(res=>{
+    loader.load(src, gltf=>{
+      const inner=gltf.scene; normalizeGroup(inner,scale);
+      const outer=new THREE.Group(); outer.add(inner);
+      inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x2a1515); o.material.roughness=1; } });
+      res(outer);
+    }, undefined, ()=>res(null));
+  });
+}
+async function loadCorpses(){
+  for(const c of corpseDefs){
+    let outer=await loadCorpse('cesium-man.glb',PLAYER_BASE);
+    if(!outer) outer=await loadCorpse('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb',PLAYER_BASE);
+    if(!outer) continue;
+    const wrap=new THREE.Group(); wrap.position.set(c.x,0,c.z); wrap.rotation.y=c.yaw;
+    outer.rotation.x=-Math.PI/2; outer.position.set(0,0.25,0.9); wrap.add(outer); scene.add(wrap); corpseWrappers.push(wrap);
+  }
+}
+async function loadGhost(){
+  const build=(gltf)=>{
+    const inner=gltf.scene; normalizeGroup(inner,MONSTER_BASE);
+    const outer=new THREE.Group(); outer.add(inner);
+    inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xdddddd); o.material.transparent=true; o.material.opacity=0.65; o.material.roughness=1; } });
+    const eyeMat=new THREE.MeshBasicMaterial({color:0x000000});
+    for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),eyeMat); e.position.set(sx,2.07,0.2); outer.add(e); }
+    let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
+    outer.visible=false; scene.add(outer); return {outer,mixer};
+  };
+  let g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
+  if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
+  if(g){ shadowGhost=g.outer; shadowGhostMixer=g.mixer; }
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
@@ -433,7 +522,7 @@ function doInteract(){
 
 /* ============ GAME FLOW ============ */
 function resetGame(){
-  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=22; S.time=0; S.dead=false; S.won=false; S.yaw=Math.PI;
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=22; S.time=0; S.shadowScare=false; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.yaw=Math.PI;
   playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   setObjective('Ward သော့ ရှာပါ');
@@ -551,14 +640,14 @@ function update(dt){
   if(!found){ useX=playerPos.x+(cx-playerPos.x)*0.3; useZ=playerPos.z+(cz-playerPos.z)*0.3; }
   useX=Math.max(-31,Math.min(31,useX)); useZ=Math.max(-23,Math.min(23,useZ));
   camera.position.set(useX,camH,useZ);
-  if(S.chase||S.scare){ camera.position.x+=(Math.random()-0.5)*0.12; camera.position.y+=(Math.random()-0.5)*0.08; }
+  if(S.chase||S.scare){ const sh=S.scare?0.25:0.12; camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; }
   camera.lookAt(playerPos.x,1.35,playerPos.z);
-  playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.0,monsterPos.z);
+  playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.0,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?12:6;
   flash.position.set(playerPos.x,2.2,playerPos.z);
   flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
   const t=performance.now()/1000;
-  lights.forEach((L,i)=>{ if(S.scare){ L.intensity=Math.random()<0.4?0:14; } else { L.intensity=9+Math.sin(t*13+i*2)*2+(Math.random()<0.04?-7:0); } });
+  lights.forEach((L,i)=>{ if(S.scare||S.chase){ L.intensity=Math.random()<(S.scare?0.4:0.3)?0:14; } else { L.intensity=9+Math.sin(t*13+i*2)*2+(Math.random()<0.04?-7:0); } });
   if(moving && $('hint')) $('hint').style.display='none';
   // interact / hide targets
   S.interactTarget=null; S.hideTarget=null;
@@ -592,15 +681,24 @@ function update(dt){
       if(!foundSpot){ S.nextScare=8; }
       else{
       monsterPos.set(sx,0,sz); monsterAngle=Math.atan2(playerPos.x-sx, playerPos.z-sz);
-      monsterState='scare'; S.scare=true; S.scareTimer=2.5; whisperSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200); toast('👻 သရဲ ပေါ်လာပြီ!');
+      monsterState='scare'; S.scare=true; S.scareTimer=2.5; whisperSound(); screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200);
+      const dm=$('damage'); dm.style.opacity=1; setTimeout(()=>dm.style.opacity=0,250);
+      S.shadowScare=false;
+      if(shadowGhost && Math.random()<0.5){
+        const ddx=playerPos.x-monsterPos.x, ddz=playerPos.z-monsterPos.z; const dl2=Math.hypot(ddx,ddz)||1;
+        const np3=collide(playerPos.x+ddx/dl2*9, playerPos.z+ddz/dl2*9, 0.5);
+        if(!lineBlocked(playerPos.x,playerPos.z,np3[0],np3[1])){ shadowGhost.position.set(np3[0],0,np3[1]); shadowGhost.rotation.y=Math.atan2(playerPos.x-np3[0], playerPos.z-np3[1]); shadowGhost.visible=true; S.shadowScare=true; }
+      }
+      toast('👻 သရဲ ပေါ်လာပြီ!');
       S.nextScare=28+Math.random()*15;
       }
     }
   }
   if(monsterState==='scare'){
     monsterAngle=Math.atan2(playerPos.x-monsterPos.x, playerPos.z-monsterPos.z);
+    if(shadowGhost && shadowGhost.visible) shadowGhost.rotation.y=Math.atan2(playerPos.x-shadowGhost.position.x, playerPos.z-shadowGhost.position.z);
     S.scareTimer-=dt;
-    if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; monsterPos.set(20,0,20); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
+    if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; S.shadowScare=false; if(shadowGhost) shadowGhost.visible=false; monsterPos.set(20,0,20); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
   }
   const canSee=!S.hidden && monsterState!=='scare' && mDist<16 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0;
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
@@ -636,6 +734,18 @@ function update(dt){
   // key bob
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
   if(!medkitTaken){ medkitMesh.rotation.y+=dt; if(Math.hypot(12-playerPos.x,14-playerPos.z)<1.8 && S.hearts<3){ medkitTaken=true; medkitMesh.visible=false; S.hearts++; beep(660,.15); setTimeout(()=>beep(880,.2),120); toast('💊 ဆေးရပြီ! အသက် +1'); } }
+  // V7 living horror: flies swarm, maggots wiggle, dust drifts, red emergency pulses
+  for(const f of flies){ f.mesh.position.set(f.cx+Math.cos(t*f.speed+f.phase)*f.r, 0.5+Math.sin(t*3+f.phase)*0.3, f.cz+Math.sin(t*f.speed*0.9+f.phase)*f.r); }
+  for(const mg of maggots){ mg.mesh.rotation.z=Math.sin(t*3+mg.phase)*0.4; mg.mesh.position.y=0.05+Math.abs(Math.sin(t*2+mg.phase))*0.02; }
+  if(dustPoints) dustPoints.rotation.y+=dt*0.01;
+  emergencyLight.intensity=4+Math.sin(t*2.5)*3;
+  if(shadowGhostMixer && shadowGhost && shadowGhost.visible) shadowGhostMixer.update(dt*0.8);
+  // twitching corpse: last corpse (vertical corridor) jerks every ~20-35s
+  if(corpseWrappers.length){
+    const tw=corpseWrappers[corpseWrappers.length-1];
+    if(S.time>nextTwitch){ twitchUntil=S.time+1; nextTwitch=S.time+20+Math.random()*15; whisperSound(); toast('👻 လူသေကောင် လှုပ်သွားသလား…?'); }
+    tw.rotation.z=(S.time<twitchUntil)?Math.sin(S.time*30)*0.05:0;
+  }
   updateHUD();
 }
 function animate(){
@@ -645,6 +755,7 @@ function animate(){
   renderer.render(scene,camera);
 }
 loadCharacter().then(ok=>{
+  loadCorpses(); loadGhost();
   $('load').style.display='none';
   if(!ok) toast('⚠️ Character load မအောင်ဘူး — internet စစ်ပြီး ပြန်ဖွင့်ပါ');
   // still allow start; character may appear via fallback in scene? if no player, start screen still works but game will show no models
