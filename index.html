@@ -39,7 +39,7 @@ canvas{display:block}
 #toast.show{opacity:1}
 #chase{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:#c81e1e;color:#fff;padding:10px 18px;border-radius:20px;font-weight:900;font-size:18px;box-shadow:0 0 24px red;display:none;animation:pulse .7s infinite}
 @keyframes pulse{50%{transform:translateX(-50%) scale(1.06)}}
-#hideTag{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);background:#0a6c3c;color:#fff;padding:8px 14px;border-radius:20px;display:none;font-weight:700}
+#hideTag{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(10,108,60,.85);color:#fff;padding:5px 12px;border-radius:20px;display:none;font-weight:700;font-size:13px;white-space:nowrap;pointer-events:none;z-index:11}
 #vignette{position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,0);transition:box-shadow .3s;pointer-events:none}
 #vignette.danger{box-shadow:inset 0 0 120px rgba(255,0,0,.75)}
 #damage{position:absolute;inset:0;background:rgba(255,0,0,.35);opacity:0;transition:opacity .2s;pointer-events:none}
@@ -53,7 +53,7 @@ canvas{display:block}
 #joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
 #btns{position:absolute;right:max(28px, env(safe-area-inset-right));bottom:max(28px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
-.abtn{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+.abtn{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;user-select:none}
 .abtn.big{width:68px;height:68px;background:#c81e1e;font-size:14px}
 .abtn.active{background:#0a6c3c}
 .abtn:disabled{opacity:.35}
@@ -91,7 +91,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V10 • သရဲ ပိုကြီး + ပိုလိုက် + အသံ ပိုကြောက်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V11 • HIDE ၁ ချက်ထဲ + ပုန်းစာ အောက်ခြေ</p>
 </div>
 
 <!-- Pause -->
@@ -133,7 +133,7 @@ canvas{display:block}
   </div>
   <div id="toast"></div>
   <div id="chase">👹 Monster လိုက်နေပြီ! ပြေး!</div>
-  <div id="hideTag">🫥 ပုန်းနေသည် — မလှုပ်ပါနဲ့</div>
+  <div id="hideTag">🫥 ပုန်းနေသည်</div>
   <div id="vignette"></div><div id="damage"></div><div id="bloodScreen"></div><div id="jumpscare">👻</div>
   <div id="staminaWrap"><label>⚡ Stamina</label><div id="staminaBar"><div id="staminaFill"></div></div></div>
   <div id="rotateHint"><p>📱 ဖုန်းကို အလျားလိုက်<br>(Landscape) လှည့်ပြီး ဆော့ပါ<br><span style="font-size:13px;color:#aaa">အလျားလိုက်မှ မြင်ကွင်း ကျယ်ပြီး ဆော့ရပိုကောင်းသည်</span></p><button class="btn" id="dismissRotate" style="margin-top:0;padding:12px 22px;font-size:16px">ဒီတိုင်းပဲ ဆော့မယ်</button></div>
@@ -674,13 +674,14 @@ let runHeld=false, runId=null;
 $('runBtn').addEventListener('pointerdown',e=>{runId=e.pointerId;runHeld=true;S.run=true;$('runBtn').classList.add('active')});
 function runEnd(e){ if(e.pointerId===runId){ runId=null; runHeld=false; if(!keysDown['shift'])S.run=false; $('runBtn').classList.remove('active'); } }
 $('runBtn').addEventListener('pointerup',runEnd); $('runBtn').addEventListener('pointercancel',runEnd);
-$('hideBtn').addEventListener('click',()=>{
+// V11 FIX: pointerdown, not click. On phone a tap that slides a few px cancels 'click', so hide needed 2-3 taps. pointerdown fires instantly, even with multitouch (joystick held).
+$('hideBtn').addEventListener('pointerdown',e=>{
+  e.preventDefault();
   if(S.hidden){ S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); toast('ပုန်းတာ ရပ်လိုက်ပြီ'); }
   else {
-    // V9 FIX: hide works ANYWHERE (crouch/hide), not only at lockers.
-    // Old code refused hide unless within 2m of a locker -> user pressed hide, stayed visible, ghost caught them.
     S.hidden=true; S.hideTimer=0; S.hideLocker=!!S.hideTarget; $('hideBtn').classList.add('active');
-    toast(S.hideLocker?'🫥 Locker ထဲ ပုန်းနေသည် — Monster ဖြတ်သွားတဲ့အထိ မလှုပ်ပါနဲ့':'🫥 ပုန်းနေသည် (ကုန်းနေသည်) — မလှုပ်ပါနဲ့, Monster ဖြတ်သွားမယ်');
+    if(navigator.vibrate) navigator.vibrate(50);
+    toast(S.hideLocker?'🫥 Locker ထဲ ပုန်းနေသည်':'🫥 ပုန်းနေသည်');
   }
 });
 $('actBtn').addEventListener('click',doInteract);
