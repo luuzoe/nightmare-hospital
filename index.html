@@ -57,8 +57,8 @@ canvas{display:block}
 #joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
 #btns{position:absolute;right:max(28px, env(safe-area-inset-right));bottom:max(28px, env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
-.abtn{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;user-select:none}
-.abtn.big{width:68px;height:68px;background:#c81e1e;font-size:14px}
+.abtn{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;user-select:none}
+.abtn.big{width:60px;height:60px;background:#c81e1e;font-size:14px}
 .abtn.active{background:#0a6c3c}
 .abtn:disabled{opacity:.35}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
@@ -82,6 +82,8 @@ canvas{display:block}
   #toast{top:64px}
   #chase{top:102px}
   #topbar{padding:6px}
+  .btn{padding:10px 20px;font-size:16px}
+  .iconbtn{width:42px;height:42px;font-size:18px}
 }
 </style>
 <script type="importmap">
@@ -102,7 +104,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V36 • အနီ စာ သေး + အပေါ် + Minimap ကြီး — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V37 • Morgue သော့ လွတ်တဲ့ နေရာ + လက် ပြန်မြင် + ခလုတ် သေး — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -490,16 +492,16 @@ scene.fog=new THREE.FogExp2(0x020202,0.09); // V10 darker + denser fog
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.1,120); scene.add(camera);
 // V27 REAL hands: CC0 anatomical right hand (Innerscene hand-posable.glb, MakeHuman base, 18.6cm, softly curved fingers, no animation) - V26 oval hands removed, user was right they looked like eggs
 const handsGroup=new THREE.Group(); camera.add(handsGroup);
-const handL=new THREE.Group(); handL.position.set(-0.20,-0.26,-0.40); handL.rotation.set(0,0.15,0); handsGroup.add(handL);
-const handR=new THREE.Group(); handR.position.set(0.20,-0.26,-0.40); handR.rotation.set(0,-0.15,0); handsGroup.add(handR);
+const handL=new THREE.Group(); handL.position.set(-0.20,-0.22,-0.45); handL.rotation.set(0.1,0.15,0); handsGroup.add(handL);
+const handR=new THREE.Group(); handR.position.set(0.20,-0.22,-0.45); handR.rotation.set(0.1,-0.15,0); handsGroup.add(handR);
 const flashMeshGroup=new THREE.Group(); flashMeshGroup.position.set(0.07,-0.03,-0.08); flashMeshGroup.rotation.set(0,0.4,0); handR.add(flashMeshGroup);
 const flashBody=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.026,0.14,12), new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.4,metalness:0.3})); flashBody.rotation.x=Math.PI/2; flashMeshGroup.add(flashBody);
 const flashLens=new THREE.Mesh(new THREE.CircleGeometry(0.02,12), new THREE.MeshBasicMaterial({color:0xfff2cc})); flashLens.position.set(0,0,-0.075); flashLens.rotation.y=Math.PI; flashMeshGroup.add(flashLens);
 const handLight=new THREE.PointLight(0xffe0b3,0.6,1.2,1); handLight.position.set(0,-0.1,-0.3); camera.add(handLight);
 handsGroup.visible=false;
 const handLoader=new GLTFLoader();
-handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(1.0,1.0,1.0); inner.rotation.x=-Math.PI/2; inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handR.add(inner); }, undefined, ()=>{});
-handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(-1.0,1.0,1.0); inner.rotation.x=-Math.PI/2; inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.side=THREE.DoubleSide; o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handL.add(inner); }, undefined, ()=>{});
+handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(1.15,1.15,1.15); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handR.add(inner); }, undefined, ()=>{});
+handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(-1.15,1.15,1.15); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.side=THREE.DoubleSide; o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handL.add(inner); }, undefined, ()=>{});
 scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.03)); // V20 darker, scarier
 const dir=new THREE.DirectionalLight(0xffe0b3,0.02); dir.position.set(10,20,10); scene.add(dir);
 
@@ -641,7 +643,7 @@ for(const [x,z] of [[0,-12],[0,12],[55,0]]){
 const keyDefs=[
   {id:1,x:-24,z:-16,room:'Ward',label:'Ward သော့'},
   {id:2,x:24,z:-16,room:'Surgery',label:'Surgery သော့'},
-  {id:3,x:20,z:20,room:'Morgue',label:'Morgue သော့'},
+  {id:3,x:20,z:22,room:'Morgue',label:'Morgue သော့'},
   {id:4,x:10,z:12,room:'Pharmacy',label:'Pharmacy သော့'},
   {id:5,x:-28,z:20,room:'Reception',label:'Reception သော့'},
 ]; // V12: 5 keys, last 2 in Pharmacy corner + Reception corner
