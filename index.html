@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V23 • သရဲအစစ် လမ်းလျောက် — Girl walk/run, Darkness Stalking/Chasing</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V24 • သရဲအသစ် 2 ကောင် — Ghost Pig + Lethal Ghost Girl (မင်းပို့တဲ့ ဖိုင်)</p>
 </div>
 
 <!-- Pause -->
@@ -941,6 +941,8 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:11, floatY:0.1, chaseTime:5, sound:'moan'},
     {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:12, floatY:0.3, chaseTime:6, sound:'growl'},
     {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:11, floatY:0.1, chaseTime:5, sound:'growl'},
+    {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
@@ -954,7 +956,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
         if(gltf.animations.length){
           mixer=new THREE.AnimationMixer(inner);
           for(const clip of gltf.animations){ actions[clip.name]=mixer.clipAction(clip); }
-          const init = def.name==='Ghost Girl Animated' ? 'walk' : (def.name==='Darkness Ghost' ? 'Armature|Stalking 1' : gltf.animations[0].name);
+          const init = def.name==='Ghost Girl Animated' ? 'walk' : def.name==='Darkness Ghost' ? 'Armature|Stalking 1' : def.name==='Ghost Pig' ? 'ghost_pig_reference_skeleton|0200' : def.name==='Lethal Ghost Girl' ? 'ghost_girl_lc_ghost_girl.dmx_skeleton|Skip' : gltf.animations[0].name;
           if(actions[init]){ actions[init].play(); curAnim=init; }
           else if(gltf.animations[0]){ actions[gltf.animations[0].name].play(); curAnim=gltf.animations[0].name; }
         }
@@ -1510,6 +1512,8 @@ function update(dt){
       let want=null;
       if(wg.def.name==='Ghost Girl Animated'){ want = wg.state==='chase' ? 'run' : (wg.state==='scare' ? 'idle_1' : 'walk'); }
       else if(wg.def.name==='Darkness Ghost'){ want = wg.state==='chase' ? 'Armature|Chasing' : 'Armature|Stalking 1'; }
+      else if(wg.def.name==='Ghost Pig'){ want = wg.state==='chase' ? 'ghost_pig_reference_skeleton|0500' : (wg.state==='scare' ? 'ghost_pig_reference_skeleton|roar' : 'ghost_pig_reference_skeleton|0200'); }
+      else if(wg.def.name==='Lethal Ghost Girl'){ want = wg.state==='scare' ? 'ghost_girl_lc_ghost_girl.dmx_skeleton|idle' : 'ghost_girl_lc_ghost_girl.dmx_skeleton|Skip'; }
       if(want && wg.actions && wg.actions[want] && wg.curAnim!==want){ if(wg.curAnim && wg.actions[wg.curAnim]) wg.actions[wg.curAnim].stop(); wg.actions[want].play(); wg.curAnim=want; }
       wg.mixer.update(dt*(wg.state==='chase'?1.4:0.9));
     }
