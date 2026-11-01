@@ -103,8 +103,8 @@ canvas{display:block}
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း + နှေးနှေး သွား (Pause မှာ ရပ် လို့ ပြောင်းလို့ ရသည်)</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V38 • ပရိဘောဂ မတိုက် + HIDE ရွေး + အလောင်းကောင် မြင် — အကုန်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်)</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V39 • HIDE အရင်လို ရပ် + Compass လမ်းကြောင်း + ယူ ခလုတ် ပြင် — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -126,7 +126,6 @@ canvas{display:block}
   <div class="row">
     <button class="btn ghost" id="mapToggleBtn">🗺️ မြေပုံ: ဖွင့်</button>
     <button class="btn ghost" id="handToggleBtn">✋ လက်: ဖွင့်</button>
-    <button class="btn ghost" id="hideModeBtn">🫥 HIDE: နှေးနှေး သွား</button>
   </div>
   <div class="row">
     <button class="btn ghost" id="camSpeedBtn">📷 ကင်မရာ: ပုံမှန်</button>
@@ -412,7 +411,7 @@ function updateHUD(){
   const fi=$('floorInfo'); if(fi) fi.textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
-  $('hideTag').style.display=S.hidden?'block':'none'; if(S.hidden && $('hideTag')) $('hideTag').textContent=S.hideSneak!==false?'🫥 ပုန်းနေသည် (နှေးနှေး သွား)':'🫥 ပုန်းနေသည် (ရပ်)';
+  $('hideTag').style.display=S.hidden?'block':'none';
   $('actBtn').disabled=!S.interactTarget;
   $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
@@ -933,6 +932,38 @@ function collide(x,z,r,allowStair){
   if(allowStair && x>=-2.3 && x<=2.3){ x=Math.max(-2,x); x=Math.min(2,x); z=Math.max(-23,z); z=Math.min(38.5,z); } else { x=Math.max(-31,x); x=Math.min(69,x); z=Math.max(-23,z); z=Math.min(23,z); }
   return [x,z];
 }
+function compassStep(px,pz,tx,tz){
+  const step=1, x0=-31, x1=69, z0=-23, z1=23;
+  const gw=Math.round((x1-x0)/step)+1, gh=Math.round((z1-z0)/step)+1;
+  const toCx=x=>Math.max(0,Math.min(gw-1,Math.round((x-x0)/step)));
+  const toCz=z=>Math.max(0,Math.min(gh-1,Math.round((z-z0)/step)));
+  const blocked=(cx,cz)=>{ const wx=x0+cx*step, wz=z0+cz*step; for(const w of walls){ if(Math.abs(wx-w.x)<w.w/2+0.6 && Math.abs(wz-w.z)<w.d/2+0.6) return true; } return false; };
+  const sx=toCx(px), sz=toCz(pz), gx=toCx(tx), gz=toCz(tz);
+  if(sx===gx && sz===gz) return [tx,tz];
+  const key=(a,b)=>a+','+b;
+  const prev=new Map(); const seen=new Set([key(sx,sz)]); const q=[[sx,sz]];
+  while(q.length){
+    const cur=q.shift();
+    if(cur[0]===gx && cur[1]===gz){
+      let node=cur;
+      while(prev.has(key(node[0],node[1]))){
+        const pr=prev.get(key(node[0],node[1]));
+        if(pr[0]===sx && pr[1]===sz) return [x0+node[0]*step, z0+node[1]*step];
+        node=pr;
+      }
+      return [tx,tz];
+    }
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(const d of dirs){
+      const nx=cur[0]+d[0], nz=cur[1]+d[1];
+      if(nx<0||nz<0||nx>=gw||nz>=gh) continue;
+      if(seen.has(key(nx,nz))) continue;
+      if(blocked(nx,nz)) continue;
+      seen.add(key(nx,nz)); prev.set(key(nx,nz),cur); q.push([nx,nz]);
+    }
+  }
+  return null;
+}
 function lineBlocked(x1,z1,x2,z2){
   for(let i=1;i<10;i++){
     const x=x1+(x2-x1)*i/10, z=z1+(z2-z1)*i/10;
@@ -1169,10 +1200,12 @@ $('hideBtn').addEventListener('pointerdown',e=>{
     toast(S.hideLocker?'🫥 Locker ထဲ ပုန်းနေသည်':'🫥 ပုန်းနေသည်');
   }
 });
-$('actBtn').addEventListener('click',doInteract);
+$('actBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); doInteract(); });
 function doInteract(){
   if(!S.playing||S.paused||!S.interactTarget)return;
   const t=S.interactTarget;
+  if(t.type==='key' && t.km.taken) return;
+  if(t.type==='item' && t.im.taken) return;
   if(t.type==='key'){
     t.km.taken=true; t.km.mesh.visible=false; S.keys++; pickupSound();
     toast('🔑 '+t.label+' ရပြီ! ('+S.keys+'/'+KEYS_NEEDED+')');
@@ -1352,7 +1385,6 @@ $('soundBtn').addEventListener('click',toggleSound); $('muteBtn').addEventListen
 if($('mapBtn')){ $('mapBtn').addEventListener('click',()=>{ S.showMap=!S.showMap; const mm=$('minimap'); if(mm) mm.style.display=S.showMap?'block':'none'; if($('mapToggleBtn')) $('mapToggleBtn').textContent=S.showMap?'🗺️ မြေပုံ: ဖွင့်':'🗺️ မြေပုံ: ပိတ်'; }); }
 if($('mapToggleBtn')){ $('mapToggleBtn').addEventListener('click',()=>{ S.showMap=!S.showMap; const mm=$('minimap'); if(mm) mm.style.display=S.showMap?'block':'none'; $('mapToggleBtn').textContent=S.showMap?'🗺️ မြေပုံ: ဖွင့်':'🗺️ မြေပုံ: ပိတ်'; }); }
 if($('handToggleBtn')){ $('handToggleBtn').addEventListener('click',()=>{ S.showHands=!S.showHands; $('handToggleBtn').textContent=S.showHands?'✋ လက်: ဖွင့်':'✋ လက်: ပိတ်'; }); }
-if($('hideModeBtn')){ $('hideModeBtn').addEventListener('click',()=>{ S.hideSneak=!S.hideSneak; $('hideModeBtn').textContent=S.hideSneak?'🫥 HIDE: နှေးနှေး သွား':'🫥 HIDE: ရပ်'; }); }
 if($('camSpeedBtn')){ $('camSpeedBtn').addEventListener('click',()=>{ S.camSpeed=(S.camSpeed===1)?1.5:((S.camSpeed===1.5)?0.7:1); $('camSpeedBtn').textContent=S.camSpeed===1.5?'📷 ကင်မရာ: မြန်':(S.camSpeed===0.7?'📷 ကင်မရာ: နှေး':'📷 ကင်မရာ: ပုံမှန်'); }); }
 if($('volBtn')){ $('volBtn').addEventListener('click',()=>{ S.volume=(S.volume===1)?1.2:((S.volume===1.2)?0.4:1); $('volBtn').textContent=S.volume===1.2?'🔊 အသံ: ကျယ်':(S.volume===0.4?'🔊 အသံ: တိုး':'🔊 အသံ: ပုံမှန်'); }); }
 if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.75)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
@@ -1389,11 +1421,11 @@ function update(dt){
   if(keysDown['d']||keysDown['arrowright'])ix+=1;
   S.run = runHeld || !!keysDown['shift'];
   const il=Math.hypot(ix,iy); if(il>1){ix/=il;iy/=il;}
-  const moving=il>0.08 && (!S.hidden || S.hideSneak!==false);
+  const moving=il>0.08 && !S.hidden;
   // stamina
   const running=moving && S.run && S.stamina>0 && !S.hidden;
   if(running)S.stamina=Math.max(0,S.stamina-(30+(15-S.floor)*1)*dt); else S.stamina=Math.min(100,S.stamina+12*dt); // V12 harder down: drain +1/floor
-  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il))*(S.hidden && S.hideSneak!==false?0.5:1); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
+  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il)); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
   // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
   // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
   // joystick up = -iy = forward amount, joystick right = ix = right amount.
@@ -1527,7 +1559,10 @@ function update(dt){
     tx=20; tz=-16; tlabel='Surgery';
   } else { tx=0; tz=24; tlabel=S.floor===1?'Final တံခါး':'အောက်ထပ် တံခါး'; }
   S.beaconX=tx; S.beaconZ=tz; beacon.position.set(tx,3.5,tz); beacon.visible=false;
-  const ang=Math.atan2(tx-playerPos.x,tz-playerPos.z);
+  let cTx=tx, cTz=tz;
+  const step=compassStep(playerPos.x,playerPos.z,tx,tz);
+  if(step){ cTx=step[0]; cTz=step[1]; }
+  const ang=Math.atan2(cTx-playerPos.x,cTz-playerPos.z);
   const dirs=['↑','↗','→','↘','↓','↙','←','↖'];
   const idx=Math.round(((ang-S.yaw)%(Math.PI*2))/(Math.PI/4));
   $('compass').textContent='🧭 '+dirs[((idx%8)+8)%8]+' '+Math.round(Math.hypot(tx-playerPos.x,tz-playerPos.z))+'m';
