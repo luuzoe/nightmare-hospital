@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V19 • Room1 error တွေ ပြင် — အလောင်း/သရဲ ထပ်နေတာ + နံရံ ပေါက်အသစ်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V20 • ကြောက်စရာကောင်း — အစိမ်းဘောင် + အဝါလမ်း + သရဲအလင်း ဖျောက်, သော့ကို မီတာနဲ့ဘဲ</p>
 </div>
 
 <!-- Pause -->
@@ -412,7 +412,7 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x050505);
 scene.fog=new THREE.FogExp2(0x020202,0.09); // V10 darker + denser fog
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.1,120);
-scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.28)); // V10 darker
+scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.15)); // V20 darker, scarier
 const dir=new THREE.DirectionalLight(0xffe0b3,0.10); dir.position.set(10,20,10); scene.add(dir);
 
 /* Textures: painted dirty hospital tiles (not flat colour) */
@@ -761,7 +761,7 @@ function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if
 
 // V14 objective beacon: tall gold pillar, visible through walls/fog, always points to next objective
 const beacon=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,7,12), new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.6,depthTest:false,fog:false}));
-beacon.renderOrder=999; beacon.position.set(0,3.5,24); scene.add(beacon);
+beacon.renderOrder=999; beacon.position.set(0,3.5,24); beacon.visible=false; scene.add(beacon);
 // V18 gap frames: green glowing door frames so gaps are obvious, not hidden dark holes
 function makeGapFrame(cx,cz,alongX){
   const mat=new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.85});
@@ -774,10 +774,9 @@ function makeGapFrame(cx,cz,alongX){
   const beam=new THREE.Mesh(new THREE.BoxGeometry(alongX?len+0.4:th,0.3,alongX?th:len+0.4),mat);
   beam.position.set(cx,3.3,cz); scene.add(beam);
 }
-for(const gx of [-16,0,16]){ makeGapFrame(gx,-3,true); makeGapFrame(gx,3,true); }
-makeGapFrame(-4,0,false); makeGapFrame(4,0,false);
+// V20 user: green frames hidden - gaps stay as passages, no glowing frames
 function makeVGapFrame(x,z){ const mat=new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.85}); for(const s of [-2,2]){ const pil=new THREE.Mesh(new THREE.BoxGeometry(0.35,3.4,0.35),mat); pil.position.set(x,1.7,z+s); scene.add(pil); } const beam=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.3,4.4),mat); beam.position.set(x,3.3,z); scene.add(beam); }
-makeVGapFrame(-4,-12); makeVGapFrame(4,-12); makeVGapFrame(-4,12); makeVGapFrame(4,12);
+// V20 user: new-gap green frames hidden
 // V18 gold path dots pool (BFS route to objective, visible through walls)
 const pathDots=[];
 for(let i=0;i<30;i++){
@@ -866,7 +865,7 @@ function loadOne(src,baseScale,targetH,dark,opts){
       const inner=gltf.scene; normalizeGroup(inner,baseScale*charScaleFactor,opts.yOffset||0,opts.rotX||0);
       if(opts.real){ inner.userData.baseScale=baseScale; }
       const outer=new THREE.Group(); outer.add(inner); scene.add(outer);
-      if(opts.real){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x440000); } }); }
+      if(opts.real){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x000000); } }); }
       else if(dark){
         // V10 ghost, not a man: pale white, translucent, floating sheet, hollow black eyes + red pupils + black mouth + long hair
         inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xe8e8e8); o.material.transparent=true; o.material.opacity=0.88; o.material.roughness=1; } });
@@ -960,7 +959,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     const build=(gltf,useReal)=>{
       const inner=gltf.scene; normalizeGroup(inner,def.scale,def.yOffset||0,def.rotX||0);
       const outer=new THREE.Group(); outer.add(inner);
-      if(def.real && useReal){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x330000); } }); }
+      if(def.real && useReal){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x000000); } }); }
       else inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
       if(def.real && useReal){
         let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
@@ -1018,8 +1017,8 @@ function findPath(sx,sz,tx,tz){
   if(prev[all.length-1]===-1) return null;
   const path=[]; let cur=all.length-1; while(cur!==0){ path.unshift(all[cur]); cur=prev[cur]; } return path;
 }
-const flash=new THREE.SpotLight(0xfff2cc,130,22,0.50,0.35,1); // V5 strong narrow flashlight tunnel
-const monsterGlow=new THREE.PointLight(0xff0000,6,7,1.5); scene.add(monsterGlow);
+const flash=new THREE.SpotLight(0xfff2cc,90,18,0.45,0.35,1); // V20 narrower/dimmer, scarier
+const monsterGlow=new THREE.PointLight(0xff0000,2,5,1.5); scene.add(monsterGlow);
 const playerRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.65,24), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.7,side:THREE.DoubleSide})); playerRing.rotation.x=-Math.PI/2; playerRing.visible=false; scene.add(playerRing);
 const monsterRing=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; monsterRing.visible=false; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
 
@@ -1320,7 +1319,7 @@ function update(dt){
     camera.lookAt(playerPos.x,playerPos.y+1.35,playerPos.z);
   }
   const wantFov=S.chase?75:62; if(camera.fov!==wantFov){ camera.fov=wantFov; camera.updateProjectionMatrix(); }
-  playerRing.position.set(playerPos.x,playerPos.y+0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?18:8; // V12 ghost glow stronger
+  playerRing.position.set(playerPos.x,playerPos.y+0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?6:2; // V20 user: no ghost glow, scarier
   flash.position.set(playerPos.x,playerPos.y+(S.fpp?1.65:2.2),playerPos.z);
   flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,playerPos.y+1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
@@ -1391,7 +1390,7 @@ function update(dt){
   } else if(fmC.type==='lure'){
     tx=20; tz=-16; tlabel='Surgery';
   } else { tx=0; tz=24; tlabel=S.floor===1?'Final တံခါး':'အောက်ထပ် တံခါး'; }
-  S.beaconX=tx; S.beaconZ=tz; beacon.position.set(tx,3.5,tz); beacon.scale.x=beacon.scale.z=1+Math.sin(t*3)*0.2;
+  S.beaconX=tx; S.beaconZ=tz; beacon.position.set(tx,3.5,tz); beacon.visible=false;
   const ang=Math.atan2(tx-playerPos.x,tz-playerPos.z);
   const dirs=['↑','↗','→','↘','↓','↙','←','↖'];
   const idx=Math.round(((ang-S.yaw)%(Math.PI*2))/(Math.PI/4));
@@ -1546,15 +1545,14 @@ function update(dt){
     }
   }
   const gf=$('ghostFace'); if(gf) gf.style.display=(S.time<S.ghostFaceUntil || (S.chase && Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z)<3))?'block':'none';
-  // V18 path dots: recompute every 2s to beacon target
-  S.pathTimer-=dt;
-  if(S.pathTimer<=0){ S.pathTimer=2.0; try{ computePathDots(S.beaconX,S.beaconZ); }catch(e){} }
+  // V20 user: yellow path hidden - key only via compass meters
+  for(const d of pathDots) d.visible=false;
   // V14 anti-stuck: pushing joystick 2s without moving = wall, warn + point to beacon
   if(S.playing && !S.paused && S.joy.active){
     S.stuckTimer+=dt;
     if(S.stuckTimer>=2){
       const moved=Math.hypot(playerPos.x-S.lastPX,playerPos.z-S.lastPZ);
-      if(moved<0.3 && S.time-S.stuckWarn>5){ S.stuckWarn=S.time; toast('⛔ နံရံ ပိတ်နေသည်! ကင်မရာလှည့်ပြီး အဝါရောင် တိုင် (beacon) ဘက် သွားပါ'); if(navigator.vibrate) navigator.vibrate(100); }
+      if(moved<0.3 && S.time-S.stuckWarn>5){ S.stuckWarn=S.time; toast('⛔ နံရံ ပိတ်နေသည်! ကင်မရာလှည့်ပြီး compass ဘက် သွားပါ'); if(navigator.vibrate) navigator.vibrate(100); }
       S.stuckTimer=0; S.lastPX=playerPos.x; S.lastPZ=playerPos.z;
     }
   } else { S.stuckTimer=0; S.lastPX=playerPos.x; S.lastPZ=playerPos.z; }
