@@ -54,6 +54,20 @@ canvas{display:block}
 .abtn:disabled{opacity:.35}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:30;font-size:17px;padding:20px;text-align:center}
+#rotateHint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.88);border:1px solid #ff4444;border-radius:16px;padding:18px;text-align:center;z-index:15;pointer-events:auto;display:none;max-width:86vw}
+#rotateHint p{margin:0 0 12px;font-size:16px;line-height:1.6}
+@media (orientation:landscape) and (max-height:520px){
+  #joy{width:104px;height:104px;left:12px;bottom:12px}
+  #knob{left:28px;top:28px;width:48px;height:48px}
+  #btns{right:12px;bottom:12px;gap:8px}
+  .abtn{width:56px;height:56px;font-size:12px}
+  .abtn.big{width:64px;height:64px}
+  #staminaWrap{bottom:118px;width:120px}
+  #hint{bottom:128px}
+  #toast{top:64px}
+  #chase{top:102px}
+  #topbar{padding:6px}
+}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
@@ -105,6 +119,7 @@ canvas{display:block}
       <div id="compass">🧭 —</div>
     </div>
     <div style="display:flex;gap:8px">
+      <button class="iconbtn" id="landBtn" title="Landscape + Fullscreen">⛶</button>
       <button class="iconbtn" id="muteBtn" title="အသံ">🔊</button>
       <button class="iconbtn" id="pauseBtn" title="ရပ်">⏸</button>
     </div>
@@ -114,6 +129,7 @@ canvas{display:block}
   <div id="hideTag">🫥 ပုန်းနေသည် — မလှုပ်ပါနဲ့</div>
   <div id="vignette"></div><div id="damage"></div>
   <div id="staminaWrap"><label>⚡ Stamina</label><div id="staminaBar"><div id="staminaFill"></div></div></div>
+  <div id="rotateHint"><p>📱 ဖုန်းကို အလျားလိုက်<br>(Landscape) လှည့်ပြီး ဆော့ပါ<br><span style="font-size:13px;color:#aaa">အလျားလိုက်မှ မြင်ကွင်း ကျယ်ပြီး ဆော့ရပိုကောင်းသည်</span></p><button class="btn" id="dismissRotate" style="margin-top:0;padding:12px 22px;font-size:16px">ဒီတိုင်းပဲ ဆော့မယ်</button></div>
   <div id="hint">ဘယ်ဘက် Joystick = လမ်း • ညာဘက် ဆွဲပါ = Camera</div>
   <div id="joy"><div id="knob"></div></div>
   <div id="btns">
@@ -378,6 +394,7 @@ function startGame(){
   ac(); resetGame(); S.playing=true; S.paused=false;
   $('startScreen').classList.add('hidden'); $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden');
   $('hud').classList.add('on'); $('load').style.display='none';
+  if(typeof checkOrientation==='function')checkOrientation();
   toast('👹 Monster က Morgue ဘက်မှာ ရှိနေသည် — တိတ်တိတ်ရှာပါ');
 }
 function pauseGame(){
@@ -412,7 +429,20 @@ function toggleSound(){
   $('muteBtn').textContent=S.sound?'🔊':'🔇';
 }
 $('soundBtn').addEventListener('click',toggleSound); $('muteBtn').addEventListener('click',toggleSound);
-addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+// Landscape: fullscreen + orientation lock (needs a user tap on Android Chrome)
+let rotateDismissed=false;
+function checkOrientation(){
+  const rh=$('rotateHint'); if(!rh)return;
+  rh.style.display=(S.playing && !S.paused && !rotateDismissed && innerHeight>innerWidth)?'block':'none';
+}
+$('dismissRotate').addEventListener('click',()=>{ rotateDismissed=true; checkOrientation(); });
+$('landBtn').addEventListener('click',async()=>{
+  try{ await document.documentElement.requestFullscreen(); }catch(e){}
+  try{ await screen.orientation.lock('landscape'); toast('⛶ Landscape Fullscreen ဖွင့်ပြီ'); }
+  catch(e){ toast('⛶ Fullscreen ဖွင့်ပြီ — ဖုန်းကို အလျားလိုက် လှည့်ပေးပါ'); }
+  rotateDismissed=true; checkOrientation();
+});
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); checkOrientation(); });
 
 /* ============ UPDATE LOOP ============ */
 const clock=new THREE.Clock();
