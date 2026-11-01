@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nightmare Hospital — ဆေးရုံဟောင်း</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#050505;color:#eee;font-family:system-ui,-apple-system,"Noto Sans Myanmar",sans-serif;touch-action:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+canvas{display:block}
+/* ---------- Screens ---------- */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:radial-gradient(ellipse at center,#2a0505 0%,#0a0000 55%,#000 100%);z-index:20}
+.screen.hidden{display:none}
+.screen h1{font-size:44px;line-height:1.1;margin:8px 0;color:#ff2d2d;text-shadow:0 0 24px rgba(255,0,0,.6);letter-spacing:1px}
+.screen h2{font-size:30px;margin:8px 0;color:#ff4444}
+.screen p{max-width:520px;line-height:1.7;color:#ddd;font-size:16px}
+.badge{display:inline-block;padding:6px 12px;border:1px solid #ff4444;border-radius:20px;color:#ffb3b3;font-size:13px;margin-bottom:10px}
+.btn{margin-top:16px;padding:16px 34px;font-size:19px;font-weight:700;border:0;border-radius:14px;background:#c81e1e;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,0,0,.35)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:#222;border:1px solid #555;box-shadow:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.small{font-size:13px;color:#aaa;line-height:1.6;max-width:520px}
+.kbd{display:inline-block;background:#222;border:1px solid #444;border-radius:6px;padding:2px 8px}
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+#hud.on{display:block}
+#topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:10px;gap:8px}
+.panel{background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 12px;backdrop-filter:blur(4px)}
+#hearts{font-size:20px;letter-spacing:2px}
+#keys{font-size:15px;margin-top:4px}
+#objective{font-size:14px;line-height:1.4;max-width:62vw}
+#compass{font-size:13px;color:#ffd166;margin-top:4px}
+.iconbtn{pointer-events:auto;width:48px;height:48px;border-radius:50%;border:1px solid #555;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}
+#toast{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #ff4444;color:#fff;padding:10px 16px;border-radius:12px;font-size:16px;white-space:nowrap;opacity:0;transition:opacity .25s}
+#toast.show{opacity:1}
+#chase{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:#c81e1e;color:#fff;padding:8px 16px;border-radius:20px;font-weight:800;display:none;animation:pulse .7s infinite}
+@keyframes pulse{50%{transform:translateX(-50%) scale(1.06)}}
+#hideTag{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);background:#0a6c3c;color:#fff;padding:8px 14px;border-radius:20px;display:none;font-weight:700}
+#vignette{position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,0);transition:box-shadow .3s;pointer-events:none}
+#vignette.danger{box-shadow:inset 0 0 120px rgba(255,0,0,.75)}
+#damage{position:absolute;inset:0;background:rgba(255,0,0,.35);opacity:0;transition:opacity .2s;pointer-events:none}
+#staminaWrap{position:absolute;left:12px;bottom:150px;width:140px}
+#staminaWrap label{font-size:12px;color:#ccc}
+#staminaBar{height:10px;background:#333;border-radius:6px;overflow:hidden;border:1px solid #555}
+#staminaFill{height:100%;width:100%;background:#ffd166}
+/* ---------- Controls ---------- */
+#joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
+#btns{position:absolute;right:16px;bottom:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
+.abtn{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+.abtn.big{width:76px;height:76px;background:#c81e1e;font-size:15px}
+.abtn.active{background:#0a6c3c}
+.abtn:disabled{opacity:.35}
+#hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
+#load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:30;font-size:17px;padding:20px;text-align:center}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="load">ဆေးရုံဟောင်း ဖွင့်နေသည်…<br><span style="font-size:13px;color:#aaa">Character (website က ရတဲ့ တကယ့် 3D လူ) ကို ဆွဲနေသည်</span></div>
+
+<!-- Start -->
+<div id="startScreen" class="screen">
+  <div class="badge">📱 ဖုန်းနဲ့ တိုက်ရိုက်ဆော့လို့ရသည် • Website Game</div>
+  <h1>Nightmare<br>Hospital</h1>
+  <p><b>ဆေးရုံဟောင်း</b> ထဲမှာ ပိတ်မိနေပြီ။ Monster က လိုက်နေသည်။<br>
+  <b>သော့ ၃ ချောင်း</b> ရှာပြီး တောင်ဘက် အဓိက တံခါးကနေ လွတ်မြောက်ပါ။<br>
+  ပြေးပါ၊ ပုန်းပါ၊ အသံကို နားထောင်ပါ။ ဖမ်းခံရရင် အသက် ၁ ခု လျော့မည်။</p>
+  <div class="row">
+    <button class="btn" id="startBtn">▶ စဆော့မယ်</button>
+    <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
+  </div>
+  <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
+  Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
+</div>
+
+<!-- Pause -->
+<div id="pauseScreen" class="screen hidden">
+  <h2>⏸ ခဏရပ်ထားသည်</h2>
+  <p id="pauseInfo"></p>
+  <div class="row">
+    <button class="btn" id="resumeBtn">▶ ဆက်ဆော့မယ်</button>
+    <button class="btn ghost" id="restartBtn">↻ အစက ပြန်ဆော့</button>
+  </div>
+  <p class="small">ဘယ်ဘက် Joystick = လမ်း • ညာဘက် Drag = Camera • RUN = ပြေး (Stamina ကုန်) • HIDE = Locker / အိပ်ရာနားမှာ ပုန်း • ယူ/ဖွင့် = သော့၊ တံခါး</p>
+</div>
+
+<!-- End -->
+<div id="endScreen" class="screen hidden">
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <div class="row"><button class="btn" id="againBtn">↻ နောက်တစ်ပွဲ ဆော့မယ်</button></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="topbar">
+    <div class="panel">
+      <div id="hearts">❤️❤️❤️</div>
+      <div id="keys">🔑 0 / 3</div>
+      <div id="objective">🎯 ရည်မှန်းချက်: Ward သော့ကို ရှာပါ</div>
+      <div id="compass">🧭 —</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="iconbtn" id="muteBtn" title="အသံ">🔊</button>
+      <button class="iconbtn" id="pauseBtn" title="ရပ်">⏸</button>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <div id="chase">👹 Monster လိုက်နေပြီ! ပြေး!</div>
+  <div id="hideTag">🫥 ပုန်းနေသည် — မလှုပ်ပါနဲ့</div>
+  <div id="vignette"></div><div id="damage"></div>
+  <div id="staminaWrap"><label>⚡ Stamina</label><div id="staminaBar"><div id="staminaFill"></div></div></div>
+  <div id="hint">ဘယ်ဘက် Joystick = လမ်း • ညာဘက် ဆွဲပါ = Camera</div>
+  <div id="joy"><div id="knob"></div></div>
+  <div id="btns">
+    <button class="abtn" id="hideBtn">🫥<br>HIDE</button>
+    <button class="abtn" id="runBtn">🏃<br>RUN</button>
+    <button class="abtn big" id="actBtn" disabled>✋<br>ယူ / ဖွင့်</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+/* ============ STATE ============ */
+const S = {playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false};
+const KEYS_NEEDED = 3;
+const $ = id => document.getElementById(id);
+let toastTimer=null;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+function setObjective(t){ $('objective').textContent='🎯 '+t; }
+function updateHUD(){
+  $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts));
+  $('keys').textContent='🔑 '+S.keys+' / 3';
+  $('staminaFill').style.width=S.stamina+'%';
+  $('chase').style.display=S.chase?'block':'none';
+  $('hideTag').style.display=S.hidden?'block':'none';
+  $('actBtn').disabled=!S.interactTarget;
+  $('actBtn').textContent=S.interactTarget?('✋\n'+S.interactTarget.label):'✋\nယူ / ဖွင့်';
+}
+
+/* ============ AUDIO (synth, no files) ============ */
+let AC=null, heartTimer=null;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
+function beep(freq,dur=0.15,type='sine',vol=0.12){ if(!S.sound)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain(); o.type=type;o.frequency.value=freq; g.gain.setValueAtTime(vol,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur); }
+function pickupSound(){ beep(880,.12); setTimeout(()=>beep(1320,.18),90); }
+function doorSound(){ beep(220,.2,'square',.08); setTimeout(()=>beep(330,.25,'square',.08),120); }
+function scareSound(){ if(!S.sound)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(120,c.currentTime); o.frequency.exponentialRampToValueAtTime(45,c.currentTime+0.8); g.gain.setValueAtTime(.18,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.9); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.9); }
+
+/* ============ THREE SETUP ============ */
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+renderer.setSize(innerWidth,innerHeight);
+renderer.domElement.id='game';
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x050505);
+scene.fog=new THREE.FogExp2(0x050505,0.055);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.1,120);
+scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.55));
+const dir=new THREE.DirectionalLight(0xffe0b3,0.35); dir.position.set(10,20,10); scene.add(dir);
+
+/* Textures: painted dirty hospital tiles (not flat colour) */
+function makeTex(draw,repX=4,repY=4){
+  const cv=document.createElement('canvas'); cv.width=cv.height=256; const g=cv.getContext('2d'); draw(g,256);
+  const t=new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(repX,repY); t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+const floorTex=makeTex((g,s)=>{
+  g.fillStyle='#2e2b28'; g.fillRect(0,0,s,s);
+  for(let y=0;y<4;y++)for(let x=0;x<4;x++){ g.fillStyle=(x+y)%2?'#35312d':'#2a2724'; g.fillRect(x*64+2,y*64+2,60,60);
+    g.fillStyle='rgba(0,0,0,.25)'; for(let i=0;i<8;i++)g.fillRect(Math.random()*256,Math.random()*256,3,3); }
+  g.fillStyle='rgba(120,20,20,.35)'; g.beginPath(); g.ellipse(180,90,28,12,0.5,0,7); g.fill();
+},8,6);
+const wallTex=makeTex((g,s)=>{
+  g.fillStyle='#6b6f66'; g.fillRect(0,0,s,s);
+  for(let y=0;y<4;y++){ g.fillStyle=y<2?'#7a7e72':'#5a5e55'; g.fillRect(0,y*64,s,62); g.fillStyle='#3f423c'; g.fillRect(0,y*64,s,2); }
+  g.fillStyle='rgba(40,30,20,.35)'; for(let i=0;i<30;i++)g.fillRect(Math.random()*256,120+Math.random()*130,6,14);
+  g.fillStyle='rgba(120,20,20,.4)'; g.fillRect(40,150,30,50);
+},6,2);
+const ceilTex=makeTex((g,s)=>{ g.fillStyle='#1c1c1c'; g.fillRect(0,0,s,s); g.fillStyle='#262626'; for(let i=0;i<4;i++)g.fillRect(0,i*64,s,3); },8,6);
+
+/* ============ MAP ============ */
+const walls=[]; // {x,z,w,d} centre + size, for collision + visuals
+function addWall(cx,cz,w,d){
+  walls.push({x:cx,z:cz,w,d});
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,3.4,d), new THREE.MeshStandardMaterial({map:wallTex,roughness:.95}));
+  m.position.set(cx,1.7,cz); scene.add(m);
+  return m;
+}
+// floor + ceiling
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(64,48), new THREE.MeshStandardMaterial({map:floorTex,roughness:.9}));
+floor.rotation.x=-Math.PI/2; floor.position.set(0,0,0); scene.add(floor);
+const ceil=new THREE.Mesh(new THREE.PlaneGeometry(64,48), new THREE.MeshStandardMaterial({map:ceilTex,roughness:1}));
+ceil.rotation.x=Math.PI/2; ceil.position.set(0,3.4,0); scene.add(ceil);
+// outer walls (south has exit gap -2..2 for the exit door)
+addWall(0,-24,64.6,0.6);
+addWall(-17,24,30,0.6); addWall(17,24,30,0.6); addWall(-32,0,0.6,48.6); addWall(32,0,0.6,48.6);
+// horizontal corridor walls z=-3 and z=3, doors at -20..-12, 12..20, centre gap -4..4
+for(const z of [-3,3]){
+  for(const [a,b] of [[-32,-20],[-12,-4],[4,12],[20,32]]) addWall((a+b)/2,z,b-a,0.6);
+}
+// vertical corridor walls x=-4 and x=4, gap -3..3
+for(const x of [-4,4]){
+  addWall(x,-13.5,0.6,21); addWall(x,13.5,0.6,21);
+}
+// exit door visual (south centre)
+const exitDoor=new THREE.Mesh(new THREE.BoxGeometry(4,3.2,0.4), new THREE.MeshStandardMaterial({color:0x7a1010,roughness:.8,emissive:0x330000}));
+exitDoor.position.set(0,1.6,24); scene.add(exitDoor);
+const exitGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1), new THREE.MeshBasicMaterial({color:0xff2222}));
+exitGlow.position.set(0,2.6,23.7); exitGlow.rotation.y=Math.PI; scene.add(exitGlow);
+
+// props (textured furniture, collision boxes)
+const props=[];
+function addProp(cx,cz,w,d,h,color,label){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color,roughness:.9}));
+  m.position.set(cx,h/2,cz); scene.add(m); props.push({x:cx,z:cz,w,d,label}); return m;
+}
+// Ward beds NW, Surgery table NE, Reception desk SW, Pharmacy shelves + Morgue slabs SE
+addProp(-26,-18,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-20,-20,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-14,-16,2.2,1.1,0.7,0x7a7e7a,'bed');
+addProp(20,-16,3,1.6,0.9,0x9aa0a0,'surgery'); addProp(26,-20,1.2,2.5,1.8,0x4a4a4a,'cabinet');
+addProp(-20,18,4,1.2,1.0,0x5a4632,'desk');
+addProp(12,8,1,6,2.0,0x3a4a3a,'shelf'); addProp(16,8,1,6,2.0,0x3a4a3a,'shelf');
+addProp(20,20,2.2,1.1,0.7,0x6a6a6a,'slab'); addProp(26,20,2.2,1.1,0.7,0x6a6a6a,'slab');
+// lockers = hiding spots
+const hideSpots=[{x:-28,z:-12},{x:28,z:-12},{x:-28,z:12},{x:28,z:12},{x:-14,z:-20}];
+for(const h of hideSpots){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1.2,2.2,1), new THREE.MeshStandardMaterial({color:0x2a4a3a,roughness:.8}));
+  m.position.set(h.x,1.1,h.z); scene.add(m);
+  const tag=new THREE.Mesh(new THREE.PlaneGeometry(1,0.4), new THREE.MeshBasicMaterial({color:0x0a6c3c}));
+  tag.position.set(h.x,2.4,h.z); scene.add(tag);
+}
+// flickering ceiling lights
+const lights=[];
+for(const [x,z] of [[-18,-12],[18,-12],[-18,12],[18,12],[0,0]]){
+  const p=new THREE.PointLight(0xffd9a0,12,16,1.8); p.position.set(x,3.2,z); scene.add(p); lights.push(p);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,8), new THREE.MeshBasicMaterial({color:0xffe0a0}));
+  bulb.position.set(x,3.3,z); scene.add(bulb);
+}
+
+/* ============ KEYS ============ */
+const keyDefs=[
+  {id:1,x:-24,z:-16,room:'Ward',label:'Ward သော့'},
+  {id:2,x:24,z:-16,room:'Surgery',label:'Surgery သော့'},
+  {id:3,x:20,z:20,room:'Morgue',label:'Exit သော့'},
+];
+const keyMeshes=[];
+for(const k of keyDefs){
+  const grp=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.07,8,20), new THREE.MeshStandardMaterial({color:0xffd700,emissive:0x664400,metalness:.7,roughness:.3}));
+  const stem=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.5,0.08), ring.material);
+  stem.position.y=-0.4; grp.add(ring,stem); grp.position.set(k.x,1.1,k.z); scene.add(grp);
+  keyMeshes.push({def:k,mesh:grp,taken:false});
+}
+function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if(km.taken)continue; const d=Math.hypot(km.def.x-px,km.def.z-pz); if(d<bd){bd=d;best=km;} } return {km:best,d:bd}; }
+
+/* ============ COLLISION HELPERS ============ */
+function collide(x,z,r){
+  for(const w of walls.concat(props)){
+    const nx=Math.max(w.x-w.w/2,Math.min(x,w.x+w.w/2));
+    const nz=Math.max(w.z-w.d/2,Math.min(z,w.z+w.d/2));
+    const dx=x-nx,dz=z-nz; const dd=dx*dx+dz*dz;
+    if(dd<r*r){
+      if(dd===0){ x+=r; continue; }
+      const dist=Math.sqrt(dd); x=nx+dx/dist*r; z=nz+dz/dist*r;
+    }
+  }
+  x=Math.max(-31,x); x=Math.min(31,x); z=Math.max(-23,z); z=Math.min(23,z);
+  return [x,z];
+}
+function lineBlocked(x1,z1,x2,z2){
+  for(let i=1;i<10;i++){
+    const x=x1+(x2-x1)*i/10, z=z1+(z2-z1)*i/10;
+    for(const w of walls){ if(Math.abs(x-w.x)<w.w/2+0.2 && Math.abs(z-w.z)<w.d/2+0.2) return true; }
+  }
+  return false;
+}
+
+/* ============ CHARACTERS (real GLB from website) ============ */
+const loader=new GLTFLoader();
+let player=null, monster=null, playerMixer=null, monsterMixer=null;
+function normalizeGroup(grp,targetH){
+  const box=new THREE.Box3().setFromObject(grp); const size=new THREE.Vector3(); box.getSize(size);
+  const s=targetH/Math.max(0.1,size.y); grp.scale.setScalar(s);
+  const box2=new THREE.Box3().setFromObject(grp);
+  grp.position.y-=box2.min.y; return grp;
+}
+function loadCharacter(){
+  return new Promise(res=>{
+    loader.load('cesium-man.glb', gltf=>{
+      const p=gltf.scene.clone(); normalizeGroup(p,1.8); scene.add(p); player=p;
+      if(gltf.animations.length){ playerMixer=new THREE.AnimationMixer(p); playerMixer.clipAction(gltf.animations[0]).play(); }
+      const m=gltf.scene.clone(); normalizeGroup(m,2.25); scene.add(m); monster=m;
+      m.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); o.material.roughness=1; } });
+      // red eyes on monster head
+      const eyeMat=new THREE.MeshBasicMaterial({color:0xff0000});
+      for(const sx of [-0.13,0.13]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),eyeMat); e.position.set(sx,2.05,0.18); m.add(e); }
+      if(gltf.animations.length){ monsterMixer=new THREE.AnimationMixer(m); monsterMixer.clipAction(gltf.animations[0]).play(); }
+      res(true);
+    }, undefined, ()=>{
+      loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>{
+        const p=gltf.scene.clone(); normalizeGroup(p,1.8); scene.add(p); player=p;
+        if(gltf.animations.length){ playerMixer=new THREE.AnimationMixer(p); playerMixer.clipAction(gltf.animations[0]).play(); }
+        const m=gltf.scene.clone(); normalizeGroup(m,2.25); scene.add(m); monster=m;
+        m.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0x1a1a1a); } });
+        res(true);
+      }, undefined, ()=>res(false));
+    });
+  });
+}
+let playerPos=new THREE.Vector3(-20,0,18), monsterPos=new THREE.Vector3(20,0,20);
+let playerAngle=Math.PI, monsterAngle=0, monsterState='patrol', patrolIdx=0, lastSeen=null;
+const patrolPts=[[20,20],[20,8],[0,0],[-20,-15],[20,-15],[-20,10],[0,0]];
+const flash=new THREE.SpotLight(0xfff2cc,30,18,0.55,0.5,1); scene.add(flash); scene.add(flash.target);
+
+/* ============ CONTROLS ============ */
+const joyEl=$('joy'), knob=$('knob');
+let joyId=null, camId=null, lastCamX=0,lastCamY=0;
+function joySet(dx,dy){
+  const len=Math.hypot(dx,dy); const cl=Math.min(1,len/48);
+  const nx=len?dx/len*cl:0, ny=len?dy/len*cl:0;
+  S.joy.x=nx; S.joy.y=ny; S.joy.active=cl>0.12;
+  knob.style.transform='translate('+(nx*34)+'px,'+(ny*34)+'px)';
+}
+joyEl.addEventListener('pointerdown',e=>{ joyId=e.pointerId; joyEl.setPointerCapture(joyId); const r=joyEl.getBoundingClientRect(); joySet(e.clientX-(r.left+64),e.clientY-(r.top+64)); });
+joyEl.addEventListener('pointermove',e=>{ if(e.pointerId!==joyId)return; const r=joyEl.getBoundingClientRect(); joySet(e.clientX-(r.left+64),e.clientY-(r.top+64)); });
+function joyEnd(e){ if(e.pointerId===joyId){ joyId=null; S.joy.x=0; S.joy.y=0; S.joy.active=false; knob.style.transform=''; } }
+joyEl.addEventListener('pointerup',joyEnd); joyEl.addEventListener('pointercancel',joyEnd);
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if(e.target!==renderer.domElement) return;
+  camId=e.pointerId; lastCamX=e.clientX; lastCamY=e.clientY;
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(e.pointerId!==camId)return; S.yaw-=(e.clientX-lastCamX)*0.005; lastCamX=e.clientX; lastCamY=e.clientY;
+});
+function camEnd(e){ if(e.pointerId===camId)camId=null; }
+renderer.domElement.addEventListener('pointerup',camEnd); renderer.domElement.addEventListener('pointercancel',camEnd);
+// keyboard (PC test)
+const keysDown={};
+addEventListener('keydown',e=>{ keysDown[e.key.toLowerCase()]=true; if(e.key===' ') {e.preventDefault(); doInteract();} });
+addEventListener('keyup',e=>{ keysDown[e.key.toLowerCase()]=false; });
+let runHeld=false;
+$('runBtn').addEventListener('pointerdown',()=>{runHeld=true;S.run=true;$('runBtn').classList.add('active')});
+addEventListener('pointerup',()=>{runHeld=false;if(!keysDown['shift'])S.run=false;$('runBtn').classList.remove('active')});
+$('hideBtn').addEventListener('click',()=>{
+  if(S.hidden){ S.hidden=false; toast('ပုန်းတာ ရပ်လိုက်ပြီ'); }
+  else if(S.hideTarget){ S.hidden=true; toast('🫥 ပုန်းနေသည် — Monster ဖြတ်သွားတဲ့အထိ မလှုပ်ပါနဲ့'); }
+  else toast('Locker / အိပ်ရာနားမှ ပုန်းလို့ရသည်');
+});
+$('actBtn').addEventListener('click',doInteract);
+function doInteract(){
+  if(!S.playing||S.paused||!S.interactTarget)return;
+  const t=S.interactTarget;
+  if(t.type==='key'){
+    t.km.taken=true; t.km.mesh.visible=false; S.keys++; pickupSound();
+    toast('🔑 '+t.label+' ရပြီ! ('+S.keys+'/3)');
+    if(S.keys===1)setObjective('နောက်သော့ ၂ ချောင်းကို ရှာပါ — Surgery နဲ့ Morgue ဘက်');
+    else if(S.keys===2)setObjective('နောက်ဆုံး သော့ ၁ ချောင်းပဲ ကျန်တော့သည်');
+    else if(S.keys===3){ setObjective('သော့စုံပြီ! တောင်ဘက် အဓိက တံခါးကို သွားပြီး လွတ်မြောက်ပါ'); toast('🎉 သော့စုံပြီ! တောင်ဘက် တံခါးကို သွားပါ'); }
+  } else if(t.type==='exit'){
+    if(S.keys>=KEYS_NEEDED){ winGame(); } else toast('🔒 တံခါးပိတ်နေသည် — သော့ '+(KEYS_NEEDED-S.keys)+' ချောင်း လိုသေးသည်');
+  }
+}
+
+/* ============ GAME FLOW ============ */
+function resetGame(){
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.invuln=0; S.chase=false; S.time=0; S.dead=false; S.won=false; S.yaw=Math.PI;
+  playerPos.set(-20,0,18); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
+  for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
+  setObjective('Ward သော့ကို ရှာပါ');
+  updateHUD();
+}
+function startGame(){
+  ac(); resetGame(); S.playing=true; S.paused=false;
+  $('startScreen').classList.add('hidden'); $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden');
+  $('hud').classList.add('on'); $('load').style.display='none';
+  toast('👹 Monster က Morgue ဘက်မှာ ရှိနေသည် — တိတ်တိတ်ရှာပါ');
+}
+function pauseGame(){
+  if(!S.playing)return; S.paused=true;
+  $('pauseInfo').textContent='🔑 '+S.keys+'/3 • ❤️ '+S.hearts+' • ⏱ '+Math.floor(S.time)+' စက္ကန့်';
+  $('pauseScreen').classList.remove('hidden');
+}
+function resumeGame(){ S.paused=false; $('pauseScreen').classList.add('hidden'); }
+function endGame(win){
+  S.playing=false; S.won=win;
+  $('endTitle').textContent=win?'🎉 လွတ်မြောက်ပြီ!':'👹 ဖမ်းခံရပြီ…';
+  $('endText').textContent=win?('ဆေးရုံဟောင်းကနေ လွတ်မြောက်သွားပြီ! အချိန်: '+Math.floor(S.time)+' စက္ကန့် • သော့: '+S.keys+'/3')
+    :('အသက် ကုန်သွားပြီ။ နောက်တစ်ပွဲ ထပ်ကြိုးစားပါ — ဒီတစ်ခါ ပိုတိတ်တိတ်နဲ့ ပိုမြန်မြန် ရှာပါ။');
+  $('endScreen').classList.remove('hidden');
+}
+function winGame(){ doorSound(); endGame(true); }
+function loseHeart(){
+  S.hearts--; S.invuln=3; scareSound();
+  const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
+  toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
+  playerPos.set(-20,0,18); monsterPos.set(20,0,20); monsterState='patrol'; S.chase=false; S.hidden=false;
+  if(S.hearts<=0) endGame(false); updateHUD();
+}
+$('startBtn').addEventListener('click',startGame);
+$('pauseBtn').addEventListener('click',pauseGame);
+$('resumeBtn').addEventListener('click',resumeGame);
+$('restartBtn').addEventListener('click',()=>{ $('pauseScreen').classList.add('hidden'); startGame(); });
+$('againBtn').addEventListener('click',()=>{ $('endScreen').classList.add('hidden'); startGame(); });
+function toggleSound(){
+  S.sound=!S.sound;
+  $('soundBtn').textContent=S.sound?'🔊 အသံ: ဖွင့်':'🔇 အသံ: ပိတ်';
+  $('muteBtn').textContent=S.sound?'🔊':'🔇';
+}
+$('soundBtn').addEventListener('click',toggleSound); $('muteBtn').addEventListener('click',toggleSound);
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+/* ============ UPDATE LOOP ============ */
+const clock=new THREE.Clock();
+let heartBeatAcc=0;
+function update(dt){
+  if(!S.playing||S.paused) return;
+  S.time+=dt;
+  if(S.invuln>0)S.invuln-=dt;
+  // input vector (joystick + keyboard)
+  let ix=S.joy.x, iy=S.joy.y;
+  if(keysDown['w']||keysDown['arrowup'])iy-=1;
+  if(keysDown['s']||keysDown['arrowdown'])iy+=1;
+  if(keysDown['a']||keysDown['arrowleft'])ix-=1;
+  if(keysDown['d']||keysDown['arrowright'])ix+=1;
+  S.run = runHeld || !!keysDown['shift'];
+  const il=Math.hypot(ix,iy); if(il>1){ix/=il;iy/=il;}
+  const moving=il>0.12 && !S.hidden;
+  // stamina
+  const running=moving && S.run && S.stamina>0;
+  if(running)S.stamina=Math.max(0,S.stamina-25*dt); else S.stamina=Math.min(100,S.stamina+15*dt);
+  const speed=running?5.4:2.9;
+  // camera-relative move
+  const sin=Math.sin(S.yaw), cos=Math.cos(S.yaw);
+  let mx=0,mz=0;
+  if(moving){ mx=(ix*cos - iy*sin); mz=(ix*sin + iy*cos); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
+  if(moving){
+    const np=collide(playerPos.x+mx*speed*dt, playerPos.z+mz*speed*dt, 0.45);
+    playerPos.x=np[0]; playerPos.z=np[1];
+    playerAngle=Math.atan2(mx,mz);
+  }
+  if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; }
+  if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
+  // camera: behind player
+  const camDist=6.2, camH=3.6;
+  const cx=playerPos.x - Math.sin(S.yaw)*camDist, cz=playerPos.z - Math.cos(S.yaw)*camDist;
+  camera.position.lerp(new THREE.Vector3(cx,camH,cz),1-Math.pow(0.001,dt));
+  camera.lookAt(playerPos.x,1.2,playerPos.z);
+  flash.position.set(playerPos.x,2.2,playerPos.z);
+  flash.target.position.set(playerPos.x+Math.sin(playerAngle)*5,1,playerPos.z+Math.cos(playerAngle)*5);
+  // flicker
+  const t=performance.now()/1000;
+  lights.forEach((L,i)=>{ L.intensity=11+Math.sin(t*13+i*2)*2+(Math.random()<0.02?-8:0); });
+  // interact / hide targets
+  S.interactTarget=null; S.hideTarget=null;
+  for(const km of keyMeshes){
+    if(!km.taken && Math.hypot(km.def.x-playerPos.x,km.def.z-playerPos.z)<1.8){ S.interactTarget={type:'key',km,label:km.def.label}; break; }
+  }
+  const ed=Math.hypot(0-playerPos.x,24-playerPos.z);
+  if(ed<2.5 && !S.interactTarget) S.interactTarget={type:'exit',label:S.keys>=3?'🚪 လွတ်မြောက်မယ်':'🚪 တံခါး (သော့လို)'};
+  let hd=1e9,hs=null; for(const h of hideSpots){ const d=Math.hypot(h.x-playerPos.x,h.z-playerPos.z); if(d<hd){hd=d;hs=h;} }
+  if(hd<2.0)S.hideTarget=hs;
+  // compass to next key or exit
+  const nk=nearestKey(playerPos.x,playerPos.z);
+  let tx=0,tz=24,tlabel='အဓိက တံခါး';
+  if(S.keys<3 && nk.km){ tx=nk.km.def.x; tz=nk.km.def.z; tlabel='နောက်သော့'; }
+  const ang=Math.atan2(tx-playerPos.x,tz-playerPos.z);
+  const dirs=['↑','↗','→','↘','↓','↙','←','↖'];
+  const idx=Math.round(((ang-S.yaw)%(Math.PI*2))/(Math.PI/4));
+  $('compass').textContent='🧭 '+tlabel+': '+dirs[((idx%8)+8)%8]+' ('+Math.round(Math.hypot(tx-playerPos.x,tz-playerPos.z))+'m)';
+  // ---- monster AI ----
+  const mDist=Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z);
+  const canSee=!S.hidden && mDist<14 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0;
+  if(canSee){ if(!S.chase){ S.chase=true; scareSound(); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
+  else if(monsterState==='chase'){
+    if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
+    else if(mDist>18){ monsterState='patrol'; S.chase=false; }
+    else if(lastSeen){ /* keep chasing last seen */ }
+  }
+  let mSpeed=2.4, target=null;
+  if(monsterState==='chase'){ mSpeed=4.6; target=lastSeen||playerPos; }
+  else { const p=patrolPts[patrolIdx]; target=new THREE.Vector3(p[0],0,p[1]); if(Math.hypot(target.x-monsterPos.x,target.z-monsterPos.z)<1.5)patrolIdx=(patrolIdx+1)%patrolPts.length; }
+  if(target && !S.paused){
+    const dx=target.x-monsterPos.x, dz=target.z-monsterPos.z; const dl=Math.hypot(dx,dz);
+    if(dl>0.1){ const nm=collide(monsterPos.x+dx/dl*mSpeed*dt, monsterPos.z+dz/dl*mSpeed*dt, 0.5); monsterPos.x=nm[0]; monsterPos.z=nm[1]; monsterAngle=Math.atan2(dx/dl,dz/dl); }
+  }
+  if(monster){ monster.position.copy(monsterPos); monster.rotation.y=monsterAngle; }
+  if(monsterMixer)monsterMixer.update(dt*(monsterState==='chase'?1.8:0.9));
+  // heartbeat / danger vignette by distance
+  const danger=mDist<10 && !S.hidden;
+  $('vignette').classList.toggle('danger',danger||S.chase);
+  if(S.chase||danger){
+    heartBeatAcc+=dt; const interval=Math.max(0.35, mDist*0.07);
+    if(heartBeatAcc>interval){ heartBeatAcc=0; beep(55,0.12,'sine',0.2); setTimeout(()=>beep(50,0.1,'sine',0.15),140); }
+  }
+  // caught?
+  if(mDist<1.3 && !S.hidden && S.invuln<=0 && !S.won){ loseHeart(); }
+  // key bob
+  for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
+  updateHUD();
+}
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(0.05,clock.getDelta());
+  update(dt);
+  renderer.render(scene,camera);
+}
+loadCharacter().then(ok=>{
+  $('load').style.display='none';
+  if(!ok) toast('⚠️ Character load မအောင်ဘူး — internet စစ်ပြီး ပြန်ဖွင့်ပါ');
+  // still allow start; character may appear via fallback in scene? if no player, start screen still works but game will show no models
+});
+animate();
+</script>
+</body>
+</html>
