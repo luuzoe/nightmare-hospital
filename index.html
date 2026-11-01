@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V20 • ကြောက်စရာကောင်း — အစိမ်းဘောင် + အဝါလမ်း + သရဲအလင်း ဖျောက်, သော့ကို မီတာနဲ့ဘဲ</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V21 • သရဲအရေအတွက် ဖျောက် — HUD မှာ မပြတော့ဘူး</p>
 </div>
 
 <!-- Pause -->
@@ -147,7 +147,6 @@ canvas{display:block}
       <div id="keys">🔑 0 / 3</div>
       <div id="floorInfo">🏢 15 လွှာ • Ep1</div>
       <div id="objective">🎯 Ward သော့ ရှာပါ</div>
-      <div id="ghostCount">👻 သရဲ —</div>
       <div id="compass">🧭 —</div>
     </div>
     <div style="display:flex;gap:8px">
@@ -345,7 +344,6 @@ function updateHUD(){
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
   $('hideTag').style.display=S.hidden?'block':'none';
-  const gc=$('ghostCount'); if(gc) gc.textContent='👻 သရဲ '+((S.activeGhostCount||5)+1)+' ကောင် + Monster လှည့်နေ';
   $('actBtn').disabled=!S.interactTarget;
   $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
