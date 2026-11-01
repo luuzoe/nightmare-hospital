@@ -103,8 +103,8 @@ canvas{display:block}
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်)</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V41 • HIDE ဖွင့်ထားရင် မလှုပ် (အရင်လို) + Compass ပေါက် + သော့ လမ်းကြောင်း စစ်ပြီး — အကုန်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • အဖြူ သရဲ emoji မရှိတော့</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V42 • အဖြူ သရဲ emoji ဖြုတ် + ပေါက် frame + Ep1 သရဲ လိုက်တာ လျှော့ — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -174,7 +174,7 @@ canvas{display:block}
   <div id="chase">👹 Monster လိုက်နေပြီ! ပြေး!</div>
   <div id="escapeBar"><div id="escapeFill"></div><span id="escapeText">🚪 တံခါး ဖွင့်နေသည်… 0%</span></div>
   <div id="hideTag">🫥 ပုန်းနေသည်</div>
-  <div id="vignette"></div><div id="damage"></div><div id="bloodScreen"></div><div id="jumpscare">👻</div><div id="ghostFace" style="display:none;position:fixed;inset:0;z-index:30;pointer-events:none;text-align:center;padding-top:18%;font-size:180px;text-shadow:0 0 40px #ff0000">👻</div>
+  <div id="vignette"></div><div id="damage"></div><div id="bloodScreen"></div><div id="jumpscare"></div><div id="ghostFace" style="display:none"></div>
   <div id="staminaWrap"><label>⚡ Stamina</label><div id="staminaBar"><div id="staminaFill"></div></div></div>
   <div id="rotateHint"><p>📱 ဖုန်းကို အလျားလိုက်<br>(Landscape) လှည့်ပြီး ဆော့ပါ<br><span style="font-size:13px;color:#aaa">အလျားလိုက်မှ မြင်ကွင်း ကျယ်ပြီး ဆော့ရပိုကောင်းသည်</span></p><button class="btn" id="dismissRotate" style="margin-top:0;padding:12px 22px;font-size:16px">ဒီတိုင်းပဲ ဆော့မယ်</button></div>
   <div id="hint">ဘယ်ဘက် Joystick = လမ်း • ညာဘက် ဆွဲပါ = Camera</div>
@@ -916,7 +916,7 @@ function poster(txt,x,y,z,ry){ const cv=document.createElement('canvas'); cv.wid
 poster('EMERGENCY',-31.6,2,0,Math.PI/2); poster('ICU',31.6,2,-10,-Math.PI/2); poster('PHARMACY',10,2,23.6,Math.PI); poster('X-RAY',-10,2,-23.6,0);
 for(let i=0;i<20;i++){ const db=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.08,0.25), new THREE.MeshStandardMaterial({color:0x1a1a1a})); db.position.set(-30+Math.random()*95,-0+0.04,-22+Math.random()*44); if(Math.abs(db.position.x)<5 && Math.abs(db.position.z)<4) continue; scene.add(db); }
 function doorFrame(cx,cz,vertical){ const mat=new THREE.MeshStandardMaterial({color:0x2a2a2a}); const w=vertical?0.25:4.4, d=vertical?4.4:0.25; const top=new THREE.Mesh(new THREE.BoxGeometry(w,0.3,d), mat); top.position.set(cx,3.25,cz); scene.add(top); const off=vertical?2:2; for(const s of [-1,1]){ const post=new THREE.Mesh(new THREE.BoxGeometry(vertical?0.25:0.25,3.4,vertical?0.25:0.25), mat); if(vertical) post.position.set(cx,1.7,cz+s*2); else post.position.set(cx+s*2,1.7,cz); scene.add(post); } }
-doorFrame(-16,-3,false); doorFrame(-16,3,false); doorFrame(16,-3,false); doorFrame(16,3,false); doorFrame(0,-3,false); doorFrame(0,3,false);
+doorFrame(-16,-3,false); doorFrame(-16,3,false); doorFrame(16,-3,false); doorFrame(16,3,false); doorFrame(0,-3,false); doorFrame(0,3,false); doorFrame(-4,-12,true); doorFrame(4,-12,true); doorFrame(-4,0,true); doorFrame(4,0,true); doorFrame(-4,12,true); doorFrame(4,12,true);
 makeBloodWriting('IT SEES YOU',-31.6,1.8,8,Math.PI/2); makeBloodWriting("DON'T TRUST",31.6,1.8,8,-Math.PI/2);
 /* ============ COLLISION HELPERS ============ */
 function collide(x,z,r,allowStair){
@@ -1370,7 +1370,7 @@ function cancelEscape(){
 }
 function loseHeart(){
   S.hearts--; S.invuln=3; scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
-  const js=$('jumpscare'); if(js){ js.style.display='block'; setTimeout(()=>js.style.display='none',600); }
+  const js=$('jumpscare'); if(js){ js.style.display='none'; }
   const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
   toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
   if(S.escaping){ cancelEscape(); toast('💔 ဖမ်းခံရလို့ တံခါး ပြန်ပိတ်သွားပြီ! တောင်တံခါးကို ပြန်သွားပြီး ပြန်ဖွင့်ပါ'); }
@@ -1595,7 +1595,7 @@ function update(dt){
       monsterPos.set(sx,0,sz); monsterAngle=Math.atan2(playerPos.x-sx, playerPos.z-sz);
       monsterState='scare'; S.scare=true; S.scareTimer=2.5; screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200);
       const dm=$('damage'); dm.style.opacity=1; setTimeout(()=>dm.style.opacity=0,250);
-      const js2=$('jumpscare'); if(js2){ js2.style.display='block'; setTimeout(()=>js2.style.display='none',250); }
+      const js2=$('jumpscare'); if(js2){ js2.style.display='none'; }
       S.shadowScare=false;
       if(shadowGhost && Math.random()<0.5){
         const ddx=playerPos.x-monsterPos.x, ddz=playerPos.z-monsterPos.z; const dl2=Math.hypot(ddx,ddz)||1;
@@ -1620,7 +1620,7 @@ function update(dt){
     const loseAfter=(S.hideLocker?2.5:5.0)+(15-S.floor)*0.2; // V12 harder down: monster stays even longer
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
   } else S.hideTimer=0;
-  const canSee=!S.hidden && monsterState!=='scare' && mDist<24 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V10 sees farther
+  const canSee=!S.hidden && monsterState!=='scare' && mDist<(S.floor===15?16:24) && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V42 Ep1: 16m, later floors 24m
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
@@ -1692,7 +1692,7 @@ function update(dt){
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
       else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 1.0); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
-      if(!S.hidden && S.invuln<=0 && (S.escaping || (wd<(wg.def.radius+(wg.def.radiusBoost||0)) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
+      if(!S.hidden && S.invuln<=0 && (S.escaping || (wd<((wg.def.radius+(wg.def.radiusBoost||0))*(S.floor===15?0.65:1)) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
         wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else wanderingScream(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
     }
@@ -1764,7 +1764,7 @@ function update(dt){
       }
     }
   }
-  const gf=$('ghostFace'); if(gf) gf.style.display=(S.time<S.ghostFaceUntil || (S.chase && Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z)<3))?'block':'none';
+  const gf=$('ghostFace'); if(gf) gf.style.display='none';
   // V20 user: yellow path hidden - key only via compass meters
   for(const d of pathDots) d.visible=false;
   // V14 anti-stuck: pushing joystick 2s without moving = wall, warn + point to beacon
@@ -1784,7 +1784,7 @@ function update(dt){
     if(nd2<12 && S.heartTimer<=0){ heartbeatSound(); S.heartTimer=Math.max(0.45,nd2*0.07); }
     S.randScareTimer-=dt;
     if(S.randScareTimer<=0){ S.randScareTimer=45+Math.random()*45; if(Math.random()<0.6) screamSound(); else growlSound(); }
-    const gf=$('ghostFace'); if(gf && S.time>=S.ghostFaceUntil) gf.style.display=(S.chase && nd2<3)?'block':'none';
+    const gf=$('ghostFace'); if(gf) gf.style.display='none';
   }
   // V12 FINAL ESCAPE progress: 8s near exit door, pauses if away/hidden, win at 100%
   if(S.escaping && S.playing && !S.paused){
