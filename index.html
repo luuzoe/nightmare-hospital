@@ -63,6 +63,10 @@ canvas{display:block}
 .abtn:disabled{opacity:.35}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:30;font-size:17px;padding:20px;text-align:center}
+#stairScreen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#fff;z-index:40;text-align:center;padding:24px}
+#stairScreen.on{display:flex}
+#stairBar{width:260px;height:20px;background:#222;border:2px solid #ff2222;border-radius:12px;overflow:hidden;margin-top:16px}#stairFill{height:100%;width:0%;background:#c81e1e}
+@keyframes stairdrop{50%{transform:translateY(10px)}}
 #rotateHint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.88);border:1px solid #ff4444;border-radius:16px;padding:18px;text-align:center;z-index:15;pointer-events:auto;display:none;max-width:86vw}
 #rotateHint p{margin:0 0 12px;font-size:16px;line-height:1.6}
 @media (orientation:landscape) and (max-height:520px){
@@ -95,7 +99,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V12 • 15 ထပ် Ep1-10+ • တစ်ထပ်ပြီး တစ်ထပ် ပိုခက် • အောက်ဆုံးမှ လွတ်မြောက်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V12.1 • 15 ထပ် + လှေကားကနေ ဆင်း + Ep1-10+</p>
 </div>
 
 <!-- Pause -->
@@ -118,6 +122,15 @@ canvas{display:block}
   <h2 id="endTitle"></h2>
   <p id="endText"></p>
   <div class="row"><button class="btn" id="againBtn">↻ နောက်တစ်ပွဲ ဆော့မယ်</button></div>
+</div>
+
+<!-- Stair descent transition -->
+<div id="stairScreen">
+  <div style="font-size:56px;animation:stairdrop 1s infinite">⬇️</div>
+  <h2 id="stairText">လှေကားကနေ ဆင်းနေသည်…</h2>
+  <p id="stairSub" style="color:#ccc"></p>
+  <div id="stairBar"><div id="stairFill"></div></div>
+  <p style="font-size:13px;color:#888">အောက်ထပ်မှာ သရဲတွေ ပိုများပြီး ပိုမြန်သည်…</p>
 </div>
 
 <!-- HUD -->
@@ -225,7 +238,7 @@ function startFloorMission(){
   else if(fm.type==='lure') obj='Ep'+fm.ep+' • သရဲကို Surgery စားပွဲဆီ ဆွဲခေါ်ပါ';
   else if(fm.type==='dark') obj='Ep'+fm.ep+' • မှောင်ထဲမှာ '+fm.label+' '+fm.need+' ခု ရှာပါ';
   else if(fm.type==='timed') obj='Ep'+fm.ep+' • '+fm.timer+' စက္ကန့်အတွင်း ပစ္စည်း '+fm.need+' ခု ယူပါ!';
-  else if(fm.type==='hide') obj='Ep'+fm.ep+' • စုစုပေါင်း '+fm.need+' စက္ကန့် ပုန်းပါ';
+  else if(fm.type==='hide') obj='Ep'+fm.ep+' • သရဲ အနား 15m အတွင်း စုစုပေါင်း '+fm.need+' စက္ကန့် ပုန်းပါ';
   else if(fm.type==='corpse') obj='Ep'+fm.ep+' • လူသေကောင် '+fm.need+' ကောင် အစဉ်လိုက် ထိပါ';
   else if(fm.type==='final') obj='Ep15 FINAL • ပစ္စည်း '+fm.need+' ခု အစဉ်လိုက် + Switch + Final Escape';
   setObjective(obj);
@@ -890,7 +903,7 @@ function resetGame(){
   for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
   for(const wg of wanderingGhosts){ if(wg.def.origWps){ wg.def.wps=wg.def.origWps; } else { wg.def.origWps=wg.def.wps.slice(); } wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; wg.def.speedBoost=0; wg.def.radiusBoost=0; const wp0=wg.def.wps[0]; if(wp0) wg.outer.position.set(wp0[0],0,wp0[1]); wg.outer.visible=true; }
   setObjective('Ep1 • သော့ 3 ချောင်း ရှာပါ');
-  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0;
+  playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30;
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
   startFloorMission();
@@ -933,6 +946,18 @@ function goToStage2(){
 }
 // V12 FLOOR DESCENT: one floor down, harder step by step. Resets player/monster/ghosts, new mission items, medkit respawns, fog/speed ramp.
 function goToNextFloor(){
+  if(S.floor<=1) return;
+  if(S._stairing) return; S._stairing=true;
+  const fromFloor=S.floor, toFloor=S.floor-1, fromEp=16-fromFloor, toEp=16-toFloor;
+  S.paused=true;
+  const ss=$('stairScreen'); if(ss) ss.classList.add('on');
+  const st=$('stairText'); if(st) st.textContent='လှေကားကနေ ဆင်းနေသည်…';
+  const sub=$('stairSub'); if(sub) sub.textContent='Ep'+fromEp+' • အထပ် '+fromFloor+'  →  Ep'+toEp+' • အထပ် '+toFloor;
+  const sf=$('stairFill'); if(sf) sf.style.width='0%';
+  let step=0; const stepTimer=setInterval(()=>{ footstepSound(); step++; if(sf) sf.style.width=Math.min(100,step*12)+'%'; },350);
+  setTimeout(()=>{ clearInterval(stepTimer); if(ss) ss.classList.remove('on'); S._stairing=false; S.paused=false; doFloorChange(); },3000);
+}
+function doFloorChange(){
   if(S.floor<=1) return;
   S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0;
   playerPos.set(-18,0,12); S.yaw=Math.PI; monsterPos.set(20,0,20); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
