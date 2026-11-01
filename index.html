@@ -100,7 +100,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V13 • လှေကား အစစ် + အထပ်တိုင်း မြေပုံ/မစ်ရှင်/သရဲ မတူ</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V13.1 • လှေကား ဝင်လို့ရပြီ + အနီအကွက် သေးသွားပြီ</p>
 </div>
 
 <!-- Pause -->
@@ -281,7 +281,7 @@ const FLOOR_LIGHTS=[0xffd9a0,0xa0ffd9,0xffa0a0,0xa0c8ff,0xffe080];
 function makePlaque(){
   const cv=document.createElement('canvas'); cv.width=512; cv.height=128;
   const ctx=cv.getContext('2d'); const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3.4,0.85), new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2.8,0.7), new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
   mesh.userData.set=(txt)=>{ ctx.fillStyle='#1a0505'; ctx.fillRect(0,0,512,128); ctx.strokeStyle='#ff2222'; ctx.lineWidth=8; ctx.strokeRect(4,4,504,120); ctx.fillStyle='#ffd166'; ctx.font='bold 44px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(txt,256,64); tex.needsUpdate=true; };
   return mesh;
 }
@@ -452,17 +452,18 @@ for(const x of [-4,4]){
 // exit door visual (south centre)
 const exitDoor=new THREE.Mesh(new THREE.BoxGeometry(4,3.2,0.4), new THREE.MeshStandardMaterial({color:0x7a1010,roughness:.8,emissive:0x330000}));
 exitDoor.position.set(0,1.6,24); scene.add(exitDoor);
-const exitGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1), new THREE.MeshBasicMaterial({color:0xff2222}));
-exitGlow.position.set(0,2.6,23.7); exitGlow.rotation.y=Math.PI; scene.add(exitGlow);
+const exitGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,0.35), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.85}));
+exitGlow.position.set(0,3.15,23.7); exitGlow.rotation.y=Math.PI; scene.add(exitGlow);
 // V13 entrance door (south, x=-19 gap) + plaques + walkable stairwell
 const entranceDoor=new THREE.Mesh(new THREE.BoxGeometry(6,3.2,0.4), new THREE.MeshStandardMaterial({color:0x1a5a2a,roughness:.8,emissive:0x003300}));
 entranceDoor.position.set(-19,1.6,24); scene.add(entranceDoor);
-const entranceGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1), new THREE.MeshBasicMaterial({color:0x22ff88}));
-entranceGlow.position.set(-19,2.6,23.7); entranceGlow.rotation.y=Math.PI; scene.add(entranceGlow);
+const entranceGlow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,0.35), new THREE.MeshBasicMaterial({color:0x22ff88,transparent:true,opacity:0.85}));
+entranceGlow.position.set(-19,3.15,23.7); entranceGlow.rotation.y=Math.PI; scene.add(entranceGlow);
 exitBlock={x:0,z:24,w:4,d:0.6}; walls.push(exitBlock);
+const stairArrow=new THREE.Mesh(new THREE.PlaneGeometry(1.2,3), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.45})); stairArrow.rotation.x=-Math.PI/2; stairArrow.position.set(0,0.06,21.5); scene.add(stairArrow);
 entranceBlock={x:-19,z:24,w:6,d:0.6}; walls.push(entranceBlock);
-entrancePlaque=makePlaque(); entrancePlaque.position.set(-19,3.9,23.7); scene.add(entrancePlaque);
-exitPlaque=makePlaque(); exitPlaque.position.set(0,3.9,23.7); scene.add(exitPlaque);
+entrancePlaque=makePlaque(); entrancePlaque.position.set(-19,3.6,23.7); scene.add(entrancePlaque);
+exitPlaque=makePlaque(); exitPlaque.position.set(0,3.6,23.7); scene.add(exitPlaque);
 for(const [rx,rz] of [[-20,-12],[20,-12],[-20,12],[20,12]]){ const rp=makePlaque(); rp.position.set(rx,3.6,rz); scene.add(rp); roomPlaques.push(rp); }
 updatePlaques();
 // stairwell: side walls (collision + tall visuals), top landing, 12 steps down, landing floor + landing door
@@ -735,7 +736,7 @@ function collide(x,z,r,allowStair){
       const dist=Math.sqrt(dd); x=nx+dx/dist*r; z=nz+dz/dist*r;
     }
   }
-  if(allowStair && x>=-2.3 && x<=2.3 && z>24){ x=Math.max(-2,x); x=Math.min(2,x); z=Math.max(-23,z); z=Math.min(38.5,z); } else { x=Math.max(-31,x); x=Math.min(69,x); z=Math.max(-23,z); z=Math.min(23,z); }
+  if(allowStair && x>=-2.3 && x<=2.3){ x=Math.max(-2,x); x=Math.min(2,x); z=Math.max(-23,z); z=Math.min(38.5,z); } else { x=Math.max(-31,x); x=Math.min(69,x); z=Math.max(-23,z); z=Math.min(23,z); }
   return [x,z];
 }
 function lineBlocked(x1,z1,x2,z2){
@@ -989,7 +990,7 @@ function doInteract(){
       const fmE=floorMission();
       toast('🔒 တံခါးပိတ်နေသည် — လုပ်စရာ ကျန်သေးသည်: '+missionProgressText()+' (လိုအပ်: '+fmE.need+')');
     } else if(S.floor===1){ S.escapeDoorX=0; S.escapeDoorZ=24; startEscape(); }
-    else if(S.doorOpen){ toast('🚪 တံခါး ပွင့်နေပြီ! လှေကားကနေ တစ်ထစ်ချင်း ဆင်းပါ'); }
+    else if(S.doorOpen){ S.yaw=0; toast('⬇️ လှေကားဘက် လှည့်ပြီ! ဂျွိုင်းစတစ်ကို အပေါ်တွန်းပြီး ဆင်းပါ'); }
     else { S.doorOpen=true; if(exitBlock){ const i=walls.indexOf(exitBlock); if(i>=0) walls.splice(i,1); } doorSound(); toast('🚪 တံခါး ပွင့်ပြီ! လှေကားကနေ တစ်ထစ်ချင်း ဆင်းပါ'); }
   }
 }
