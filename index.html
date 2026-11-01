@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V29 • သရဲ ၂ ကောင် အသစ် + ပရိဘောဂ သူ့သူ ရွှေ့ + အသံ ပိုကြောက်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V30 • ခြေထောက် ကြီး ပြင် — သရဲ နံရံနဲ့ ဝေးဝေး + အကျယ် သရဲ သေးအောင်</p>
 </div>
 
 <!-- Pause -->
@@ -939,10 +939,10 @@ let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်နေသည်…');
   const defs=[
     {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:13, floatY:0.1, chaseTime:5, sound:'moan'},
-    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:14, floatY:0.3, chaseTime:6, sound:'growl'},
+    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.6, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:14, floatY:0.3, chaseTime:6, sound:'growl'},
     {name:'Ghost Girl', src:'ghost-saori.glb', real:true, scale:0.2, yOffset:0.79, rotX:Math.PI/2, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'}, // V28: replaces lying Ghost Girl Animated with Zaw-sent Saori girl (no anim, head at -Z so rotX +PI/2 stands it up, scale 0.2 => 1.84m)
-    {name:'Inktober Ghost', src:'ghost-inktober.glb', real:true, scale:1.0, yOffset:1.01, pos:[-24,-12], wps:[[-24,-12],[-16,-12],[0,0],[-20,0]], speed:2.5, radius:12, floatY:0.2, chaseTime:5, sound:'moan'},
-    {name:'Low Poly Ghost', src:'ghost-lowpoly.glb', real:true, scale:0.056, yOffset:0.43, pos:[24,-20], wps:[[24,-20],[16,-12],[0,0],[20,0]], speed:2.7, radius:12, floatY:0.2, chaseTime:5, sound:'growl'},
+    {name:'Inktober Ghost', src:'ghost-inktober.glb', real:true, scale:0.9, yOffset:1.01, pos:[-24,-12], wps:[[-24,-12],[-16,-12],[0,0],[-20,0]], speed:2.5, radius:12, floatY:0.2, chaseTime:5, sound:'moan'},
+    {name:'Low Poly Ghost', src:'ghost-lowpoly.glb', real:true, scale:0.045, yOffset:0.43, pos:[24,-20], wps:[[24,-20],[16,-12],[0,0],[20,0]], speed:2.7, radius:12, floatY:0.2, chaseTime:5, sound:'growl'},
     {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:13, floatY:0.1, chaseTime:5, sound:'growl'},
     {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
@@ -1490,7 +1490,7 @@ function update(dt){
     const wd=Math.hypot(wg.outer.position.x-playerPos.x, wg.outer.position.z-playerPos.z);
     if(wg.state==='chase'){
       wg.chaseTimer-=dt; const cdx=playerPos.x-wg.outer.position.x, cdz=playerPos.z-wg.outer.position.z; const cdl=Math.hypot(cdx,cdz)||1;
-      const nm2=collide(wg.outer.position.x+cdx/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, wg.outer.position.z+cdz/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, 0.5); wg.outer.position.x=nm2[0]; wg.outer.position.z=nm2[1]; wg.outer.rotation.y=Math.atan2(cdx/cdl,cdz/cdl);
+      const nm2=collide(wg.outer.position.x+cdx/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, wg.outer.position.z+cdz/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, 1.0); wg.outer.position.x=nm2[0]; wg.outer.position.z=nm2[1]; wg.outer.rotation.y=Math.atan2(cdx/cdl,cdz/cdl);
       if(S.hidden || cdl<1.5 || wg.chaseTimer<=0){ wg.state='scare'; wg.scareTimer=2.0; wanderingScare=true; screamSound(); whisperSound(); if(navigator.vibrate) navigator.vibrate(150); toast('👻 '+wg.def.name+' မိတော့မယ်!'); }
     } else if(wg.state==='scare'){
       wanderingScare=true; wg.scareTimer-=dt;
@@ -1503,10 +1503,10 @@ function update(dt){
       wg.outer.visible=true; wg.outer.position.y=(wg.def.floatY||0.1)+Math.sin(t*2.5)*0.06;
       if(typeof wg.blinkTimer==='undefined') wg.blinkTimer=8+Math.random()*6;
       wg.blinkTimer-=dt;
-      if(wg.blinkTimer<=0){ wg.blinkTimer=10+Math.random()*8; const bdx=playerPos.x-wg.outer.position.x, bdz=playerPos.z-wg.outer.position.z; const bl=Math.hypot(bdx,bdz)||1; const nmB=collide(wg.outer.position.x+bdx/bl*4, wg.outer.position.z+bdz/bl*4, 0.5); wg.outer.position.x=nmB[0]; wg.outer.position.z=nmB[1]; screamSound(); toast('👻 '+wg.def.name+' ရုတ်တရက် နီးလာပြီ!'); }
+      if(wg.blinkTimer<=0){ wg.blinkTimer=10+Math.random()*8; const bdx=playerPos.x-wg.outer.position.x, bdz=playerPos.z-wg.outer.position.z; const bl=Math.hypot(bdx,bdz)||1; const nmB=collide(wg.outer.position.x+bdx/bl*4, wg.outer.position.z+bdz/bl*4, 1.0); wg.outer.position.x=nmB[0]; wg.outer.position.z=nmB[1]; screamSound(); toast('👻 '+wg.def.name+' ရုတ်တရက် နီးလာပြီ!'); }
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
-      else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 0.5); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
+      else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 1.0); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
       if(!S.hidden && S.invuln<=0 && (S.escaping || (wd<(wg.def.radius+(wg.def.radiusBoost||0)) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
         wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else screamSound(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
