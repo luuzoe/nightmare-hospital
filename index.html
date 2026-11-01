@@ -464,10 +464,12 @@ function update(dt){
   const running=moving && S.run && S.stamina>0;
   if(running)S.stamina=Math.max(0,S.stamina-25*dt); else S.stamina=Math.min(100,S.stamina+15*dt);
   const speed=running?5.4:2.9;
-  // camera-relative move
+  // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
+  // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
+  // joystick up = -iy = forward amount, joystick right = ix = right amount.
   const sin=Math.sin(S.yaw), cos=Math.cos(S.yaw);
   let mx=0,mz=0;
-  if(moving){ mx=(ix*cos - iy*sin); mz=(ix*sin + iy*cos); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
+  if(moving){ mx=(-iy*sin - ix*cos); mz=(-iy*cos + ix*sin); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
   if(moving){
     const np=collide(playerPos.x+mx*speed*dt, playerPos.z+mz*speed*dt, 0.45);
     playerPos.x=np[0]; playerPos.z=np[1];
