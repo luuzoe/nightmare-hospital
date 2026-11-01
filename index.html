@@ -64,7 +64,7 @@ canvas{display:block}
 #hint{position:absolute;left:50%;bottom:158px;transform:translateX(-50%);font-size:12px;color:#bbb;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;white-space:nowrap}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:30;font-size:17px;padding:20px;text-align:center}
 #landBtn{display:none!important}
-#floorBanner{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font-size:42px;font-weight:900;color:#ffd166;text-shadow:0 0 20px #ff0000,2px 2px 0 #000;z-index:45;display:none;text-align:center}#floorBanner.on{display:block}
+#floorBanner{position:fixed;left:50%;top:14%;transform:translate(-50%,-50%);font-size:26px;font-weight:900;color:#ffd166;text-shadow:0 0 20px #ff0000,2px 2px 0 #000;z-index:45;display:none;text-align:center}#floorBanner.on{display:block}
 #stairScreen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#fff;z-index:40;text-align:center;padding:24px}
 #stairScreen.on{display:flex}
 #stairBar{width:260px;height:20px;background:#222;border:2px solid #ff2222;border-radius:12px;overflow:hidden;margin-top:16px}#stairFill{height:100%;width:0%;background:#c81e1e}
@@ -102,7 +102,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V35 • HIDE ပုန်းပြီး လမ်းလျှောက် + သရဲမ အသံ ရှား + လက် လှည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V36 • အနီ စာ သေး + အပေါ် + Minimap ကြီး — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -168,7 +168,7 @@ canvas{display:block}
     </div>
   </div>
   <div id="toast"></div>
-  <canvas id="minimap" width="150" height="75" style="position:fixed;top:64px;right:10px;z-index:20;pointer-events:none;background:rgba(0,0,0,0.6);border:1px solid #444;border-radius:6px"></canvas>
+  <canvas id="minimap" width="200" height="100" style="position:fixed;top:64px;right:10px;z-index:20;pointer-events:none;background:rgba(0,0,0,0.6);border:1px solid #444;border-radius:6px"></canvas>
   <div id="chase">👹 Monster လိုက်နေပြီ! ပြေး!</div>
   <div id="escapeBar"><div id="escapeFill"></div><span id="escapeText">🚪 တံခါး ဖွင့်နေသည်… 0%</span></div>
   <div id="hideTag">🫥 ပုန်းနေသည်</div>
@@ -220,8 +220,8 @@ function drawMinimap(){
   g.clearRect(0,0,cv.width,cv.height);
   g.fillStyle='#111111';
   g.fillRect(0,0,cv.width,cv.height);
-  const sc=1.4;
-  g.fillStyle='#888888';
+  const sc=1.85;
+  g.fillStyle='#cccccc';
   for(const w of walls){
     const x=(w.x-w.w/2+32)*sc;
     const y=(w.z-w.d/2+24)*sc;
@@ -232,19 +232,19 @@ function drawMinimap(){
     const by=(S.beaconZ+24)*sc;
     g.fillStyle='#ffcc00';
     g.beginPath();
-    g.arc(Math.max(2,Math.min(cv.width-2,bx)),Math.max(2,Math.min(cv.height-2,by)),3,0,Math.PI*2);
+    g.arc(Math.max(2,Math.min(cv.width-2,bx)),Math.max(2,Math.min(cv.height-2,by)),5,0,Math.PI*2);
     g.fill();
   }
   const px=(playerPos.x+32)*sc;
   const py=(playerPos.z+24)*sc;
   g.fillStyle='#22ff88';
   g.beginPath();
-  g.arc(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)),3.5,0,Math.PI*2);
+  g.arc(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)),5,0,Math.PI*2);
   g.fill();
   g.strokeStyle='#22ff88';
   g.beginPath();
   g.moveTo(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)));
-  g.lineTo(Math.max(2,Math.min(cv.width-2,px+Math.sin(S.yaw)*10)),Math.max(2,Math.min(cv.height-2,py+Math.cos(S.yaw)*10)));
+  g.lineTo(Math.max(2,Math.min(cv.width-2,px+Math.sin(S.yaw)*14)),Math.max(2,Math.min(cv.height-2,py+Math.cos(S.yaw)*14)));
   g.stroke();
 }
 function floorEp(){ return 16-S.floor; }
@@ -817,11 +817,11 @@ function makeHandprint(x,y,z,ry){
 makeHandprint(-3.69,1.2,-5,Math.PI/2); makeHandprint(3.69,1.4,5,-Math.PI/2); makeHandprint(-10,1.5,-2.69,0);
 function makeBloodWriting(text,x,y,z,ry){
   const cv=document.createElement('canvas'); cv.width=512; cv.height=128; const g=cv.getContext('2d');
-  g.fillStyle='#8a1010'; g.font='bold 72px sans-serif'; g.textAlign='center'; g.fillText(text,256,80);
+  g.fillStyle='#8a1010'; g.font='bold 56px sans-serif'; g.textAlign='center'; g.fillText(text,256,80);
   g.fillStyle='rgba(138,16,16,0.8)'; for(let i=0;i<10;i++) g.fillRect(80+Math.random()*350,80,4,10+Math.random()*30);
   const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(3,0.75), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.95}));
-  m.position.set(x,y,z); m.rotation.y=ry; scene.add(m);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.95}));
+  m.position.set(x,2.7,z); m.rotation.y=ry; scene.add(m);
 }
 makeBloodWriting('HELP',0,1.8,-2.69,0); makeBloodWriting('RUN',0,1.8,2.69,Math.PI); makeBloodWriting("DON'T LOOK BACK",-3.69,1.8,-12,Math.PI/2);
 makeBloodWriting("DON'T SLEEP",3.69,1.8,12,-Math.PI/2); makeBloodWriting('HE IS HERE',55,1.8,-14.69,0); makeBloodPool(36,0,1.0); makeBloodPool(55,0,1.2); makeHandprint(39.69,1.2,0,-Math.PI/2);
@@ -830,8 +830,8 @@ const extraPools=[]; const extraPoolSlots=[[-24,-16],[24,-16],[-20,12],[20,12],[
 for(let i=0;i<12;i++){ const pm=makeBloodPool(extraPoolSlots[i][0],extraPoolSlots[i][1],1.0+Math.random()*0.5); extraPools.push(pm); }
 function makeDynamicWriting(x,y,z,ry){
   const cv=document.createElement('canvas'); cv.width=512; cv.height=128; const ctx=cv.getContext('2d'); const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3,0.75), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.95})); mesh.position.set(x,y,z); mesh.rotation.y=ry; scene.add(mesh);
-  mesh.userData.set=(txt)=>{ ctx.clearRect(0,0,512,128); ctx.fillStyle='#8a1010'; ctx.font='bold 64px sans-serif'; ctx.textAlign='center'; ctx.fillText(txt,256,80); tex.needsUpdate=true; };
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.95})); mesh.position.set(x,2.7,z); mesh.rotation.y=ry; scene.add(mesh);
+  mesh.userData.set=(txt)=>{ ctx.clearRect(0,0,512,128); ctx.fillStyle='#8a1010'; ctx.font='bold 48px sans-serif'; ctx.textAlign='center'; ctx.fillText(txt,256,80); tex.needsUpdate=true; };
   return mesh;
 }
 const dynamicWritings=[makeDynamicWriting(-31.6,1.8,-8,Math.PI/2), makeDynamicWriting(31.6,1.8,-8,-Math.PI/2), makeDynamicWriting(-10,1.8,23.6,Math.PI), makeDynamicWriting(10,1.8,-23.6,0)];
