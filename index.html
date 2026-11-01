@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V21 • သရဲအရေအတွက် ဖျောက် — HUD မှာ မပြတော့ဘူး</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V22 • သရဲအစစ် ဘဲ — တြိဂံအဖြူ သရဲအတု ဖျောက်, မင်းပို့တဲ့ သရဲဘဲ</p>
 </div>
 
 <!-- Pause -->
@@ -320,8 +320,7 @@ function applyFloorLayout(){
 }
 function setActiveGhosts(){
   if(!wanderingGhosts.length) return;
-  const fd=15-S.floor; const n=wanderingGhosts.length;
-  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+1)%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+3)%n].def.name, wanderingGhosts[(fd+4)%n].def.name]; S.activeGhostCount=active.length;
+  const active=wanderingGhosts.map(wg=>wg.def.name); S.activeGhostCount=active.length;
   for(const wg of wanderingGhosts){
     if(active.includes(wg.def.name)){ wg.state='patrol'; wg.cooldown=0; wg.outer.visible=true; const wp=wg.def.wps[0]; if(wp) wg.outer.position.set(wp[0],0,wp[1]); }
     else { wg.state='patrol'; wg.cooldown=9999; wg.outer.visible=false; }
@@ -926,18 +925,14 @@ async function loadCorpses(){
   }, undefined, ()=>{});
 }
 async function loadGhost(){
+  // V22: shadow scare uses Zaw-sent Darkness ghost, original texture, no toy recolor
   const build=(gltf)=>{
-    const inner=gltf.scene; normalizeGroup(inner,MONSTER_BASE);
+    const inner=gltf.scene; normalizeGroup(inner,0.7,0,0);
     const outer=new THREE.Group(); outer.add(inner);
-    inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(0xdddddd); o.material.transparent=true; o.material.opacity=0.65; o.material.roughness=1; } });
-    const eyeMat=new THREE.MeshBasicMaterial({color:0x000000});
-    for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),eyeMat); e.position.set(sx,2.73,0.18); outer.add(e); const pup=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,2.73,0.28); outer.add(pup); }
-    const mouth2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.05),eyeMat); mouth2.position.set(0,2.44,0.22); outer.add(mouth2);
     let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
     outer.visible=false; scene.add(outer); return {outer,mixer};
   };
-  let g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
-  if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
+  let g=await new Promise(res=>{ loader.load('ghost-dark.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
   if(g){ shadowGhost=g.outer; shadowGhostMixer=g.mixer; }
 }
 let wanderingGhosts=[], wanderingScare=false;
@@ -946,12 +941,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:11, floatY:0.1, chaseTime:5, sound:'moan'},
     {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:12, floatY:0.3, chaseTime:6, sound:'growl'},
     {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
-    {name:'Ghost Girl', scale:0.80, color:0xe8e8e8, opacity:0.85, eye:0x000000, pos:[-22,-12], wps:[[-22,-12],[-24,-6],[0,0],[-16,0]], speed:2.5, radius:10, floatY:0.3, chaseTime:4.5, sound:'scream'},
-    {name:'Child Ghost', scale:0.45, color:0x333333, opacity:0.9, eye:0xff0000, pos:[-26,20], wps:[[-26,20],[-16,12],[0,0],[-10,12]], speed:3.5, radius:8, floatY:0.1, chaseTime:3.5, sound:'giggle'},
-    {name:'Nurse Ghost', scale:0.75, color:0xdddddd, opacity:0.9, eye:0x000000, pos:[20,-20], wps:[[20,-20],[16,-6],[0,0],[20,0]], speed:2.8, radius:11, floatY:0.25, chaseTime:5, sound:'whisper', cap:true},
-    {name:'Shadow Ghost', scale:1.10, color:0x111111, opacity:0.95, eye:0xff0000, pos:[24,12], wps:[[24,12],[16,12],[0,0],[20,12]], speed:2.0, radius:12, floatY:0.4, chaseTime:6, sound:'growl'},
-    {name:'Crawl Ghost', scale:0.50, color:0x8a7a68, opacity:0.9, eye:0xffff00, pos:[0,12], wps:[[0,12],[10,12],[-10,12],[0,0]], speed:4.0, radius:9, floatY:0.05, chaseTime:3, sound:'growl', crawl:true},
-    {name:'Old Ghost', scale:0.85, color:0x999999, opacity:0.85, eye:0x000000, pos:[-20,12], wps:[[-20,12],[-16,12],[0,0],[-16,0]], speed:2.2, radius:11, floatY:0.1, chaseTime:5, sound:'moan', cane:true},
+    // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
     const build=(gltf,useReal)=>{
@@ -968,7 +958,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
       const eyeY2=2.07*def.scale/0.70;
       for(const sx of [-0.14,0.14]){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8),eyeMat); e.position.set(sx,eyeY2,0.18); outer.add(e); if(def.eye===0x000000){ const pup=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),new THREE.MeshBasicMaterial({color:0xff0000})); pup.position.set(sx,eyeY2,0.27); outer.add(pup); } }
       const mouthW=new THREE.Mesh(new THREE.BoxGeometry(0.24,0.16,0.05),eyeMat); mouthW.position.set(0,eyeY2*0.89,0.22); outer.add(mouthW);
-      if(def.name==='Ghost Girl'){ for(const hx of [-0.26,0.26]){ const hair=new THREE.Mesh(new THREE.BoxGeometry(0.13,1.0,0.09),new THREE.MeshBasicMaterial({color:0x000000})); hair.position.set(hx,eyeY2-0.3,0.15); outer.add(hair); } const sheetW=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.2,16,1,true), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,side:THREE.DoubleSide})); sheetW.position.set(0,0.6,0); outer.add(sheetW); }
+      // V22: white cone sheet removed
       if(def.cap){ const cap=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.12,0.4),new THREE.MeshBasicMaterial({color:0xffffff})); cap.position.set(0,eyeY2+0.35,0); outer.add(cap); const cross=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.05),new THREE.MeshBasicMaterial({color:0xff0000})); cross.position.set(0,eyeY2+0.35,0.22); outer.add(cross); }
       if(def.cane){ const cane=new THREE.Mesh(new THREE.BoxGeometry(0.07,1.4,0.07),new THREE.MeshBasicMaterial({color:0x5a4632})); cane.position.set(0.4,0.7,0.3); outer.add(cane); }
       if(def.crawl){ outer.rotation.x=0.7; }
@@ -978,11 +968,9 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     };
     let g=null;
     if(def.src){ g=await new Promise(res=>{ loader.load(def.src, gltf=>res(build(gltf,true)), undefined, ()=>res(null)); }); }
-    if(!g) g=await new Promise(res=>{ loader.load('cesium-man.glb', gltf=>res(build(gltf,false)), undefined, ()=>res(null)); });
-    if(!g) g=await new Promise(res=>{ loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', gltf=>res(build(gltf)), undefined, ()=>res(null)); });
-    if(g) wanderingGhosts.push(g);
+    if(g) wanderingGhosts.push(g); // V22: no CesiumMan fallback - sent ghosts only
   }
-  if(typeof setActiveGhosts==='function') setActiveGhosts(); toast('👻 သရဲတွေ အဆင်သင့် — '+wanderingGhosts.length+' ကောင်');
+  if(typeof setActiveGhosts==='function') setActiveGhosts(); toast('👻 သရဲတွေ အဆင်သင့်');
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
