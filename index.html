@@ -90,7 +90,7 @@ canvas{display:block}
   </div>
   <p class="small">ထိန်းချုပ်မှု — ဘယ်ဘက်: Joystick နဲ့ လမ်း • ညာဘက် မျက်နှာပြင်ကို ဆွဲပြီး Camera လှည့် • RUN ကို ဖိထားပြီး ပြေး • HIDE က ပုန်းစရာနားမှာ ပုန်း • ယူ/ဖွင့် က သော့နဲ့ တံခါး<br>
   Character: Khronos glTF Sample (CC0/CC-BY) website က CesiumMan — တကယ့် textured လူ 3D model, code အတုံးမဟုတ်။ Monster ကလည်း အဲဒီ လူပုံစံကို မှောင်ပြီး အရပ်ရှည်အောင် ပြောင်းထားတာ။</p>
-  <p style="font-size:12px;color:#888;margin-top:10px">V5 • Camera နီး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
+  <p style="font-size:12px;color:#888;margin-top:10px">V6 • Audit ပြင်: မီးအိမ် Camera ဘက် + ပုန်း / သရဲ မြင်ရအောင် + RUN multitouch + တုန် + ဆေး + ခေါင်မိုး မပါ + ပိုကြောက်စရာ + သရဲ ခြောက်တာ (ဘီလူးကြီး မဟုတ်) + Camera အကွာ + 👤−/👤+ အရွယ် ခလုတ် • Start ကို နှိပ်တာနဲ့ Landscape Fullscreen အလိုလို ဖြစ်မယ်</p>
 </div>
 
 <!-- Pause -->
@@ -291,6 +291,15 @@ for(const k of keyDefs){
   stem.position.y=-0.4; grp.add(ring,stem); grp.position.set(k.x,1.1,k.z); scene.add(grp);
   keyMeshes.push({def:k,mesh:grp,taken:false});
 }
+// Medkit: Pharmacy (12,14) - restores 1 heart, auto-pickup when hurt
+let medkitTaken=false;
+const medkitMesh=new THREE.Group();
+{
+  const box=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), new THREE.MeshStandardMaterial({color:0xffffff,roughness:.6}));
+  const cross1=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.15,0.1), new THREE.MeshBasicMaterial({color:0xff0000}));
+  const cross2=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.4,0.1), new THREE.MeshBasicMaterial({color:0xff0000}));
+  cross1.position.z=0.31; cross2.position.z=0.31; medkitMesh.add(box,cross1,cross2); medkitMesh.position.set(12,0.8,14); scene.add(medkitMesh);
+}
 function nearestKey(px,pz){ let best=null,bd=1e9; for(const km of keyMeshes){ if(km.taken)continue; const d=Math.hypot(km.def.x-px,km.def.z-pz); if(d<bd){bd=d;best=km;} } return {km:best,d:bd}; }
 
 /* ============ COLLISION HELPERS ============ */
@@ -398,9 +407,10 @@ renderer.domElement.addEventListener('pointerup',camEnd); renderer.domElement.ad
 const keysDown={};
 addEventListener('keydown',e=>{ keysDown[e.key.toLowerCase()]=true; if(e.key===' ') {e.preventDefault(); doInteract();} });
 addEventListener('keyup',e=>{ keysDown[e.key.toLowerCase()]=false; });
-let runHeld=false;
-$('runBtn').addEventListener('pointerdown',()=>{runHeld=true;S.run=true;$('runBtn').classList.add('active')});
-addEventListener('pointerup',()=>{runHeld=false;if(!keysDown['shift'])S.run=false;$('runBtn').classList.remove('active')});
+let runHeld=false, runId=null;
+$('runBtn').addEventListener('pointerdown',e=>{runId=e.pointerId;runHeld=true;S.run=true;$('runBtn').classList.add('active')});
+function runEnd(e){ if(e.pointerId===runId){ runId=null; runHeld=false; if(!keysDown['shift'])S.run=false; $('runBtn').classList.remove('active'); } }
+$('runBtn').addEventListener('pointerup',runEnd); $('runBtn').addEventListener('pointercancel',runEnd);
 $('hideBtn').addEventListener('click',()=>{
   if(S.hidden){ S.hidden=false; toast('ပုန်းတာ ရပ်လိုက်ပြီ'); }
   else if(S.hideTarget){ S.hidden=true; toast('🫥 ပုန်းနေသည် — Monster ဖြတ်သွားတဲ့အထိ မလှုပ်ပါနဲ့'); }
@@ -453,7 +463,7 @@ function endGame(win){
 }
 function winGame(){ doorSound(); endGame(true); }
 function loseHeart(){
-  S.hearts--; S.invuln=3; scareSound();
+  S.hearts--; S.invuln=3; scareSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
   const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
   toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
   playerPos.set(-18,0,12); monsterPos.set(20,0,20); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false;
@@ -523,7 +533,7 @@ function update(dt){
     playerPos.x=np[0]; playerPos.z=np[1];
     playerAngle=Math.atan2(mx,mz);
   }
-  if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; }
+  if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; player.visible=!S.hidden; } // AUDIT V6: hidden player was still standing in the open
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
   // footsteps while walking/running (so the game is never silent)
   if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; beep(65,.07,'sine',.07); } } else stepAcc=0;
@@ -545,7 +555,7 @@ function update(dt){
   camera.lookAt(playerPos.x,1.35,playerPos.z);
   playerRing.position.set(playerPos.x,0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.0,monsterPos.z);
   flash.position.set(playerPos.x,2.2,playerPos.z);
-  flash.target.position.set(playerPos.x+Math.sin(playerAngle)*5,1,playerPos.z+Math.cos(playerAngle)*5);
+  flash.target.position.set(playerPos.x+Math.sin(S.yaw)*5,1.3,playerPos.z+Math.cos(S.yaw)*5); // AUDIT V6: was playerAngle (movement) -> view was dark when camera turned without moving
   // flicker (stronger in scare)
   const t=performance.now()/1000;
   lights.forEach((L,i)=>{ if(S.scare){ L.intensity=Math.random()<0.4?0:14; } else { L.intensity=9+Math.sin(t*13+i*2)*2+(Math.random()<0.04?-7:0); } });
@@ -573,19 +583,27 @@ function update(dt){
   if(!S.paused && monsterState!=='scare' && monsterState!=='chase' && !S.hidden && S.invuln<=0){
     S.nextScare-=dt;
     if(S.nextScare<=0 && mDist>8){
-      const a2=Math.random()*Math.PI*2;
-      const np2=collide(playerPos.x+Math.sin(a2)*9, playerPos.z+Math.cos(a2)*9, 0.5);
-      monsterPos.set(np2[0],0,np2[1]); monsterAngle=Math.atan2(playerPos.x-np2[0], playerPos.z-np2[1]);
-      monsterState='scare'; S.scare=true; S.scareTimer=2.5; whisperSound(); scareSound(); toast('👻 သရဲ ပေါ်လာပြီ!');
+      let sx=playerPos.x, sz=playerPos.z, foundSpot=false;
+      for(let k=0;k<8;k++){
+        const a2=Math.random()*Math.PI*2;
+        const np2=collide(playerPos.x+Math.sin(a2)*9, playerPos.z+Math.cos(a2)*9, 0.5);
+        if(!lineBlocked(playerPos.x,playerPos.z,np2[0],np2[1])){ sx=np2[0]; sz=np2[1]; foundSpot=true; break; }
+      }
+      if(!foundSpot){ S.nextScare=8; }
+      else{
+      monsterPos.set(sx,0,sz); monsterAngle=Math.atan2(playerPos.x-sx, playerPos.z-sz);
+      monsterState='scare'; S.scare=true; S.scareTimer=2.5; whisperSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200); toast('👻 သရဲ ပေါ်လာပြီ!');
       S.nextScare=28+Math.random()*15;
+      }
     }
   }
   if(monsterState==='scare'){
+    monsterAngle=Math.atan2(playerPos.x-monsterPos.x, playerPos.z-monsterPos.z);
     S.scareTimer-=dt;
     if(S.scareTimer<=0){ monsterState='patrol'; S.scare=false; monsterPos.set(20,0,20); toast('👻 သရဲ ပျောက်သွားပြီ…'); }
   }
   const canSee=!S.hidden && monsterState!=='scare' && mDist<16 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0;
-  if(canSee){ if(!S.chase){ S.chase=true; scareSound(); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
+  if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
     else if(mDist>20){ monsterState='patrol'; S.chase=false; }
@@ -617,6 +635,7 @@ function update(dt){
   } else S.catchTimer=0;
   // key bob
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
+  if(!medkitTaken){ medkitMesh.rotation.y+=dt; if(Math.hypot(12-playerPos.x,14-playerPos.z)<1.8 && S.hearts<3){ medkitTaken=true; medkitMesh.visible=false; S.hearts++; beep(660,.15); setTimeout(()=>beep(880,.2),120); toast('💊 ဆေးရပြီ! အသက် +1'); } }
   updateHUD();
 }
 function animate(){
