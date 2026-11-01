@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V22 • သရဲအစစ် ဘဲ — တြိဂံအဖြူ သရဲအတု ဖျောက်, မင်းပို့တဲ့ သရဲဘဲ</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V23 • သရဲအစစ် လမ်းလျောက် — Girl walk/run, Darkness Stalking/Chasing</p>
 </div>
 
 <!-- Pause -->
@@ -950,9 +950,16 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
       if(def.real && useReal){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x000000); } }); }
       else inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.color.set(def.color); o.material.transparent=true; o.material.opacity=def.opacity; o.material.roughness=1; } });
       if(def.real && useReal){
-        let mixer=null; if(gltf.animations.length){ mixer=new THREE.AnimationMixer(inner); mixer.clipAction(gltf.animations[0]).play(); }
+        let mixer=null, actions={}, curAnim=null;
+        if(gltf.animations.length){
+          mixer=new THREE.AnimationMixer(inner);
+          for(const clip of gltf.animations){ actions[clip.name]=mixer.clipAction(clip); }
+          const init = def.name==='Ghost Girl Animated' ? 'walk' : (def.name==='Darkness Ghost' ? 'Armature|Stalking 1' : gltf.animations[0].name);
+          if(actions[init]){ actions[init].play(); curAnim=init; }
+          else if(gltf.animations[0]){ actions[gltf.animations[0].name].play(); curAnim=gltf.animations[0].name; }
+        }
         outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
-        return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
+        return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol',actions,curAnim};
       }
       const eyeMat=new THREE.MeshBasicMaterial({color:def.eye});
       const eyeY2=2.07*def.scale/0.70;
@@ -1498,7 +1505,14 @@ function update(dt){
         wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else screamSound(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
     }
-    if(wg.mixer && wg.outer.visible) wg.mixer.update(dt*0.9);
+    if(wg.mixer && wg.outer.visible){
+      // V23: walk/run while moving, idle while scare-facing, Chasing while chasing (sent files' real clips)
+      let want=null;
+      if(wg.def.name==='Ghost Girl Animated'){ want = wg.state==='chase' ? 'run' : (wg.state==='scare' ? 'idle_1' : 'walk'); }
+      else if(wg.def.name==='Darkness Ghost'){ want = wg.state==='chase' ? 'Armature|Chasing' : 'Armature|Stalking 1'; }
+      if(want && wg.actions && wg.actions[want] && wg.curAnim!==want){ if(wg.curAnim && wg.actions[wg.curAnim]) wg.actions[wg.curAnim].stop(); wg.actions[want].play(); wg.curAnim=want; }
+      wg.mixer.update(dt*(wg.state==='chase'?1.4:0.9));
+    }
   }
   if(S.playing && !S.paused){ S.whisperTimer-=dt; if(S.whisperTimer<=0){ let nd=1e9; for(const wg of wanderingGhosts){ if(wg.outer && wg.outer.visible){ const d=Math.hypot(wg.outer.position.x-playerPos.x,wg.outer.position.z-playerPos.z); if(d<nd) nd=d; } } if(nd<6 && !S.hidden){ whisperSound(); } S.whisperTimer=3; } }
   // V15 apparitions: ghost silhouettes appear/vanish in every room, whisper when near
