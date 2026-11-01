@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V24 • သရဲအသစ် 2 ကောင် — Ghost Pig + Lethal Ghost Girl (မင်းပို့တဲ့ ဖိုင်)</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V25 • သရဲအစစ်နဲ့ ကြောက်စရာကောင်း — လိုက်တာ ပိုဝေး, ရှေ့တည့်တည့် ပိုခဏပေါ်</p>
 </div>
 
 <!-- Pause -->
@@ -938,11 +938,11 @@ async function loadGhost(){
 let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်နေသည်…');
   const defs=[
-    {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:11, floatY:0.1, chaseTime:5, sound:'moan'},
-    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:12, floatY:0.3, chaseTime:6, sound:'growl'},
-    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
-    {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:11, floatY:0.1, chaseTime:5, sound:'growl'},
-    {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:10, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:13, floatY:0.1, chaseTime:5, sound:'moan'},
+    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.7, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:14, floatY:0.3, chaseTime:6, sound:'growl'},
+    {name:'Ghost Girl Animated', src:'ghost-girl.glb', real:true, scale:1.0, yOffset:0, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:13, floatY:0.1, chaseTime:5, sound:'growl'},
+    {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
@@ -1534,7 +1534,7 @@ function update(dt){
   if(S.playing && !S.paused && !S.hidden && S.invuln<=0){
     S.frontScareTimer-=dt;
     if(S.frontScareTimer<=0){
-      S.frontScareTimer=35+Math.random()*20;
+      S.frontScareTimer=25+Math.random()*15; // V25 scarier, more frequent front jumpscare
       const fx=playerPos.x+Math.sin(S.yaw)*2.5, fz=playerPos.z+Math.cos(S.yaw)*2.5;
       const fp=collide(fx,fz,0.5);
       if(Math.hypot(fp[0]-playerPos.x,fp[1]-playerPos.z)>1.2 && !lineBlocked(playerPos.x,playerPos.z,fp[0],fp[1])){
