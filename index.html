@@ -103,8 +103,8 @@ canvas{display:block}
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း + နှေးနှေး သွား</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V40 • HIDE ပုန်း + နှေးနှေး သွား ပြန် + Compass ပေါက်ကို တည့်တည့် ပြ — အကုန်</p>
+  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်)</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V41 • HIDE ဖွင့်ထားရင် မလှုပ် (အရင်လို) + Compass ပေါက် + သော့ လမ်းကြောင်း စစ်ပြီး — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -411,7 +411,7 @@ function updateHUD(){
   const fi=$('floorInfo'); if(fi) fi.textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
   $('staminaFill').style.width=S.stamina+'%';
   $('chase').style.display=S.chase?'block':'none';
-  $('hideTag').style.display=S.hidden?'block':'none'; if(S.hidden && $('hideTag')) $('hideTag').textContent='🫥 ပုန်းနေသည် • နှေးနှေး သွား';
+  $('hideTag').style.display=S.hidden?'block':'none';
   $('actBtn').disabled=!S.interactTarget;
   $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit'&&S.doorOpen)?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit'||S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
 }
@@ -1433,11 +1433,11 @@ function update(dt){
   if(keysDown['d']||keysDown['arrowright'])ix+=1;
   S.run = runHeld || !!keysDown['shift'];
   const il=Math.hypot(ix,iy); if(il>1){ix/=il;iy/=il;}
-  const moving=il>0.08;
+  const moving=il>0.08 && !S.hidden;
   // stamina
   const running=moving && S.run && S.stamina>0 && !S.hidden;
   if(running)S.stamina=Math.max(0,S.stamina-(30+(15-S.floor)*1)*dt); else S.stamina=Math.min(100,S.stamina+12*dt); // V12 harder down: drain +1/floor
-  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il))*(S.hidden?0.5:1); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
+  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il)); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
   // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
   // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
   // joystick up = -iy = forward amount, joystick right = ix = right amount.
