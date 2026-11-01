@@ -101,7 +101,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V14 • Beacon + Auto Fullscreen + ပိုကြောက် + ပို Realistic</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V15 • Nightmare - အထပ်တိုင်း ကြောက်စရာ ပြည့် + သရဲ ၅+ ကောင်</p>
 </div>
 
 <!-- Pause -->
@@ -310,13 +310,15 @@ function applyFloorLayout(){
       pr.x=pr.ox+dx; pr.z=pr.oz+dz; pr.mesh.position.x=pr.x; pr.mesh.position.z=pr.z;
     }
   }
+  if(typeof extraPools!=='undefined'){ extraPools.forEach((pm,i)=>{ const sl=extraPoolSlots[(fd*3+i*2)%extraPoolSlots.length]; pm.position.x=sl[0]; pm.position.z=sl[1]; }); }
+  if(typeof dynamicWritings!=='undefined'){ dynamicWritings.forEach((dw,i)=>{ dw.userData.set(SCARY_TEXTS[(fd+i*3)%SCARY_TEXTS.length]); }); }
   const lc=FLOOR_LIGHTS[fd%5];
   for(let i=0;i<5 && i<lights.length;i++){ try{ lights[i].color.set(lc); }catch(e){} }
 }
 function setActiveGhosts(){
   if(!wanderingGhosts.length) return;
   const fd=15-S.floor; const n=wanderingGhosts.length;
-  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+4)%n].def.name];
+  const active=[wanderingGhosts[fd%n].def.name, wanderingGhosts[(fd+1)%n].def.name, wanderingGhosts[(fd+2)%n].def.name, wanderingGhosts[(fd+3)%n].def.name, wanderingGhosts[(fd+4)%n].def.name];
   for(const wg of wanderingGhosts){
     if(active.includes(wg.def.name)){ wg.state='patrol'; wg.cooldown=0; wg.outer.visible=true; const wp=wg.def.wps[0]; if(wp) wg.outer.position.set(wp[0],0,wp[1]); }
     else { wg.state='patrol'; wg.cooldown=9999; wg.outer.visible=false; }
@@ -713,6 +715,30 @@ function makeBloodWriting(text,x,y,z,ry){
 }
 makeBloodWriting('HELP',0,1.8,-2.69,0); makeBloodWriting('RUN',0,1.8,2.69,Math.PI); makeBloodWriting("DON'T LOOK BACK",-3.69,1.8,-12,Math.PI/2);
 makeBloodWriting("DON'T SLEEP",3.69,1.8,12,-Math.PI/2); makeBloodWriting('HE IS HERE',55,1.8,-14.69,0); makeBloodPool(36,0,1.0); makeBloodPool(55,0,1.2); makeHandprint(39.69,1.2,0,-Math.PI/2);
+// V15: every floor full of horror - extra pools (repositioned per floor), dynamic writings, pulsing red lamps, ghost apparitions
+const extraPools=[]; const extraPoolSlots=[[-24,-16],[24,-16],[-20,12],[20,12],[0,-12],[0,12],[-16,0],[16,0],[48,-10],[62,10],[55,0],[-28,20],[10,-20],[-10,20],[36,0],[65,0],[45,-12],[45,12],[-24,0],[24,0]];
+for(let i=0;i<12;i++){ const pm=makeBloodPool(extraPoolSlots[i][0],extraPoolSlots[i][1],1.0+Math.random()*0.5); extraPools.push(pm); }
+function makeDynamicWriting(x,y,z,ry){
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=128; const ctx=cv.getContext('2d'); const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3,0.75), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.95})); mesh.position.set(x,y,z); mesh.rotation.y=ry; scene.add(mesh);
+  mesh.userData.set=(txt)=>{ ctx.clearRect(0,0,512,128); ctx.fillStyle='#8a1010'; ctx.font='bold 64px sans-serif'; ctx.textAlign='center'; ctx.fillText(txt,256,80); tex.needsUpdate=true; };
+  return mesh;
+}
+const dynamicWritings=[makeDynamicWriting(-31.6,1.8,-8,Math.PI/2), makeDynamicWriting(31.6,1.8,-8,-Math.PI/2), makeDynamicWriting(-10,1.8,23.6,Math.PI), makeDynamicWriting(10,1.8,-23.6,0)];
+const SCARY_TEXTS=["BEHIND YOU","IT'S COMING","NO ESCAPE","DON'T LOOK","IT SEES YOU","RUN NOW","DEAD END","HE IS HERE","CAN'T HIDE","IT KNOWS"];
+const redLamps=[];
+for(const [rx,rz] of [[-20,-12],[20,-12],[-20,12],[20,12]]){ const rl=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10), new THREE.MeshBasicMaterial({color:0xff0000,transparent:true,opacity:0.8})); rl.position.set(rx,3.2,rz); scene.add(rl); redLamps.push(rl); }
+const apparitions=[];
+for(let i=0;i<8;i++){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.6,12,1,true), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.45,side:THREE.DoubleSide})); body.position.y=0.8;
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.28,10,10), new THREE.MeshBasicMaterial({color:0xe8e8e8,transparent:true,opacity:0.6})); head.position.y=1.9;
+  const e1=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:0xff0000})); e1.position.set(-0.1,1.95,0.24);
+  const e2=e1.clone(); e2.position.x=0.1;
+  g.add(body,head,e1,e2); g.position.set(0,0,0); g.visible=false; scene.add(g);
+  apparitions.push({mesh:g, timer:3+i*2, visible:false});
+}
+const apparitionSlots=[[-20,-12],[20,-12],[-20,12],[20,12],[0,-12],[0,12],[-16,0],[16,0],[48,0],[55,-10],[55,10],[36,0]];
 function makeDragTrail(x1,z1,x2,z2){
   const len=Math.hypot(x2-x1,z2-z1);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(0.7,len), new THREE.MeshBasicMaterial({map:getBloodTex(),transparent:true,opacity:0.8}));
@@ -1306,7 +1332,7 @@ function update(dt){
         if(!lineBlocked(playerPos.x,playerPos.z,np3[0],np3[1])){ shadowGhost.position.set(np3[0],0,np3[1]); shadowGhost.rotation.y=Math.atan2(playerPos.x-np3[0], playerPos.z-np3[1]); shadowGhost.visible=true; S.shadowScare=true; }
       }
       toast('👻 သရဲ ပေါ်လာပြီ!');
-      S.nextScare=18+Math.random()*12;
+      S.nextScare=12+Math.random()*8;
       }
     }
   }
@@ -1323,7 +1349,7 @@ function update(dt){
     const loseAfter=(S.hideLocker?2.5:5.0)+(15-S.floor)*0.2; // V12 harder down: monster stays even longer
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
   } else S.hideTimer=0;
-  const canSee=!S.hidden && monsterState!=='scare' && mDist<20 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V10 sees farther
+  const canSee=!S.hidden && monsterState!=='scare' && mDist<24 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V10 sees farther
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
@@ -1401,6 +1427,17 @@ function update(dt){
     if(wg.mixer && wg.outer.visible) wg.mixer.update(dt*0.9);
   }
   if(S.playing && !S.paused){ S.whisperTimer-=dt; if(S.whisperTimer<=0){ let nd=1e9; for(const wg of wanderingGhosts){ if(wg.outer && wg.outer.visible){ const d=Math.hypot(wg.outer.position.x-playerPos.x,wg.outer.position.z-playerPos.z); if(d<nd) nd=d; } } if(nd<6 && !S.hidden){ whisperSound(); } S.whisperTimer=3; } }
+  // V15 apparitions: ghost silhouettes appear/vanish in every room, whisper when near
+  for(let ai=0; ai<apparitions.length; ai++){
+    const ap=apparitions[ai]; ap.timer-=dt;
+    if(ap.timer<=0){
+      ap.visible=!ap.visible; ap.timer=ap.visible?3+Math.random()*4:5+Math.random()*8;
+      if(ap.visible){ const sl=apparitionSlots[Math.floor(Math.random()*apparitionSlots.length)]; ap.mesh.position.set(sl[0],0,sl[1]); ap.mesh.visible=true; if(Math.hypot(sl[0]-playerPos.x,sl[1]-playerPos.z)<12) whisperSound(); }
+      else ap.mesh.visible=false;
+    }
+    if(ap.visible){ ap.mesh.rotation.y=Math.atan2(playerPos.x-ap.mesh.position.x, playerPos.z-ap.mesh.position.z); ap.mesh.position.y=Math.sin(t*2+ai)*0.1; }
+  }
+  for(let ri=0; ri<redLamps.length; ri++){ const s=1+Math.sin(t*5+ri*1.7)*0.35; redLamps[ri].scale.set(s,s,s); redLamps[ri].material.opacity=0.5+Math.sin(t*5+ri)*0.3; }
   // V14 anti-stuck: pushing joystick 2s without moving = wall, warn + point to beacon
   if(S.playing && !S.paused && S.joy.active){
     S.stuckTimer+=dt;
@@ -1464,7 +1501,7 @@ function update(dt){
     }
     // Blackout: every ~30-45s, lights out 2s, scream, flashlight only = very scary hospital
     if(S.blackout>0){ S.blackout-=dt; }
-    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=2.5; S.blackoutTimer=Math.max(20,35-(15-S.floor))+Math.random()*10; screamSound(); toast('⚡ မီး ပျက်သွားပြီ!'); } }
+    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=2.5; S.blackoutTimer=Math.max(15,28-(15-S.floor))+Math.random()*8; screamSound(); toast('⚡ မီး ပျက်သွားပြီ!'); } }
   }
   // key bob
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
@@ -1492,7 +1529,7 @@ function update(dt){
   // twitching corpse: last corpse (vertical corridor) jerks every ~20-35s
   if(corpseWrappers.length){
     const tw=corpseWrappers[corpseWrappers.length-1];
-    if(S.time>nextTwitch){ twitchUntil=S.time+1; nextTwitch=S.time+20+Math.random()*15; whisperSound(); toast('👻 လူသေကောင် လှုပ်သွားသလား…?'); }
+    if(S.time>nextTwitch){ twitchUntil=S.time+1; nextTwitch=S.time+10+Math.random()*10; whisperSound(); toast('👻 လူသေကောင် လှုပ်သွားသလား…?'); }
     tw.rotation.z=(S.time<twitchUntil)?Math.sin(S.time*30)*0.05:0;
   }
   updateHUD();
