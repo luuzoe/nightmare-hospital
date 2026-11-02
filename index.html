@@ -103,13 +103,27 @@ canvas{display:block}
     <button class="btn" id="startBtn" onclick="window.__nhStart?window.__nhStart(event):(document.getElementById('startError').textContent='⚠️ JS handler မရှိဘူး',document.getElementById('startError').style.display='block')">▶ စဆော့မယ်</button>
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
+    <button class="btn ghost" id="tutorialBtn">📖 ဘယ်လိုဆော့မလဲ</button>
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
+  <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V79 • ထစ်တာ ပြင် — ချောမွေ့</p>
-  <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V80 • Tutorial + Load + သန့်တဲ့ Start</p>
+  <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
+</div>
+
+<div id="tutorialScreen" class="screen hidden">
+  <h2>📖 ဘယ်လိုဆော့ရမလဲ</h2>
+  <p style="font-size:15px;text-align:left">🕹️ <b>ဘယ် Joystick</b> = လမ်း • <b>ညာဘက် ဆွဲ</b> = Camera လှည့်<br>
+  🏃 <b>RUN</b> = ပြေး (စွမ်းအင် ကုန်ရင် ရပ်ရမယ်)<br>
+  🫥 <b>HIDE</b> = ပုန်း — HIDE ဖွင့်ထားရင် လမ်းမလျှောက်ရဘူး, သရဲ အလွယ်မမြင်ဘူး (အရမ်းနီးရင် တွေ့တယ်)<br>
+  ✋ <b>ယူ/ဖွင့်</b> = သော့ (အနီး 3m) / ပစ္စည်း (အနီး 1.8m) ယူ<br>
+  🎯 <b>Mission ပြီးမှ</b> လှေကားအောက် ဆင်း — mission မပြီးပဲ လှေကားအောက် ရောက်ရင် သရဲက ချက်ချင်း သတ်တယ် (လမ်းတစ်ဝက်မှာ သတိပေးတယ်)<br>
+  💀 သရဲဖမ်းရင် နှလုံး 1 လုံး + ယူထားတဲ့ ပစ္စည်း 1 ခု ကျတယ်, သေရင် 5 စက္ကန့် ရေတွက်ပြီး ပြန်ပေါ်တယ်<br>
+  💾 Save: ထပ်/နှလုံး/အချိန် သိမ်းတယ်, ဆက်ဆော့မယ် နဲ့ ပြန်ဆော့လို့ရတယ်</p>
+  <div class="row"><button class="btn" id="tutorialCloseBtn">✅ နားလည်ပြီ, စဆော့မယ်</button></div>
 </div>
 
 <!-- Pause -->
@@ -210,8 +224,8 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 try{ window.__nhModuleStarted=true; const bs0=document.getElementById('bootStatus'); if(bs0) bs0.textContent='Module started…'; }catch(e){}
 let _starting=false;
-function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
-try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElementById('earlyError'); if(!_sb){ if(_ee){ _ee.textContent='⚠️ Early: startBtn not found in DOM'; _ee.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; window.__nhEarlyOK=true; if(_ee){ _ee.textContent='Early listeners OK'; _ee.style.display='block'; } const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _ee2=document.getElementById('earlyError'); if(_ee2){ _ee2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _ee2.style.display='block'; } }
+function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(window.__nhCoreReady!==true){ const cs=$('coreStatus'); if(cs) cs.textContent='⏳ သရဲတွေ တင်နေတုန်း… ခဏစောင့်, ပြီးရင် စဆော့မယ် ထပ်နှိပ်'; return; } if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
+try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElementById('earlyError'); if(!_sb){ if(_ee){ _ee.textContent='⚠️ Early: startBtn not found in DOM'; _ee.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; window.__nhEarlyOK=true; if(_ee){ _ee.textContent='Early listeners OK'; } const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _ee2=document.getElementById('earlyError'); if(_ee2){ _ee2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _ee2.style.display='block'; } }
 
 /* ============ STATE ============ */
 const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false, hideSneak:true};
@@ -1583,7 +1597,7 @@ try{ window.__nhCP='GF2 before saveProgress'; const _bs=document.getElementById(
 function saveProgress(){ try{ if(!S.playing) return; const fmS=floorMission(); const data={floor:S.floor, hearts:S.hearts, time:Math.floor(S.time), missionType:fmS.type, items:S.items, keys:S.keys, switchIdx:S.switchIdx, corpseTouched:(S.corpseTouched||[]).slice(), visitedRooms:ROOM_ZONES.map((z,i)=>S.visited.includes(z)?i:-1).filter(i=>i>=0), visitedLockers:hideSpots.map((h,i)=>S.visited.includes(h)?i:-1).filter(i=>i>=0), missionDone:S.missionDone, hideTotal:S.hideTotal, distance:S.distance, missionTimer:S.missionTimer, switchOn:S.switchOn, keysTaken:keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED).map(km=>km.def.id)}; localStorage.setItem('nh_save', JSON.stringify(data)); }catch(e){} }
 window.addEventListener('beforeunload', saveProgress);
 try{ window.__nhCP='GF3 before continueGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF3 before continueGame'; }catch(e){}
-function continueGame(){ let sv=null; try{ sv=JSON.parse(localStorage.getItem('nh_save')||'null'); }catch(e){} _skipKeyShuffle=true; startGame(); if(sv && sv.floor>=1 && sv.floor<=15){ S.floor=sv.floor; S.hearts=sv.hearts||3; playerPos.set(sv.floor===15?-81:-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; startFloorMission(); const fm2=floorMission(); if(fm2.type==='keys' && sv.keysTaken){ S.keys=0; for(const km of keyMeshes){ if(km.def.id<=KEYS_NEEDED){ if(sv.keysTaken.includes(km.def.id)){ km.taken=true; km.mesh.visible=false; S.keys++; } else { km.taken=false; km.mesh.visible=true; } } } } else if((fm2.type==='order'||fm2.type==='dark'||fm2.type==='timed'||fm2.type==='final'||fm2.type==='timedorder') && typeof sv.items==='number' && sv.items>0){ const n=Math.min(sv.items,fm2.need); S.items=0; itemMeshes.forEach((im,idx)=>{ if(idx<n){ im.taken=true; im.mesh.visible=false; S.items++; } }); } if(typeof sv.switchIdx==='number') S.switchIdx=sv.switchIdx; if(Array.isArray(sv.corpseTouched)){ S.corpseTouched=sv.corpseTouched.slice(); S.corpseIdx=S.corpseTouched.length; } if(fm2.type==='rooms' && Array.isArray(sv.visitedRooms)){ S.visited=sv.visitedRooms.map(i=>ROOM_ZONES[i]).filter(Boolean); } if((fm2.type==='lockers'||fm2.type==='darklockers') && Array.isArray(sv.visitedLockers)){ S.visited=sv.visitedLockers.map(i=>hideSpots[i]).filter(Boolean); } if(typeof sv.hideTotal==='number') S.hideTotal=sv.hideTotal; if(typeof sv.distance==='number') S.distance=sv.distance; if(typeof sv.missionTimer==='number') S.missionTimer=sv.missionTimer; if(typeof sv.switchOn==='boolean') S.switchOn=sv.switchOn; if(typeof sv.missionDone==='boolean') S.missionDone=sv.missionDone; if(missionComplete()){ setObjective('တိုးတက်မှု ပြန်ရပြီ! လှေကား (N5-N6 ကြား) သွား'); } updateHUD(); toast('💾 သိမ်းထားတဲ့ အထပ် '+sv.floor+' ကနေ ဆက်ဆော့သည်, တိုးတက်မှု ပြန်ရပြီ'); } }
+function continueGame(){ if(window.__nhCoreReady!==true){ const cs=$('coreStatus'); if(cs) cs.textContent='⏳ သရဲတွေ တင်နေတုန်း… ခဏစောင့်, ပြီးရင် ဆက်ဆော့မယ် ထပ်နှိပ်'; return; } let sv=null; try{ sv=JSON.parse(localStorage.getItem('nh_save')||'null'); }catch(e){} _skipKeyShuffle=true; startGame(); if(sv && sv.floor>=1 && sv.floor<=15){ S.floor=sv.floor; S.hearts=sv.hearts||3; playerPos.set(sv.floor===15?-81:-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; startFloorMission(); const fm2=floorMission(); if(fm2.type==='keys' && sv.keysTaken){ S.keys=0; for(const km of keyMeshes){ if(km.def.id<=KEYS_NEEDED){ if(sv.keysTaken.includes(km.def.id)){ km.taken=true; km.mesh.visible=false; S.keys++; } else { km.taken=false; km.mesh.visible=true; } } } } else if((fm2.type==='order'||fm2.type==='dark'||fm2.type==='timed'||fm2.type==='final'||fm2.type==='timedorder') && typeof sv.items==='number' && sv.items>0){ const n=Math.min(sv.items,fm2.need); S.items=0; itemMeshes.forEach((im,idx)=>{ if(idx<n){ im.taken=true; im.mesh.visible=false; S.items++; } }); } if(typeof sv.switchIdx==='number') S.switchIdx=sv.switchIdx; if(Array.isArray(sv.corpseTouched)){ S.corpseTouched=sv.corpseTouched.slice(); S.corpseIdx=S.corpseTouched.length; } if(fm2.type==='rooms' && Array.isArray(sv.visitedRooms)){ S.visited=sv.visitedRooms.map(i=>ROOM_ZONES[i]).filter(Boolean); } if((fm2.type==='lockers'||fm2.type==='darklockers') && Array.isArray(sv.visitedLockers)){ S.visited=sv.visitedLockers.map(i=>hideSpots[i]).filter(Boolean); } if(typeof sv.hideTotal==='number') S.hideTotal=sv.hideTotal; if(typeof sv.distance==='number') S.distance=sv.distance; if(typeof sv.missionTimer==='number') S.missionTimer=sv.missionTimer; if(typeof sv.switchOn==='boolean') S.switchOn=sv.switchOn; if(typeof sv.missionDone==='boolean') S.missionDone=sv.missionDone; if(missionComplete()){ setObjective('တိုးတက်မှု ပြန်ရပြီ! လှေကား (N5-N6 ကြား) သွား'); } updateHUD(); toast('💾 သိမ်းထားတဲ့ အထပ် '+sv.floor+' ကနေ ဆက်ဆော့သည်, တိုးတက်မှု ပြန်ရပြီ'); } }
 try{ window.__nhCP='GF4 before startGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF4 before startGame'; }catch(e){}
 function startGame(){
   try{ localStorage.removeItem('nh_save'); }catch(e){}
@@ -2298,18 +2312,34 @@ function animate(){
   update(dt);
   renderer.render(scene,camera);
 }
+function setCoreStatus(txt){ try{ const el=document.getElementById('coreStatus'); if(el) el.textContent=txt; }catch(e){} }
+setTimeout(()=>{ if(window.__nhCoreReady!==true){ window.__nhCoreReady=true; setCoreStatus('⚠️ internet နှေးနေတယ် — စဆော့လို့ရပြီ, တချို့ သရဲ နောက်မှ ပေါ်လာနိုင်တယ်'); } },90000);
 loadCharacter().then(async ok=>{
   $('load').style.display='none';
-  await new Promise(r=>setTimeout(r,50));
+  setCoreStatus('⏳ အလောင်းတွေ တင်နေသည်…');
   await loadCorpses();
-  await new Promise(r=>setTimeout(r,50));
+  setCoreStatus('⏳ သရဲကြီး တင်နေသည်…');
   await loadGhost();
-  await new Promise(r=>setTimeout(r,50));
+  setCoreStatus('⏳ နောက်ထပ် သရဲတွေ တင်နေသည်…');
   await loadWanderingGhosts();
+  window.__nhCoreReady=true;
+  setCoreStatus('✅ အားလုံး အဆင်သင့် — စဆော့လို့ရပြီ');
   if(!ok) toast('⚠️ Character load မအောင်ဘူး — internet စစ်ပြီး ပြန်ဖွင့်ပါ');
   // still allow start; character may appear via fallback in scene? if no player, start screen still works but game will show no models
 });
 animate();
+</script>
+<script>
+(function(){
+  var tut=document.getElementById('tutorialScreen');
+  var btn=document.getElementById('tutorialBtn');
+  var closeBtn=document.getElementById('tutorialCloseBtn');
+  function showTut(){ if(tut) tut.classList.remove('hidden'); }
+  function hideTut(){ if(tut) tut.classList.add('hidden'); try{ localStorage.setItem('nh_tutorial_seen','1'); }catch(e){} }
+  if(btn) btn.addEventListener('click',showTut);
+  if(closeBtn) closeBtn.addEventListener('click',hideTut);
+  try{ if(!localStorage.getItem('nh_tutorial_seen')) showTut(); }catch(e){}
+})();
 </script>
 </body>
 </html>
