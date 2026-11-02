@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V66 • resetGame ပြန်ထည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V67 • save+continue+start ပြန်ထည့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1556,9 +1556,26 @@ function resetGame(){
   updateHUD();
 }
 try{ window.__nhCP='GF2 before saveProgress'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF2 before saveProgress'; }catch(e){}
-function saveProgress(){}
-function continueGame(){}
-function startGame(){ try{ $('startScreen').classList.add('hidden'); $('hud').classList.add('on'); }catch(e){} S.playing=true; try{ toast('V65 stub start'); }catch(e){} }
+function saveProgress(){ try{ if(!S.playing) return; const fmS=floorMission(); const data={floor:S.floor, hearts:S.hearts, time:Math.floor(S.time), missionType:fmS.type, items:S.items, keys:S.keys, switchIdx:S.switchIdx, corpseTouched:(S.corpseTouched||[]).slice(), visitedRooms:ROOM_ZONES.map((z,i)=>S.visited.includes(z)?i:-1).filter(i=>i>=0), visitedLockers:hideSpots.map((h,i)=>S.visited.includes(h)?i:-1).filter(i=>i>=0), missionDone:S.missionDone, hideTotal:S.hideTotal, distance:S.distance, missionTimer:S.missionTimer, switchOn:S.switchOn, keysTaken:keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED).map(km=>km.def.id)}; localStorage.setItem('nh_save', JSON.stringify(data)); }catch(e){} }
+window.addEventListener('beforeunload', saveProgress);
+try{ window.__nhCP='GF3 before continueGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF3 before continueGame'; }catch(e){}
+function continueGame(){ let sv=null; try{ sv=JSON.parse(localStorage.getItem('nh_save')||'null'); }catch(e){} _skipKeyShuffle=true; startGame(); if(sv && sv.floor>=1 && sv.floor<=15){ S.floor=sv.floor; S.hearts=sv.hearts||3; playerPos.set(sv.floor===15?-81:-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; startFloorMission(); const fm2=floorMission(); if(fm2.type==='keys' && sv.keysTaken){ S.keys=0; for(const km of keyMeshes){ if(km.def.id<=KEYS_NEEDED){ if(sv.keysTaken.includes(km.def.id)){ km.taken=true; km.mesh.visible=false; S.keys++; } else { km.taken=false; km.mesh.visible=true; } } } } else if((fm2.type==='order'||fm2.type==='dark'||fm2.type==='timed'||fm2.type==='final'||fm2.type==='timedorder') && typeof sv.items==='number' && sv.items>0){ const n=Math.min(sv.items,fm2.need); S.items=0; itemMeshes.forEach((im,idx)=>{ if(idx<n){ im.taken=true; im.mesh.visible=false; S.items++; } }); } if(typeof sv.switchIdx==='number') S.switchIdx=sv.switchIdx; if(Array.isArray(sv.corpseTouched)){ S.corpseTouched=sv.corpseTouched.slice(); S.corpseIdx=S.corpseTouched.length; } if(fm2.type==='rooms' && Array.isArray(sv.visitedRooms)){ S.visited=sv.visitedRooms.map(i=>ROOM_ZONES[i]).filter(Boolean); } if((fm2.type==='lockers'||fm2.type==='darklockers') && Array.isArray(sv.visitedLockers)){ S.visited=sv.visitedLockers.map(i=>hideSpots[i]).filter(Boolean); } if(typeof sv.hideTotal==='number') S.hideTotal=sv.hideTotal; if(typeof sv.distance==='number') S.distance=sv.distance; if(typeof sv.missionTimer==='number') S.missionTimer=sv.missionTimer; if(typeof sv.switchOn==='boolean') S.switchOn=sv.switchOn; if(typeof sv.missionDone==='boolean') S.missionDone=sv.missionDone; if(missionComplete()){ setObjective('တိုးတက်မှု ပြန်ရပြီ! လှေကား (N5-N6 ကြား) သွား'); } updateHUD(); toast('💾 သိမ်းထားတဲ့ အထပ် '+sv.floor+' ကနေ ဆက်ဆော့သည်, တိုးတက်မှု ပြန်ရပြီ'); } }
+try{ window.__nhCP='GF4 before startGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF4 before startGame'; }catch(e){}
+function startGame(){
+  try{ localStorage.removeItem('nh_save'); }catch(e){}
+  $('startScreen').classList.add('hidden'); $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden');
+  $('hud').classList.add('on'); $('load').style.display='none';
+  S.playing=true; S.paused=false;
+  resetGame();
+  try{ ac(); }catch(e){}
+  try{ tryAutoLandscape(); }catch(e){}
+  setTimeout(()=>{ try{ tryAutoLandscape(); }catch(e){} },500);
+  try{ startAmbient(); beep(440,.15); setTimeout(()=>beep(660,.2),150); }catch(e){}
+  if(typeof checkOrientation==='function')checkOrientation();
+  setTimeout(()=>{ const h=$('hint'); if(h) h.style.display='none'; },6000);
+  toast('👹 Monster က Morgue ဘက်မှာ ရှိနေသည် — တိတ်တိတ်ရှာပါ');
+}
+try{ window.__nhCP='GF5 before pauseGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF5 before pauseGame'; }catch(e){}
 function pauseGame(){}
 function resumeGame(){}
 function neckSnapKill(){}
