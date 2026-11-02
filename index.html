@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V77 • သော့ HUD 0/4 ပြင်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V78 • ပရိဘောဂ collision — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -719,7 +719,7 @@ updatePlaques();
 const props=[];
 function addProp(cx,cz,w,d,h,color,label){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color,roughness:.9}));
-  m.position.set(cx,h/2,cz); scene.add(m); props.push({x:cx,z:cz,w,d,label,mesh:m,ox:cx,oz:cz}); return m;
+  m.position.set(cx,h/2,cz); scene.add(m); props.push({x:cx,z:cz,w,d,label,mesh:m,ox:cx,oz:cz}); if(['bed','surgery','cabinet','desk','shelf','slab','bed2','cabinet2','desk2','shelf2','partition','roomprop'].includes(label) && typeof walls!=='undefined') walls.push({x:cx,z:cz,w,d,isFurniture:true}); return m;
 }
 // Ward beds NW, Surgery table NE, Reception desk SW, Pharmacy shelves + Morgue slabs SE
 addProp(-52,-18,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-42,-20,2.2,1.1,0.7,0x8a8f8a,'bed'); addProp(-32,-16,2.2,1.1,0.7,0x7a7e7a,'bed');
