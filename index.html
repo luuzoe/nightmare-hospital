@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V68 • pause+end+win ပြန်ထည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V69 • လွှာပြောင်း ပြန်ထည့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1604,9 +1604,49 @@ function endGame(win){
 }
 function winGame(){ doorSound(); endGame(true); }
 // V12 STAGE 2: south door is a portal, not a win. Teleport to new east room, reset ghosts/patrol there, new tasks.
-function goToStage2(){}
-function goToNextFloor(){}
-function doFloorChange(){}
+function goToStage2(){
+  return; // V46 disabled: east wing removed, descent is via left staircase hall, not a portal.
+  doorSound(); S.stage=2; S.items=0; S.switchOn=false; S.escaping=false; S.escapeProgress=0;
+  playerPos.set(45,0,0); S.yaw=Math.PI/2; monsterPos.set(65,0,10); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
+  for(const wg of wanderingGhosts){
+    if(!wg.def.origWps) wg.def.origWps=wg.def.wps.slice();
+    if(!wg.def.newWps) wg.def.newWps=wg.def.name==='Ghost Girl'?[[50,-10],[60,0],[45,0],[55,-8]]:[[60,10],[50,5],[65,0],[55,12]];
+    wg.def.wps=wg.def.newWps; wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0;
+    const wp=wg.def.wps[0]; wg.outer.position.set(wp[0],0,wp[1]); wg.outer.visible=true;
+  }
+  setObjective('အခန်းသစ်! ဆေး ရှာပါ'); toast('🚪 အခန်းသစ် ရောက်ပြီ! ပစ္စည်း ၃ ခု ရှာပြီး Switch နှိပ်ပါ'); updateHUD();
+}
+// V12 FLOOR DESCENT: one floor down, harder step by step. Resets player/monster/ghosts, new mission items, medkit respawns, fog/speed ramp.
+try{ window.__nhCP='GF7 before goToNextFloor'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF7 before goToNextFloor'; }catch(e){}
+function goToNextFloor(){
+  if(S.floor<=1) return;
+  if(S._landingFade) return; S._landingFade=true;
+  S.paused=true; const ss=$('stairScreen'); if(ss) ss.classList.add('on'); const st=$('stairText'); if(st) st.textContent='အထပ် '+(S.floor-1)+' သို့ ဝင်နေသည်…'; const sub=$('stairSub'); if(sub) sub.textContent='Ep'+(16-S.floor)+' → Ep'+(17-S.floor);
+  setTimeout(()=>{ if(ss) ss.classList.remove('on'); S._landingFade=false; S.paused=false; doFloorChange(); },900);
+}
+function doFloorChange(){
+  if(S.floor<=1) return;
+  S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0; S._landing=false;
+  playerPos.set(-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
+  S.doorOpen=false; S.doorAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof openEntranceDoor==='function') openEntranceDoor();
+  // V53 harder: medkit only every 3rd floor (15,12,9,6,3), not every floor
+  if(S.floor%3===0){ medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true; } else { medkitTaken=true; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=false; }
+  // keys only on floor15; mission setup handles items/keys per floor type
+  for(const km of keyMeshes){ km.taken=true; km.mesh.visible=false; }
+  startFloorMission();
+  const floorDown=15-S.floor;
+  for(const wg of wanderingGhosts){ if(wg.def.origWps) wg.def.wps=wg.def.origWps; wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; const wp=wg.def.wps[0]; wg.outer.position.set(wp[0],0,wp[1]); wg.outer.visible=true; wg.def.speedBoost=floorDown*0.1; wg.def.radiusBoost=floorDown*0.5; }
+  if(typeof setActiveGhosts==='function') setActiveGhosts();
+  if(typeof saveProgress==='function') saveProgress();
+  S.nextScare=Math.max(6,15-floorDown);
+  if(ambientGain) ambientGain.gain.value=S.sound?(0.03+floorDown*0.003):0; // V12 ambient louder down
+  const fm=floorMission();
+  toast('⬇️ Ep'+fm.ep+' • အထပ် '+S.floor+' သို့ ဆင်းပြီ! '+fm.label+' '+fm.need+' ခု'+(fm.switch?' + Switch':'')+' လုပ်ပါ');
+  if(typeof showFloorBanner==='function') showFloorBanner(STORY_HINTS[S.floor]||('🏢 အထပ် '+S.floor+' • Ep'+fm.ep));
+  updateHUD();
+}
+// V12 FINAL ESCAPE: not instant win. Door takes 8s to unlock, all ghosts rage-chase you, progress pauses if you leave the door, resets if caught.
+try{ window.__nhCP='GF8 before startEscape'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF8 before startEscape'; }catch(e){}
 function startEscape(){}
 function cancelEscape(){}
 function loseHeart(){}
