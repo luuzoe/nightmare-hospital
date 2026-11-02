@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V58 • import ပျက်လား init ပျက်လား — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V59 • ဘယ်အပိုင်းမှာ ရပ်လဲ — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
 </div>
@@ -198,7 +198,7 @@ setTimeout(function(){
     if(window.__nhStart) return;
     var be=document.getElementById('bootError'); if(!be) return;
     var errs=window.__nhBootErrors.length?window.__nhBootErrors.join(' | '):'no error event captured';
-    var kind=window.__nhModuleStarted?'Module started but init failed before listeners':'Module never started (import/CDN failed or hung)';
+    var kind=window.__nhModuleStarted?('Module started, last checkpoint: '+(window.__nhCP||'none')+', init failed before listeners'):'Module never started (import/CDN failed or hung)';
     be.textContent='⚠️ Boot failed: '+kind+'. Errors: '+errs;
     be.style.display='block';
   }catch(err){}
@@ -494,6 +494,7 @@ function updateHUD(){
   if(hc.actT!==actTxt){ $('actBtn').textContent=actTxt; hc.actT=actTxt; }
 }
 
+try{ window.__nhCP='CP1 STATE done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP1 STATE done'; }catch(e){}
 /* ============ AUDIO (synth, no files) ============ */
 let AC=null, heartTimer=null;
 function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
@@ -558,6 +559,7 @@ function wanderingScream(){ if(S.time-lastWanderScream<60) return; lastWanderScr
 function whisperSound(){ if(S.time-lastGirlTime<120) return; lastGirlTime=S.time; if(playReal('girl',0.35)) return; playNoise(1.6,'bandpass',1100,1.5,0.25,7); }
 function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpass',900,1,0.65,0); playTone(950,200,1.4,'sawtooth',0.55,0); setTimeout(()=>playTone(1300,350,0.8,'sawtooth',0.45,0),150); setTimeout(()=>playTone(850,180,0.9,'sawtooth',0.35,0),400); setTimeout(()=>playTone(1100,300,0.7,'sawtooth',0.25,0),800); playTone(55,30,1.4,'sine',0.45,0); }
 
+try{ window.__nhCP='CP2 AUDIO done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP2 AUDIO done'; }catch(e){}
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
@@ -618,6 +620,7 @@ const wallTex=makeTex((g,s)=>{
 },6,2);
 const ceilTex=makeTex((g,s)=>{ g.fillStyle='#1c1c1c'; g.fillRect(0,0,s,s); g.fillStyle='#262626'; for(let i=0;i<4;i++)g.fillRect(0,i*64,s,3); },8,6);
 
+try{ window.__nhCP='CP3 THREE done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP3 THREE done'; }catch(e){}
 /* ============ MAP ============ */
 const walls=[]; // {x,z,w,d} centre + size, for collision + visuals
 function addWall(cx,cz,w,d){
@@ -850,6 +853,7 @@ for(const [x,z] of [[0,-12],[0,12],[55,0]]){
   const rb=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8), new THREE.MeshBasicMaterial({color:0xff2222})); rb.position.set(x,3.3,z); scene.add(rb);
 }
 
+try{ window.__nhCP='CP4 MAP done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP4 MAP done'; }catch(e){}
 /* ============ KEYS ============ */
 const keyDefs=[
   {id:1,x:-47,z:-16,room:'လူနာဆောင်',label:'သော့ 1'},
@@ -1141,6 +1145,7 @@ for(const [dx,dz] of [[-45,-3],[5,-3],[25,3],[-15,3]]){ const fp=new THREE.Mesh(
 for(const [dx,dz] of [[-50,-22],[50,-22],[-50,22],[50,22],[-10,-22],[20,22]]){ const moss=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.0), new THREE.MeshStandardMaterial({color:0x2a4a1a,roughness:1})); moss.rotation.x=-Math.PI/2; moss.position.set(dx,0.02,dz); scene.add(moss); }
 makeBloodWriting('ABANDONED',-84.2,2.6,2,Math.PI/2); makeBloodWriting('DO NOT ENTER',-7.5,2.6,-4.69,0); makeBloodWriting('LEFT TO ROT',-7.5,2.6,4.69,Math.PI); makeBloodWriting('NO ONE COMES HERE',-47,2.0,-4.69,0);
 { const dustGeo=new THREE.BufferGeometry(); const dustPos=[]; for(let i=0;i<240;i++){ dustPos.push(-56+Math.random()*112, 0.4+Math.random()*2.6, -22+Math.random()*44); } dustGeo.setAttribute('position', new THREE.Float32BufferAttribute(dustPos,3)); const dust=new THREE.Points(dustGeo, new THREE.PointsMaterial({color:0xcccccc,size:0.05,transparent:true,opacity:0.35})); scene.add(dust); }
+try{ window.__nhCP='CP5 KEYS+GORE done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP5 KEYS+GORE done'; }catch(e){}
 /* ============ COLLISION HELPERS ============ */
 function collide(x,z,r,allowStair){
   for(const w of walls){
@@ -1233,6 +1238,7 @@ function lineBlocked(x1,z1,x2,z2){
   return false;
 }
 
+try{ window.__nhCP='CP6 COLLISION done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP6 COLLISION done'; }catch(e){}
 /* ============ CHARACTERS (real GLB from website) ============ */
 const loader=new GLTFLoader();
 let player=null, monster=null, playerMixer=null, monsterMixer=null;
@@ -1415,6 +1421,7 @@ const monsterGlow=new THREE.PointLight(0xff0000,2,5,1.5); scene.add(monsterGlow)
 const playerRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.65,24), new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.7,side:THREE.DoubleSide})); playerRing.rotation.x=-Math.PI/2; playerRing.visible=false; scene.add(playerRing);
 const monsterRing=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,24), new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:0.8,side:THREE.DoubleSide})); monsterRing.rotation.x=-Math.PI/2; monsterRing.visible=false; scene.add(monsterRing); scene.add(flash); scene.add(flash.target);
 
+try{ window.__nhCP='CP7 CHARACTERS done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP7 CHARACTERS done'; }catch(e){}
 /* ============ CONTROLS ============ */
 const joyEl=$('joy'), knob=$('knob');
 let joyId=null, camId=null, lastCamX=0,lastCamY=0;
@@ -1519,6 +1526,7 @@ function doInteract(){
   if(typeof saveProgress==='function') saveProgress();
 }
 
+try{ window.__nhCP='CP8 CONTROLS done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP8 CONTROLS done'; }catch(e){}
 /* ============ GAME FLOW ============
 let _skipKeyShuffle=false; // V53: Continue must NOT reshuffle keys
 function resetGame(){
@@ -1655,6 +1663,7 @@ function loseHeart(){
   playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
   if(S.hearts<=0) endGame(false); updateHUD();
 }
+try{ window.__nhCP='CP9 GAMEFLOW done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP9 GAMEFLOW done'; }catch(e){}
 let _starting=false;
 function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
 window.__nhStart=handleStart;
