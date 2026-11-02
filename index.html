@@ -52,7 +52,7 @@ canvas{display:block}
 #staminaWrap{position:absolute;left:12px;bottom:150px;width:140px}
 #staminaWrap label{font-size:12px;color:#ccc}
 #staminaBar{height:10px;background:#333;border-radius:6px;overflow:hidden;border:1px solid #555}
-#staminaFill{height:100%;width:100%;background:#ffd166}
+#staminaFill{height:100%;width:100%;background:#ffd166;transition:width .15s linear}
 /* ---------- Controls ---------- */
 #joy{position:absolute;left:18px;bottom:18px;width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:34px;top:34px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.5)}
@@ -105,7 +105,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • စွန့်ပစ်ဆေးရုံ: အခန်း 15x25m, တံခါး 2.5m, လျှောက်လမ်း 10m, လှေကားအစစ်, အပေါ်ဆုံး 15 ထပ်က စ</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V52 • ထပ်တိုင်း မြေပုံ မတူ — အခန်းထဲ အတွင်းနံရံ + corridor နံရံ ထပ်တိုင်း ကွဲ — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V53 • အကုန် ခက်အောင် + smooth + ပြတင်းပေါက် — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -458,14 +458,22 @@ let toastTimer=null;
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
 function setObjective(t){ $('objective').textContent='🎯 '+t; }
 function updateHUD(){
-  $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts));
-  { const fmH=floorMission(); if(fmH.type==='keys') $('keys').textContent='🔑 '+S.keys+' / 3'; else if(['order','dark','timed','final','timedorder'].includes(fmH.type)) $('keys').textContent='📦 '+S.items+' / '+fmH.need; else $('keys').textContent='🎯 '+missionProgressText(); }
-  const fi=$('floorInfo'); if(fi) fi.textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
+  // V53 smooth UI: only touch DOM when text/display actually changed (was every frame, causing phone UI jank)
+  if(!S._hudCache) S._hudCache={};
+  const hc=S._hudCache;
+  const heartsTxt='❤️'.repeat(Math.max(0,S.hearts));
+  if(hc.hearts!==heartsTxt){ $('hearts').textContent=heartsTxt; hc.hearts=heartsTxt; }
+  let keysTxt; { const fmH=floorMission(); if(fmH.type==='keys') keysTxt='🔑 '+S.keys+' / 3'; else if(['order','dark','timed','final','timedorder'].includes(fmH.type)) keysTxt='📦 '+S.items+' / '+fmH.need; else keysTxt='🎯 '+missionProgressText(); }
+  if(hc.keys!==keysTxt){ $('keys').textContent=keysTxt; hc.keys=keysTxt; }
+  const floorTxt='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
+  if(hc.floor!==floorTxt){ const fi=$('floorInfo'); if(fi) fi.textContent=floorTxt; hc.floor=floorTxt; }
   $('staminaFill').style.width=S.stamina+'%';
-  $('chase').style.display=S.chase?'block':'none';
-  $('hideTag').style.display=S.hidden?'block':'none';
-  $('actBtn').disabled=!S.interactTarget;
-  $('actBtn').textContent=S.interactTarget?((S.interactTarget.type==='exit')?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
+  if(hc.chase!==S.chase){ $('chase').style.display=S.chase?'block':'none'; hc.chase=S.chase; }
+  if(hc.hide!==S.hidden){ $('hideTag').style.display=S.hidden?'block':'none'; hc.hide=S.hidden; }
+  const actDisabled=!S.interactTarget;
+  const actTxt=S.interactTarget?((S.interactTarget.type==='exit')?'✋ လှေကား ဆင်း':((S.interactTarget.type==='exit2'||S.interactTarget.type==='switch')?'✋ ဖွင့်':'✋ ယူ')):'✋ ယူ';
+  if(hc.actD!==actDisabled){ $('actBtn').disabled=actDisabled; hc.actD=actDisabled; }
+  if(hc.actT!==actTxt){ $('actBtn').textContent=actTxt; hc.actT=actTxt; }
 }
 
 /* ============ AUDIO (synth, no files) ============ */
@@ -534,7 +542,7 @@ function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpa
 
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
 renderer.setSize(innerWidth,innerHeight);
 renderer.domElement.id='game';
 document.body.prepend(renderer.domElement);
@@ -616,6 +624,20 @@ addWall(0,-30,169.6,0.6);
 addWall(0,30,169.6,0.6);
 addWall(-84.5,-17.5,0.6,25); addWall(-84.5,17.5,0.6,25);
 addWall(84.5,-17.5,0.6,25); addWall(84.5,17.5,0.6,25);
+// V53 windows: outer walls ONLY (north z=-30, south z=30), NOT interior partitions. One shared canvas texture + geometry/material, 22 windows, visual only, no collision.
+{
+  const wcv=document.createElement('canvas'); wcv.width=256; wcv.height=144;
+  const wg=wcv.getContext('2d');
+  wg.fillStyle='#0a1420'; wg.fillRect(0,0,256,144);
+  wg.fillStyle='#1a2a3a'; for(let i=0;i<20;i++){ wg.fillRect(10+Math.random()*236,10+Math.random()*124,20,12); }
+  wg.fillStyle='#000000'; wg.beginPath(); wg.moveTo(30,30); wg.lineTo(80,50); wg.lineTo(50,90); wg.closePath(); wg.fill();
+  wg.fillStyle='#222222'; wg.fillRect(0,0,256,10); wg.fillRect(0,134,256,10); wg.fillRect(0,0,10,144); wg.fillRect(246,0,10,144); wg.fillRect(123,0,10,144); wg.fillRect(0,67,256,10);
+  const wtex=new THREE.CanvasTexture(wcv); wtex.colorSpace=THREE.SRGBColorSpace;
+  const wgeo=new THREE.PlaneGeometry(3,1.8);
+  const wmat=new THREE.MeshStandardMaterial({map:wtex,roughness:.4,metalness:.1});
+  for(const dc of NORTH_CENTRES){ const m=new THREE.Mesh(wgeo,wmat); m.position.set(dc,1.9,-29.6); scene.add(m); }
+  for(const dc of SOUTH_CENTRES){ const m=new THREE.Mesh(wgeo,wmat); m.position.set(dc,1.9,29.6); m.rotation.y=Math.PI; scene.add(m); }
+}
 // V47: north rooms explicit (staircase gap is bounds 5-6, not a room).
 const NORTH_ROOMS=[[-84.5,-69.5],[-69.5,-54.5],[-54.5,-39.5],[-39.5,-24.5],[-24.5,-9.5],[-5.5,9.5],[9.5,24.5],[24.5,39.5],[39.5,54.5],[54.5,69.5],[69.5,84.5]];
 for(let i=0;i<NORTH_CENTRES.length;i++){
@@ -1479,9 +1501,10 @@ function doInteract(){
   if(typeof saveProgress==='function') saveProgress();
 }
 
-/* ============ GAME FLOW ============ */
+/* ============ GAME FLOW ============
+let _skipKeyShuffle=false; // V53: Continue must NOT reshuffle keys
 function resetGame(){
-  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=50; S.randScareTimer=50; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=150; S.hauntTimer=45; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=50; S.randScareTimer=50; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=90; S.hauntTimer=45; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
   if(scene.fog) scene.fog.density=0.09;
   medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } }
@@ -1491,12 +1514,20 @@ function resetGame(){
   playerPos.set(-81,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
+  // V53 key positions random per fresh game (labels stay with id, compass points to new positions)
+  if(!_skipKeyShuffle){
+    const first3=keyMeshes.filter(km=>km.def.id<=KEYS_NEEDED);
+    const pos=first3.map(km=>[km.def.x,km.def.z]);
+    for(let i=pos.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=pos[i]; pos[i]=pos[j]; pos[j]=tmp; }
+    first3.forEach((km,i)=>{ km.def.x=pos[i][0]; km.def.z=pos[i][1]; km.mesh.position.set(pos[i][0],1.1,pos[i][1]); });
+  }
+  _skipKeyShuffle=false;
   startFloorMission();
   updateHUD();
 }
 function saveProgress(){ try{ if(!S.playing) return; const fmS=floorMission(); const data={floor:S.floor, hearts:S.hearts, time:Math.floor(S.time), missionType:fmS.type, items:S.items, keys:S.keys, switchIdx:S.switchIdx, corpseTouched:(S.corpseTouched||[]).slice(), visitedRooms:ROOM_ZONES.map((z,i)=>S.visited.includes(z)?i:-1).filter(i=>i>=0), visitedLockers:hideSpots.map((h,i)=>S.visited.includes(h)?i:-1).filter(i=>i>=0), missionDone:S.missionDone, hideTotal:S.hideTotal, distance:S.distance, missionTimer:S.missionTimer, switchOn:S.switchOn, keysTaken:keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED).map(km=>km.def.id)}; localStorage.setItem('nh_save', JSON.stringify(data)); }catch(e){} }
 window.addEventListener('beforeunload', saveProgress);
-function continueGame(){ let sv=null; try{ sv=JSON.parse(localStorage.getItem('nh_save')||'null'); }catch(e){} startGame(); if(sv && sv.floor>=1 && sv.floor<=15){ S.floor=sv.floor; S.hearts=sv.hearts||3; playerPos.set(sv.floor===15?-81:-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; startFloorMission(); const fm2=floorMission(); if(fm2.type==='keys' && sv.keysTaken){ S.keys=0; for(const km of keyMeshes){ if(km.def.id<=KEYS_NEEDED){ if(sv.keysTaken.includes(km.def.id)){ km.taken=true; km.mesh.visible=false; S.keys++; } else { km.taken=false; km.mesh.visible=true; } } } } else if((fm2.type==='order'||fm2.type==='dark'||fm2.type==='timed'||fm2.type==='final'||fm2.type==='timedorder') && typeof sv.items==='number' && sv.items>0){ const n=Math.min(sv.items,fm2.need); S.items=0; itemMeshes.forEach((im,idx)=>{ if(idx<n){ im.taken=true; im.mesh.visible=false; S.items++; } }); } if(typeof sv.switchIdx==='number') S.switchIdx=sv.switchIdx; if(Array.isArray(sv.corpseTouched)){ S.corpseTouched=sv.corpseTouched.slice(); S.corpseIdx=S.corpseTouched.length; } if(fm2.type==='rooms' && Array.isArray(sv.visitedRooms)){ S.visited=sv.visitedRooms.map(i=>ROOM_ZONES[i]).filter(Boolean); } if((fm2.type==='lockers'||fm2.type==='darklockers') && Array.isArray(sv.visitedLockers)){ S.visited=sv.visitedLockers.map(i=>hideSpots[i]).filter(Boolean); } if(typeof sv.hideTotal==='number') S.hideTotal=sv.hideTotal; if(typeof sv.distance==='number') S.distance=sv.distance; if(typeof sv.missionTimer==='number') S.missionTimer=sv.missionTimer; if(typeof sv.switchOn==='boolean') S.switchOn=sv.switchOn; if(typeof sv.missionDone==='boolean') S.missionDone=sv.missionDone; if(missionComplete()){ setObjective('တိုးတက်မှု ပြန်ရပြီ! လှေကား (N5-N6 ကြား) သွား'); } updateHUD(); toast('💾 သိမ်းထားတဲ့ အထပ် '+sv.floor+' ကနေ ဆက်ဆော့သည်, တိုးတက်မှု ပြန်ရပြီ'); } }
+function continueGame(){ let sv=null; try{ sv=JSON.parse(localStorage.getItem('nh_save')||'null'); }catch(e){} _skipKeyShuffle=true; startGame(); if(sv && sv.floor>=1 && sv.floor<=15){ S.floor=sv.floor; S.hearts=sv.hearts||3; playerPos.set(sv.floor===15?-81:-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; startFloorMission(); const fm2=floorMission(); if(fm2.type==='keys' && sv.keysTaken){ S.keys=0; for(const km of keyMeshes){ if(km.def.id<=KEYS_NEEDED){ if(sv.keysTaken.includes(km.def.id)){ km.taken=true; km.mesh.visible=false; S.keys++; } else { km.taken=false; km.mesh.visible=true; } } } } else if((fm2.type==='order'||fm2.type==='dark'||fm2.type==='timed'||fm2.type==='final'||fm2.type==='timedorder') && typeof sv.items==='number' && sv.items>0){ const n=Math.min(sv.items,fm2.need); S.items=0; itemMeshes.forEach((im,idx)=>{ if(idx<n){ im.taken=true; im.mesh.visible=false; S.items++; } }); } if(typeof sv.switchIdx==='number') S.switchIdx=sv.switchIdx; if(Array.isArray(sv.corpseTouched)){ S.corpseTouched=sv.corpseTouched.slice(); S.corpseIdx=S.corpseTouched.length; } if(fm2.type==='rooms' && Array.isArray(sv.visitedRooms)){ S.visited=sv.visitedRooms.map(i=>ROOM_ZONES[i]).filter(Boolean); } if((fm2.type==='lockers'||fm2.type==='darklockers') && Array.isArray(sv.visitedLockers)){ S.visited=sv.visitedLockers.map(i=>hideSpots[i]).filter(Boolean); } if(typeof sv.hideTotal==='number') S.hideTotal=sv.hideTotal; if(typeof sv.distance==='number') S.distance=sv.distance; if(typeof sv.missionTimer==='number') S.missionTimer=sv.missionTimer; if(typeof sv.switchOn==='boolean') S.switchOn=sv.switchOn; if(typeof sv.missionDone==='boolean') S.missionDone=sv.missionDone; if(missionComplete()){ setObjective('တိုးတက်မှု ပြန်ရပြီ! လှေကား (N5-N6 ကြား) သွား'); } updateHUD(); toast('💾 သိမ်းထားတဲ့ အထပ် '+sv.floor+' ကနေ ဆက်ဆော့သည်, တိုးတက်မှု ပြန်ရပြီ'); } }
 function startGame(){
   try{ localStorage.removeItem('nh_save'); }catch(e){}
   ac(); tryAutoLandscape(); setTimeout(()=>tryAutoLandscape(),500); startAmbient(); beep(440,.15); setTimeout(()=>beep(660,.2),150);
@@ -1558,8 +1589,8 @@ function doFloorChange(){
   S.floor--; S.stage=1; S.switchOn=false; S.escaping=false; S.escapeProgress=0; S._landing=false;
   playerPos.set(-7.5,0,0); playerPos.y=0; S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; patrolIdx=0; S.chase=false; S.scare=false; S.hidden=false; S.hideTimer=0; S.stamina=100; S.invuln=3; $('hideBtn').classList.remove('active');
   S.doorOpen=false; S.doorAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof openEntranceDoor==='function') openEntranceDoor();
-  // medkit respawns each floor (survival across 15 floors needs it)
-  medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
+  // V53 harder: medkit only every 3rd floor (15,12,9,6,3), not every floor
+  if(S.floor%3===0){ medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true; } else { medkitTaken=true; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=false; }
   // keys only on floor15; mission setup handles items/keys per floor type
   for(const km of keyMeshes){ km.taken=true; km.mesh.visible=false; }
   startFloorMission();
@@ -1581,7 +1612,7 @@ function startEscape(){
   if(S.stage!==2){ S.escapeDoorX=-7.5; S.escapeDoorZ=-29; }
   monsterState='chase'; S.chase=true; lastSeen=playerPos.clone();
   screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate([300,100,300]);
-  toast('🚨 တံခါး ဖွင့်နေသည်! သရဲတွေ အားလုံး လာနေပြီ! တံခါးနား ၈ စက္ကန့် ခံပါ!');
+  toast('🚨 တံခါး ဖွင့်နေသည်! သရဲတွေ အားလုံး လာနေပြီ! တံခါးနား ၁၀ စက္ကန့် ခံပါ!');
   const eb=$('escapeBar'); if(eb) eb.style.display='block';
 }
 function cancelEscape(){
@@ -1593,7 +1624,11 @@ function loseHeart(){
   S.hearts--; S.invuln=3; scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
   const js=$('jumpscare'); if(js){ js.style.display='none'; }
   const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
-  toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်');
+  // V53 catch cost: drop one key/item (must re-collect), not just a heart
+  let dropped='';
+  if(S.keys>0){ const takenKeys=keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED); const dk=takenKeys[takenKeys.length-1]; if(dk){ dk.taken=false; dk.mesh.visible=true; S.keys--; dropped=' 🔑 '+dk.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
+  else if(S.items>0){ const fmD=floorMission(); const takenItems=itemMeshes.filter((im,idx)=>im.taken && idx<fmD.need); const di=takenItems[takenItems.length-1]; if(di){ di.taken=false; di.mesh.visible=true; S.items--; dropped=' 📦 '+di.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
+  toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်'+dropped);
   if(S.escaping){ cancelEscape(); toast('💔 ဖမ်းခံရလို့ တံခါး ပြန်ပိတ်သွားပြီ! တောင်တံခါးကို ပြန်သွားပြီး ပြန်ဖွင့်ပါ'); }
   playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
   if(S.hearts<=0) endGame(false); updateHUD();
@@ -1620,7 +1655,7 @@ if($('mapToggleBtn')){ $('mapToggleBtn').addEventListener('click',()=>{ S.showMa
 if($('handToggleBtn')){ $('handToggleBtn').addEventListener('click',()=>{ S.showHands=!S.showHands; $('handToggleBtn').textContent=S.showHands?'✋ လက်: ဖွင့်':'✋ လက်: ပိတ်'; }); }
 if($('camSpeedBtn')){ $('camSpeedBtn').addEventListener('click',()=>{ S.camSpeed=(S.camSpeed===1)?1.5:((S.camSpeed===1.5)?0.7:1); $('camSpeedBtn').textContent=S.camSpeed===1.5?'📷 ကင်မရာ: မြန်':(S.camSpeed===0.7?'📷 ကင်မရာ: နှေး':'📷 ကင်မရာ: ပုံမှန်'); }); }
 if($('volBtn')){ $('volBtn').addEventListener('click',()=>{ S.volume=(S.volume===1)?1.2:((S.volume===1.2)?0.4:1); $('volBtn').textContent=S.volume===1.2?'🔊 အသံ: ကျယ်':(S.volume===0.4?'🔊 အသံ: တိုး':'🔊 အသံ: ပုံမှန်'); }); }
-if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.75)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
+if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.5)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
 // Landscape: fullscreen + orientation lock (needs a user tap on Android Chrome)
 let rotateDismissed=false;
 function checkOrientation(){
@@ -1642,6 +1677,7 @@ addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.upd
 /* ============ UPDATE LOOP ============ */
 const clock=new THREE.Clock();
 let heartBeatAcc=0, stepAcc=0, growlAcc=0, whisperAcc=0;
+let smoothVX=0, smoothVZ=0; // V53 smooth movement velocity
 function update(dt){
   if(!S.playing||S.paused) return;
   S.time+=dt;
@@ -1657,7 +1693,7 @@ function update(dt){
   const moving=il>0.08 && !S.hidden;
   // stamina
   const running=moving && S.run && S.stamina>0 && !S.hidden;
-  if(running)S.stamina=Math.max(0,S.stamina-(30+(15-S.floor)*1)*dt); else S.stamina=Math.min(100,S.stamina+12*dt); // V12 harder down: drain +1/floor
+  if(running)S.stamina=Math.max(0,S.stamina-(38+(15-S.floor)*1.5)*dt); else if(!moving) S.stamina=Math.min(100,S.stamina+10*dt); // V53 harder: drain faster, regen only when standing still (walking does not regen)
   const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il)); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
   // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
   // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
@@ -1665,16 +1701,25 @@ function update(dt){
   const sin=Math.sin(S.yaw), cos=Math.cos(S.yaw);
   let mx=0,mz=0;
   if(moving){ mx=(-iy*sin - ix*cos); mz=(-iy*cos + ix*sin); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
-  if(moving){
-    const np=collide(playerPos.x+mx*speed*dt, playerPos.z+mz*speed*dt, 0.45, true);
+  // V53 smooth movement: velocity lerps to target, no instant start/stop snap; model angle lerps too
+  const targetVX=moving?mx*speed:0, targetVZ=moving?mz*speed:0;
+  const vk=Math.min(1,dt*10);
+  smoothVX+=(targetVX-smoothVX)*vk; smoothVZ+=(targetVZ-smoothVZ)*vk;
+  if(!moving && Math.abs(smoothVX)<0.01 && Math.abs(smoothVZ)<0.01){ smoothVX=0; smoothVZ=0; }
+  if(smoothVX!==0 || smoothVZ!==0){
+    const np=collide(playerPos.x+smoothVX*dt, playerPos.z+smoothVZ*dt, 0.45, true);
     playerPos.x=np[0]; playerPos.z=np[1];
-    playerAngle=Math.atan2(mx,mz);
+    if(moving){
+      const targetAngle=Math.atan2(mx,mz);
+      let ad=((targetAngle-playerAngle+Math.PI*3)%(Math.PI*2))-Math.PI;
+      playerAngle+=ad*Math.min(1,dt*12);
+    }
   }
   // V47 REAL STAIRCASE: hall x -9.5..-5.5, z -30..-5, player actually descends 0 -> -3m as he walks north.
   S.inStair=(playerPos.x>=-9.5 && playerPos.x<=-5.5 && playerPos.z>=-30 && playerPos.z<=-5);
   if(S.inStair){ const hallY=Math.max(-3, Math.min(0, (playerPos.z+5)/25*3)); playerPos.y=hallY; if(moving){ const sidx=Math.floor((-6.5-playerPos.z)/1.5); if(sidx!==S._lastStep){ S._lastStep=sidx; footstepSound(); } } }
   else playerPos.y=0;
-  if(moving && floorMission().type==='distance' && !S.missionDone){ S.distance+=speed*dt; }
+  if(moving && floorMission().type==='distance' && !S.missionDone){ S.distance+=Math.hypot(smoothVX,smoothVZ)*dt; } // V53: distance from actual smooth velocity
   if(player){ player.position.copy(playerPos); player.rotation.y=playerAngle; player.visible=S.fpp?false:!S.hidden; }
   playerRing.visible=false; monsterRing.visible=false; // V18 user: hide bottom rings
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
@@ -1701,7 +1746,7 @@ function update(dt){
     if(S.chase||S.scare||wanderingScare||S.escaping||S.blackout>0){ const sh=S.scare?0.45:(S.chase||S.escaping?0.25:(S.blackout>0?0.20:0.35)); camera.position.x+=(Math.random()-0.5)*sh; camera.position.y+=(Math.random()-0.5)*sh*0.7; }
     camera.lookAt(playerPos.x,playerPos.y+1.35,playerPos.z);
   }
-  const wantFov=S.chase?75:62; if(camera.fov!==wantFov){ camera.fov=wantFov; camera.updateProjectionMatrix(); }
+  const wantFov=S.chase?75:62; if(Math.abs(camera.fov-wantFov)>0.01){ camera.fov+=(wantFov-camera.fov)*Math.min(1,dt*6); camera.updateProjectionMatrix(); } // V53 smooth FOV, no snap zoom
   playerRing.position.set(playerPos.x,playerPos.y+0.05,playerPos.z); monsterRing.position.set(monsterPos.x,0.05,monsterPos.z); monsterGlow.position.set(monsterPos.x,2.5,monsterPos.z); monsterGlow.intensity=(S.chase||S.scare)?6:2; // V20 user: no ghost glow, scarier
   handsGroup.visible = !!S.fpp && S.playing && !S.paused && S.showHands!==false;
   if(typeof handLight!=='undefined') handLight.visible=handsGroup.visible;
@@ -1819,7 +1864,7 @@ function update(dt){
   const ang=Math.atan2(cTx-playerPos.x,cTz-playerPos.z);
   const dirs=['↑','↗','→','↘','↓','↙','←','↖'];
   const idx=Math.round(((ang-S.yaw)%(Math.PI*2))/(Math.PI/4));
-  $('compass').textContent='🧭 '+dirs[((idx%8)+8)%8]+' '+Math.round(Math.hypot(tx-playerPos.x,tz-playerPos.z))+'m';
+  const compDist=S.floor<=10?'':(' '+Math.round(Math.hypot(tx-playerPos.x,tz-playerPos.z))+'m'); $('compass').textContent='🧭 '+dirs[((idx%8)+8)%8]+compDist; // V53 harder: lower floors show direction only, no exact metres
   // ---- monster AI ----
   const mDist=Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z);
   // V5 SCARE SYSTEM: ghost scares from different places, does NOT catch instantly.
@@ -1864,17 +1909,17 @@ function update(dt){
     // V50 hide search: monster reaches your hide spot (within 2.5m) = hide breaks, you must run (catch still needs 1.4m + grace, so it is fair, not instant)
     if(S.hidden && monsterState==='chase' && mDist<2.5){ S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); lastSeen=playerPos.clone(); scareSound(); toast('👹 ပုန်းနေတာ တွေ့သွားပြီ! ပြေးပါ!'); }
   } else S.hideTimer=0;
-  const canSee=!S.hidden && (S.floor!==15 || S.keys>=1) && monsterState!=='scare' && mDist<24 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V47 Ep1 wakes up after Key1
+  const canSee=!S.hidden && (S.floor!==15 || S.keys>=1) && monsterState!=='scare' && mDist<28 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V53 harder: detection 28m
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
     if(S.hidden && mDist>28){ monsterState='patrol'; S.chase=false; } // V50: hiding far away no longer ends chase instantly; hideTimer must expire
     else if(mDist>28){ monsterState='patrol'; S.chase=false; } // V10 gives up later, chases longer
     else if(lastSeen){ /* keep chasing last seen */ }
   }
-  let mSpeed=3.8+S.keys*0.2, target=null; // V49: patrol faster, monster feels present
+  let mSpeed=4.2+S.keys*0.2, target=null; // V53 harder: patrol faster
   if(monsterState==='scare'){ mSpeed=0; target=null; monsterPath=[]; }
   else if(monsterState==='chase'){
-    mSpeed=6.4+(S.floor===15?S.keys*0.2:S.items*0.05)+(15-S.floor)*0.15; if(S.escaping) mSpeed+=1.0; if(mSpeed>8.5) mSpeed=8.5; // V47 harder: +0.15/floor, cap 8.5
+    mSpeed=7.2+(S.floor===15?S.keys*0.2:S.items*0.05)+(15-S.floor)*0.2; if(S.escaping) mSpeed+=1.0; if(mSpeed>9.2) mSpeed=9.2; // V53 harder: +0.2/floor, cap 9.2
     const tp=lastSeen||playerPos;
     if(!lineBlocked(monsterPos.x,monsterPos.z,tp.x,tp.z) && Math.hypot(tp.x-monsterPos.x,tp.z-monsterPos.z)<8){ target=tp; monsterPath=[]; }
     else {
@@ -1907,8 +1952,14 @@ function update(dt){
   // V5: no instant catch - must stay within 1.4m for 0.8s, so player can run away from a scare
   if(monsterState!=='scare' && mDist<1.4 && !S.hidden && S.invuln<=0 && !S.won){
     S.catchTimer+=dt;
-    if(S.catchTimer>Math.max(0.40,0.65-(15-S.floor)*0.02)){ S.catchTimer=0; loseHeart(); } // V47 harder: grace to 0.40s at bottom
+    if(S.catchTimer>Math.max(0.30,0.55-(15-S.floor)*0.02)){ S.catchTimer=0; loseHeart(); } // V53 harder: grace to 0.30s at bottom
   } else S.catchTimer=0;
+  // V53 wandering ghosts also dangerous: chase-state ghost within 1.4m for 0.5s = heart loss. Scare teleport does NOT catch (fair: chase is visible, run/hide works).
+  if(!S.won && S.invuln<=0 && !S.hidden){
+    let wgCatch=null;
+    for(const wg of wanderingGhosts){ if(wg.active!==false && wg.outer && wg.outer.visible && wg.state==='chase' && Math.hypot(wg.outer.position.x-playerPos.x,wg.outer.position.z-playerPos.z)<1.4){ wgCatch=wg; break; } }
+    if(wgCatch){ if(typeof S.wanderCatchTimer!=='number') S.wanderCatchTimer=0; S.wanderCatchTimer+=dt; if(S.wanderCatchTimer>0.5){ S.wanderCatchTimer=0; wgCatch.state='scare'; wgCatch.scareTimer=2.0; loseHeart(); } } else S.wanderCatchTimer=0;
+  } else S.wanderCatchTimer=0;
   // V9 distant moan every ~18-30s so the hospital never feels silent
   if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=90+Math.random()*30; } } // V49: moan every 90-120s, dread without noise
   // V9 wandering ghosts: patrol, scare, vanish, cooldown
@@ -1994,7 +2045,7 @@ function update(dt){
   if(S.playing && !S.paused && (S.floor!==15 || S.keys>=2) && !S.hidden && S.invuln<=0){
     S.frontScareTimer-=dt;
     if(S.frontScareTimer<=0){
-      S.frontScareTimer=60+Math.random()*30; // V49: front scare every 60-90s
+      S.frontScareTimer=45+Math.random()*30; // V53 harder: front/behind scare every 45-75s
       const behind=Math.random()<0.4; const fx=playerPos.x+(behind?-1:1)*Math.sin(S.yaw)*2.5, fz=playerPos.z+(behind?-1:1)*Math.cos(S.yaw)*2.5; // V50: 40% behind scare
       const fp=collide(fx,fz,0.5);
       if(Math.hypot(fp[0]-playerPos.x,fp[1]-playerPos.z)>1.2 && !lineBlocked(playerPos.x,playerPos.z,fp[0],fp[1])){
@@ -2063,10 +2114,10 @@ function update(dt){
         if(Math.hypot(fp[0]-playerPos.x,fp[1]-playerPos.z)>15){ shadowFigure.position.set(fp[0],0,fp[1]); shadowFigure.visible=true; S.glimpseUntil=S.time+2.5; whisperSound(); toast('👤 တစ်စုံတစ်ခု ဖြတ်သွားတယ်…'); }
       }
       if(S.glimpseUntil && S.time>S.glimpseUntil){ shadowFigure.visible=false; S.glimpseUntil=0; }
-      if(typeof S.huntTimer!=='number') S.huntTimer=150;
+      if(typeof S.huntTimer!=='number') S.huntTimer=90;
       S.huntTimer-=dt;
       if(S.huntTimer<=0){
-        S.huntTimer=180+Math.random()*60;
+        S.huntTimer=120+Math.random()*60; // V53 harder: hunts more often
         monsterState='chase'; S.chase=true; lastSeen=playerPos.clone(); screamSound(); if(navigator.vibrate) navigator.vibrate(200); toast('🚨 သရဲက မင်းကို လိုက်နေပြီ! ပုန်းပါ!');
       }
     }
@@ -2076,7 +2127,7 @@ function update(dt){
   if(S.escaping && S.playing && !S.paused){
     const distExit=Math.hypot(playerPos.x-S.escapeDoorX, playerPos.z-S.escapeDoorZ);
     if(!S.hidden && distExit<=4.5){
-      S.escapeProgress+=dt/8;
+      S.escapeProgress+=dt/10; // V53 harder: Final Escape hold 10s (was 8s)
       const pct=Math.min(100, Math.floor(S.escapeProgress*100));
       const ef=$('escapeFill'); if(ef) ef.style.width=pct+'%';
       const et=$('escapeText'); if(et) et.textContent='🚪 တံခါး ဖွင့်နေသည်… '+pct+'%';
