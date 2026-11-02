@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V76 • သေ ၅ စက္ကန့် + သွေး + အလောင်း — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V77 • သော့ HUD 0/4 ပြင်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -485,7 +485,7 @@ function updateHUD(){
   const hc=S._hudCache;
   const heartsTxt='❤️'.repeat(Math.max(0,S.hearts));
   if(hc.hearts!==heartsTxt){ $('hearts').textContent=heartsTxt; hc.hearts=heartsTxt; }
-  let keysTxt; { const fmH=floorMission(); if(fmH.type==='keys') keysTxt='🔑 '+S.keys+' / 3'; else if(['order','dark','timed','final','timedorder'].includes(fmH.type)) keysTxt='📦 '+S.items+' / '+fmH.need; else keysTxt='🎯 '+missionProgressText(); }
+  let keysTxt; { const fmH=floorMission(); if(fmH.type==='keys') keysTxt='🔑 '+S.keys+' / '+KEYS_NEEDED; else if(['order','dark','timed','final','timedorder'].includes(fmH.type)) keysTxt='📦 '+S.items+' / '+fmH.need; else keysTxt='🎯 '+missionProgressText(); }
   if(hc.keys!==keysTxt){ $('keys').textContent=keysTxt; hc.keys=keysTxt; }
   const floorTxt='🏢 '+S.floor+' လွှာ • Ep'+floorEp()+(S.floor===1?' • FINAL':'');
   if(hc.floor!==floorTxt){ const fi=$('floorInfo'); if(fi) fi.textContent=floorTxt; hc.floor=floorTxt; }
