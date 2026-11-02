@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V67 • save+continue+start ပြန်ထည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V68 • pause+end+win ပြန်ထည့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1576,11 +1576,34 @@ function startGame(){
   toast('👹 Monster က Morgue ဘက်မှာ ရှိနေသည် — တိတ်တိတ်ရှာပါ');
 }
 try{ window.__nhCP='GF5 before pauseGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF5 before pauseGame'; }catch(e){}
-function pauseGame(){}
-function resumeGame(){}
-function neckSnapKill(){}
-function endGame(win){}
-function winGame(){}
+function pauseGame(){
+  if(!S.playing)return; S.paused=true;
+  $('pauseInfo').textContent='🏢 '+S.floor+' လွှာ • '+(S.floor===15?('🔑 '+S.keys+'/'+KEYS_NEEDED):('📦 '+S.items+'/'+floorMission().need))+' • ❤️ '+S.hearts+' • ⏱ '+Math.floor(S.time)+' စက္ကန့်';
+  $('pauseScreen').classList.remove('hidden');
+}
+function resumeGame(){ S.paused=false; $('pauseScreen').classList.add('hidden'); }
+// V48 NECK SNAP: mission not done + staircase bottom = instant death, no respawn, no hearts left.
+function neckSnapKill(){
+  if(S._neckSnap) return; S._neckSnap=true; S.neckSnap=true; S.hearts=0; updateHUD();
+  scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([500,100,500]);
+  const d=$('damage'); if(d) d.style.opacity=1;
+  // ghost teleports right in front of the player (hall descent faces north, so front = -z)
+  monsterPos.set(playerPos.x,0,playerPos.z-2); if(typeof monster!=='undefined' && monster){ monster.position.set(monsterPos.x,playerPos.y+1.6,monsterPos.z); monster.rotation.y=Math.PI; }
+  toast('💀 သရဲက ဂုတ်ချိုးသတ်လိုက်ပြီ!');
+  S.paused=true;
+  setTimeout(()=>{ S.paused=false; endGame(false); },900);
+}
+try{ window.__nhCP='GF6 before endGame'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF6 before endGame'; }catch(e){}
+function endGame(win){
+  try{ localStorage.removeItem('nh_save'); }catch(e){}
+  S.playing=false; S.won=win; const ebE=$('escapeBar'); if(ebE) ebE.style.display='none';
+  $('endTitle').textContent=win?'🎉 လွတ်မြောက်ပြီ!':(S.neckSnap?'💀 ဂုတ်ချိုးခံရပြီ…':'👹 ဖမ်းခံရပြီ…');
+  $('endText').textContent=win?('မေသူ၏ ဒိုင်ယာရီကို ရပြီ! 15 ထပ် ဆေးရုံကနေ လွတ်မြောက်သွားပြီ! အချိန်: '+Math.floor(S.time)+' စက္ကန့် — ဒါပေမယ့် ဆေးရုံက မင်းနောက်ကို လိုက်နေတုန်းပဲ…')
+    :(S.neckSnap?'Mission မပြီးဘဲ လှေကားအောက်ဆုံးထိ ဆင်းလို့ သရဲက ဂုတ်ချိုးသတ်လိုက်ပြီ! လှေကားမဆင်းခင် mission အရင် ပြီးအောင် လုပ်ပါ။':'အသက် ကုန်သွားပြီ။ နောက်တစ်ပွဲ ထပ်ကြိုးစားပါ — ဒီတစ်ခါ ပိုတိတ်တိတ်နဲ့ ပိုမြန်မြန် ရှာပါ။');
+  $('endScreen').classList.remove('hidden');
+}
+function winGame(){ doorSound(); endGame(true); }
+// V12 STAGE 2: south door is a portal, not a win. Teleport to new east room, reset ghosts/patrol there, new tasks.
 function goToStage2(){}
 function goToNextFloor(){}
 function doFloorChange(){}
