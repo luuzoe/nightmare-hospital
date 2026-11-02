@@ -29,16 +29,16 @@ canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
 #hud.on{display:block}
 #topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:8px;gap:8px}
-.panel{background:linear-gradient(180deg,rgba(40,0,0,.85),rgba(0,0,0,.75));border:1px solid rgba(255,0,0,.6);border-radius:12px;padding:6px 10px;backdrop-filter:blur(4px);max-width:340px;box-shadow:0 0 16px rgba(255,0,0,.35)}
-#hearts{font-size:19px;letter-spacing:2px;text-shadow:0 0 10px red}
-#floorInfo{font-size:13px;color:#ffd166;font-weight:800}
-#objective{font-size:13px;line-height:1.3;max-width:300px;color:#ffdddd;font-weight:700}
-#keys{font-size:13px;margin-top:2px}
-#objective{font-size:13px;line-height:1.3;max-width:300px}
-#compass{font-size:12px;color:#ffd166;margin-top:2px}
+.panel{background:linear-gradient(180deg,rgba(40,0,0,.85),rgba(0,0,0,.75));border:1px solid rgba(255,0,0,.6);border-radius:10px;padding:4px 7px;backdrop-filter:blur(4px);max-width:220px;box-shadow:0 0 16px rgba(255,0,0,.35)}
+#hearts{font-size:15px;letter-spacing:1px;text-shadow:0 0 10px red}
+#floorInfo{font-size:11px;color:#ffd166;font-weight:800}
+#objective{font-size:11px;line-height:1.3;max-width:200px;color:#ffdddd;font-weight:700}
+#keys{font-size:11px;margin-top:2px}
+#objective{font-size:11px;line-height:1.3;max-width:200px}
+#compass{font-size:11px;color:#ffd166;margin-top:2px}
 .iconbtn{pointer-events:auto;width:48px;height:48px;border-radius:50%;border:1px solid #ff4444;background:rgba(20,0,0,.75);color:#fff;font-size:20px;cursor:pointer}
-#toast{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:rgba(40,0,0,.85);border:1px solid #ff2222;color:#ffdddd;padding:10px 16px;border-radius:12px;font-size:16px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s;text-shadow:0 0 8px red}
-#toast.show{opacity:1}
+#toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:rgba(0,0,0,.35);border:1px solid rgba(255,120,120,.35);color:rgba(255,220,220,.85);padding:6px 10px;border-radius:10px;font-size:13px;font-weight:600;white-space:normal;max-width:70vw;text-align:center;opacity:0;transition:opacity .25s;text-shadow:none;z-index:12}
+#toast.show{opacity:.75}
 #chase{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:#c81e1e;color:#fff;padding:10px 18px;border-radius:20px;font-weight:900;font-size:18px;box-shadow:0 0 24px red;display:none;animation:pulse .7s infinite,chaseshake .18s infinite}
 @keyframes chaseshake{25%{margin-left:-3px}75%{margin-left:3px}}
 #escapeBar{position:absolute;left:50%;top:160px;transform:translateX(-50%);width:260px;height:26px;background:#222;border:2px solid #ff2222;border-radius:14px;overflow:hidden;display:none;z-index:11}#escapeFill{height:100%;width:0%;background:#c81e1e}#escapeText{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px;font-weight:800;color:#fff;white-space:nowrap}
@@ -79,7 +79,7 @@ canvas{display:block}
   .abtn.big{width:60px;height:60px}
   #staminaWrap{bottom:118px;width:120px}
   #hint{bottom:128px}
-  #toast{top:64px}
+  #toast{top:8px;font-size:12px}
   #chase{top:102px}
   #topbar{padding:6px}
   .btn{padding:10px 20px;font-size:16px}
@@ -105,7 +105,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • စွန့်ပစ်ဆေးရုံ: အခန်း 15x25m, တံခါး 2.5m, လျှောက်လမ်း 10m, လှေကားအစစ်, အပေါ်ဆုံး 15 ထပ်က စ</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V50 • အကုန်: unseen haunting + dynamic tension + risky chase + story events + jumpscare variety — error မရှိ — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V51 • toast အပေါ်ဆုံး + မှိန် + minimap သေး — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -171,7 +171,7 @@ canvas{display:block}
     </div>
   </div>
   <div id="toast"></div>
-  <canvas id="minimap" width="200" height="100" style="position:fixed;top:64px;right:10px;z-index:20;pointer-events:none;background:rgba(0,0,0,0.6);border:1px solid #444;border-radius:6px"></canvas>
+  <canvas id="minimap" width="120" height="60" style="position:fixed;top:60px;right:8px;z-index:20;pointer-events:none;background:rgba(0,0,0,0.6);border:1px solid #444;border-radius:6px"></canvas>
   <div id="chase">👹 Monster လိုက်နေပြီ! ပြေး!</div>
   <div id="escapeBar"><div id="escapeFill"></div><span id="escapeText">🚪 တံခါး ဖွင့်နေသည်… 0%</span></div>
   <div id="hideTag">🫥 ပုန်းနေသည်</div>
@@ -226,7 +226,7 @@ function drawMinimap(){
   g.clearRect(0,0,cv.width,cv.height);
   g.fillStyle='#111111';
   g.fillRect(0,0,cv.width,cv.height);
-  const sc=1.1;
+  const sc=0.6; // V51: minimap smaller
   g.fillStyle='#cccccc';
   for(const w of walls){
     if(w.isDoor && w.doorOpen) continue;
@@ -239,19 +239,19 @@ function drawMinimap(){
     const by=(S.beaconZ+30)*sc;
     g.fillStyle='#ffcc00';
     g.beginPath();
-    g.arc(Math.max(2,Math.min(cv.width-2,bx)),Math.max(2,Math.min(cv.height-2,by)),5,0,Math.PI*2);
+    g.arc(Math.max(2,Math.min(cv.width-2,bx)),Math.max(2,Math.min(cv.height-2,by)),3,0,Math.PI*2);
     g.fill();
   }
   const px=(playerPos.x+84.5)*sc;
   const py=(playerPos.z+30)*sc;
   g.fillStyle='#22ff88';
   g.beginPath();
-  g.arc(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)),5,0,Math.PI*2);
+  g.arc(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)),3,0,Math.PI*2);
   g.fill();
   g.strokeStyle='#22ff88';
   g.beginPath();
   g.moveTo(Math.max(2,Math.min(cv.width-2,px)),Math.max(2,Math.min(cv.height-2,py)));
-  g.lineTo(Math.max(2,Math.min(cv.width-2,px+Math.sin(S.yaw)*14)),Math.max(2,Math.min(cv.height-2,py+Math.cos(S.yaw)*14)));
+  g.lineTo(Math.max(2,Math.min(cv.width-2,px+Math.sin(S.yaw)*8)),Math.max(2,Math.min(cv.height-2,py+Math.cos(S.yaw)*8)));
   g.stroke();
 }
 function floorEp(){ return 16-S.floor; }
