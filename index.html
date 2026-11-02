@@ -106,9 +106,10 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V62 • early error မြင်စေ — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V63 • early error သီးသန့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
+  <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
 </div>
 
 <!-- Pause -->
@@ -198,7 +199,7 @@ setTimeout(function(){
     if(window.__nhStart) return;
     var be=document.getElementById('bootError'); if(!be) return;
     var errs=window.__nhBootErrors.length?window.__nhBootErrors.join(' | '):'no error event captured';
-    var kind=window.__nhModuleStarted?('Module started, last checkpoint: '+(window.__nhCP||'none')+', init failed before listeners'):'Module never started (import/CDN failed or hung)';
+    var kind=window.__nhModuleStarted?('Module started, last checkpoint: '+(window.__nhCP||'none')+', early: '+(window.__nhEarlyOK?'OK':(window.__nhEarlyError||'no early error'))+', init failed before listeners'):'Module never started (import/CDN failed or hung)';
     be.textContent='⚠️ Boot failed: '+kind+'. Errors: '+errs;
     be.style.display='block';
   }catch(err){}
@@ -209,7 +210,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 try{ window.__nhModuleStarted=true; const bs0=document.getElementById('bootStatus'); if(bs0) bs0.textContent='Module started…'; }catch(e){}
 let _starting=false;
-try{ const _sb=document.getElementById('startBtn'); if(!_sb){ const _be=document.getElementById('bootError'); if(_be){ _be.textContent='⚠️ Early: startBtn not found in DOM'; _be.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _be2=document.getElementById('bootError'); if(_be2){ _be2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _be2.style.display='block'; } }
+try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElementById('earlyError'); if(!_sb){ if(_ee){ _ee.textContent='⚠️ Early: startBtn not found in DOM'; _ee.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; window.__nhEarlyOK=true; if(_ee){ _ee.textContent='Early listeners OK'; _ee.style.display='block'; } const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _ee2=document.getElementById('earlyError'); if(_ee2){ _ee2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _ee2.style.display='block'; } }
 
 /* ============ STATE ============ */
 const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false, hideSneak:true};
