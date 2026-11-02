@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V69 • လွှာပြောင်း ပြန်ထည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V70 • GAME FLOW အပြည့် ပြန်ထည့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1647,9 +1647,34 @@ function doFloorChange(){
 }
 // V12 FINAL ESCAPE: not instant win. Door takes 8s to unlock, all ghosts rage-chase you, progress pauses if you leave the door, resets if caught.
 try{ window.__nhCP='GF8 before startEscape'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF8 before startEscape'; }catch(e){}
-function startEscape(){}
-function cancelEscape(){}
-function loseHeart(){}
+function startEscape(){
+  if(S.escaping) return;
+  S.escaping=true; S.escapeProgress=0; S.hidden=false; $('hideBtn').classList.remove('active');
+  if(S.stage!==2){ S.escapeDoorX=-7.5; S.escapeDoorZ=-29; }
+  monsterState='chase'; S.chase=true; lastSeen=playerPos.clone();
+  screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate([300,100,300]);
+  toast('🚨 တံခါး ဖွင့်နေသည်! သရဲတွေ အားလုံး လာနေပြီ! တံခါးနား ၁၀ စက္ကန့် ခံပါ!');
+  const eb=$('escapeBar'); if(eb) eb.style.display='block';
+}
+function cancelEscape(){
+  if(!S.escaping) return; S.escaping=false; S.escapeProgress=0;
+  const eb=$('escapeBar'); if(eb) eb.style.display='none';
+  const ef=$('escapeFill'); if(ef) ef.style.width='0%';
+}
+try{ window.__nhCP='GF9 before loseHeart'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF9 before loseHeart'; }catch(e){}
+function loseHeart(){
+  S.hearts--; S.invuln=3; scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  const js=$('jumpscare'); if(js){ js.style.display='none'; }
+  const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
+  // V53 catch cost: drop one key/item (must re-collect), not just a heart
+  let dropped='';
+  if(S.keys>0){ const takenKeys=keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED); const dk=takenKeys[takenKeys.length-1]; if(dk){ dk.taken=false; dk.mesh.visible=true; S.keys--; dropped=' 🔑 '+dk.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
+  else if(S.items>0){ const fmD=floorMission(); const takenItems=itemMeshes.filter((im,idx)=>im.taken && idx<fmD.need); const di=takenItems[takenItems.length-1]; if(di){ di.taken=false; di.mesh.visible=true; S.items--; dropped=' 📦 '+di.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
+  toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်'+dropped);
+  if(S.escaping){ cancelEscape(); toast('💔 ဖမ်းခံရလို့ တံခါး ပြန်ပိတ်သွားပြီ! တောင်တံခါးကို ပြန်သွားပြီး ပြန်ဖွင့်ပါ'); }
+  playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
+  if(S.hearts<=0) endGame(false); updateHUD();
+}
 try{ window.__nhCP='CP9 GAMEFLOW done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP9 GAMEFLOW done'; }catch(e){}
 window.__nhStart=handleStart;
 $('startBtn').addEventListener('touchstart',handleStart,{passive:false});
