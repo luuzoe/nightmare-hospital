@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V63 • early error သီးသန့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V64 • handleStart အစောဆုံး — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -210,6 +210,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 try{ window.__nhModuleStarted=true; const bs0=document.getElementById('bootStatus'); if(bs0) bs0.textContent='Module started…'; }catch(e){}
 let _starting=false;
+function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
 try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElementById('earlyError'); if(!_sb){ if(_ee){ _ee.textContent='⚠️ Early: startBtn not found in DOM'; _ee.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; window.__nhEarlyOK=true; if(_ee){ _ee.textContent='Early listeners OK'; _ee.style.display='block'; } const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _ee2=document.getElementById('earlyError'); if(_ee2){ _ee2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _ee2.style.display='block'; } }
 
 /* ============ STATE ============ */
@@ -1676,7 +1677,6 @@ function loseHeart(){
   if(S.hearts<=0) endGame(false); updateHUD();
 }
 try{ window.__nhCP='CP9 GAMEFLOW done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP9 GAMEFLOW done'; }catch(e){}
-function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
 window.__nhStart=handleStart;
 $('startBtn').addEventListener('touchstart',handleStart,{passive:false});
 $('startBtn').addEventListener('pointerdown',handleStart);
