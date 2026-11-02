@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V75 • ရှုပ်ထွေး + ခက်ခဲ + ပိုကြောက် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V76 • သေ ၅ စက္ကန့် + သွေး + အလောင်း — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -535,10 +535,10 @@ loadRealSound('moan','ghost-moan.mp3');
 loadRealSound('growl','ghost-growl.mp3');
 loadRealSound('roar','ghost-roar.mp3');
 loadRealSound('girl','ghost-girl.mp3');
-function growlSound(){ if(playReal('growl',0.5)) return; playTone(60,35,1.5,'sawtooth',0.50,9); playNoise(1.5,'lowpass',180,1,0.35,9); playTone(40,28,1.5,'sine',0.40,0); }
+function growlSound(){ if(playReal('growl',0.8)) return; playTone(60,35,1.5,'sawtooth',0.50,9); playNoise(1.5,'lowpass',180,1,0.35,9); playTone(40,28,1.5,'sine',0.40,0); }
 function heartbeatSound(){ thump(0.5); setTimeout(()=>thump(0.4),180); }
 function giggleSound(){ playTone(900,1200,0.4,'sine',0.12,10); setTimeout(()=>playTone(1100,800,0.4,'sine',0.10,12),250); setTimeout(()=>playTone(1000,1300,0.3,'sine',0.10,10),550); } // child ghost giggle
-function moanSound(){ if(playReal('moan',0.25)) return; playTone(240,120,3.0,'sine',0.35,5); playNoise(3.0,'bandpass',400,2,0.25,3); playTone(120,80,3.0,'sawtooth',0.20,4); }
+function moanSound(){ if(playReal('moan',0.6)) return; playTone(240,120,3.0,'sine',0.35,5); playNoise(3.0,'bandpass',400,2,0.25,3); playTone(120,80,3.0,'sawtooth',0.20,4); }
 function pickupSound(){ beep(880,.12); setTimeout(()=>beep(1320,.18),90); }
 function doorSound(){ playTone(180,320,0.5,'sawtooth',0.07,0); playNoise(0.5,'bandpass',600,2,0.03,0); } // creak, not beep
 function scareSound(){ if(playReal('roar',0.9)) { thump(0.7); return; } playTone(110,35,1.4,'sawtooth',0.60,0); playNoise(1.4,'lowpass',300,1,0.45,0); thump(0.7); playTone(50,30,1.4,'sine',0.45,0); }
@@ -560,7 +560,7 @@ document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
 let lastGirlTime=-999;
 let lastWanderScream=-999;
 function wanderingScream(){ if(S.time-lastWanderScream<60) return; lastWanderScream=S.time; screamSound(); }
-function whisperSound(){ if(S.time-lastGirlTime<120) return; lastGirlTime=S.time; if(playReal('girl',0.35)) return; playNoise(1.6,'bandpass',1100,1.5,0.25,7); }
+function whisperSound(){ if(S.time-lastGirlTime<30) return; lastGirlTime=S.time; if(playReal('girl',0.7)) return; playNoise(1.6,'bandpass',1100,1.5,0.25,7); }
 function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpass',900,1,0.65,0); playTone(950,200,1.4,'sawtooth',0.55,0); setTimeout(()=>playTone(1300,350,0.8,'sawtooth',0.45,0),150); setTimeout(()=>playTone(850,180,0.9,'sawtooth',0.35,0),400); setTimeout(()=>playTone(1100,300,0.7,'sawtooth',0.25,0),800); playTone(55,30,1.4,'sine',0.45,0); }
 
 try{ window.__nhCP='CP2 AUDIO done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP2 AUDIO done'; }catch(e){}
@@ -918,6 +918,8 @@ const medkitMesh=new THREE.Group();
 const corpseDefs=[
   {x:-62,z:-20,yaw:Math.PI/2}, {x:2,z:-20,yaw:0.5}, {x:62,z:-20,yaw:2.2},
   {x:-62,z:20,yaw:1.0}, {x:-2,z:20,yaw:2.8}, {x:58,z:20,yaw:0},
+  {x:-40,z:0,yaw:0.5}, {x:10,z:0,yaw:2.0}, {x:60,z:0,yaw:1.0},
+  {x:-77,z:-20,yaw:1.5}, {x:-17,z:-20,yaw:0.2}, {x:73,z:20,yaw:2.5}, {x:-32,z:20,yaw:0.8},
 ];
 const flies=[], maggots=[];
 let bloodTex=null;
@@ -936,6 +938,8 @@ function makeWallBlood(x,y,z,ry,w,h){
 }
 // V17 real blood on walls everywhere
 makeWallBlood(-84.2,1.5,-17.5,Math.PI/2,3.5,2.5); makeWallBlood(84.2,1.5,-17.5,-Math.PI/2,3.5,2.5); makeWallBlood(-84.2,1.5,17.5,Math.PI/2,3.5,2.5); makeWallBlood(84.2,1.5,17.5,-Math.PI/2,3.5,2.5); makeWallBlood(0,1.5,-29.6,0,4,2.5); makeWallBlood(0,1.5,29.6,Math.PI,4,2.5); makeWallBlood(-47,1.5,-5.3,0,3,2); makeWallBlood(47,1.5,5.3,Math.PI,3,2); makeWallBlood(80,1.5,0,-Math.PI/2,3,2);
+makeWallBlood(-17,1.5,-5.3,0,3,2); makeWallBlood(17,1.5,-5.3,0,3,2); makeWallBlood(62,1.5,-5.3,0,3,2); makeWallBlood(-32,1.5,5.3,Math.PI,3,2); makeWallBlood(13,1.5,5.3,Math.PI,3,2); makeWallBlood(58,1.5,5.3,Math.PI,3,2); makeWallBlood(-40,1.5,-29.6,0,4,2.5); makeWallBlood(40,1.5,-29.6,0,4,2.5); makeWallBlood(-40,1.5,29.6,Math.PI,4,2.5); makeWallBlood(40,1.5,29.6,Math.PI,4,2.5);
+makeBloodPool(-60,0,1.2); makeBloodPool(-20,0,1.0); makeBloodPool(20,0,1.3); makeBloodPool(60,0,1.1); makeBloodPool(-47,-20,1.0); makeBloodPool(32,-20,1.2); makeBloodPool(-62,20,1.0); makeBloodPool(43,20,1.2);
 for(const c of corpseDefs){ makeBloodPool(c.x,c.z,2.2+Math.random()*0.6); makeBloodPool(c.x+0.8,c.z+0.5,1.2); }
 for(const idx of [1,4]){
   const c=corpseDefs[idx]; const hdX=-Math.sin(c.yaw), hdZ=-Math.cos(c.yaw);
@@ -1141,7 +1145,7 @@ dirtStain(-47,-16,2.2); dirtStain(-17,16,2.2); dirtStain(47,-16,2.2); dirtStain(
 // V73 ghost dash: a bed and a chair that zip across in front of the player, visual only
 function dashBed(){ const g=new THREE.Group(); const bed=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.7), new THREE.MeshStandardMaterial({color:0x3a3a3a})); bed.position.y=0.9; g.add(bed); const mattress=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.12,0.65), new THREE.MeshStandardMaterial({color:0xd8d8d0})); mattress.position.y=1.02; g.add(mattress); const pillow=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.1,0.55), new THREE.MeshStandardMaterial({color:0xeeeeee})); pillow.position.set(-0.6,1.12,0); g.add(pillow); for(const px of [-0.8,0.8]){ for(const pz of [-0.3,0.3]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.08), bed.material); leg.position.set(px,0.45,pz); g.add(leg); } } g.visible=false; scene.add(g); return g; }
 function dashChair(){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6), new THREE.MeshStandardMaterial({color:0x222222})); seat.position.y=0.5; const back=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.7,0.1), seat.material); back.position.set(0,0.9,-0.3); g.add(seat,back); g.visible=false; scene.add(g); return g; }
-const dashItems=[dashBed(),dashChair()]; let dashTimer=40+Math.random()*30, dashAnim=null;
+const dashItems=[dashBed(),dashChair()]; let dashTimer=40+Math.random()*30, dashAnim=null, dashIdx=0;
 
 function poster(txt,x,y,z,ry){ const cv=document.createElement('canvas'); cv.width=256; cv.height=128; const g=cv.getContext('2d'); g.fillStyle='#0a2a5a'; g.fillRect(0,0,256,128); g.fillStyle='#ffffff'; g.font='bold 36px sans-serif'; g.textAlign='center'; g.fillText(txt,128,70); const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace; const m=new THREE.Mesh(new THREE.PlaneGeometry(2,1), new THREE.MeshBasicMaterial({map:tex})); m.position.set(x,y,z); m.rotation.y=ry; scene.add(m); }
 poster('EMERGENCY',-84.2,2,0,Math.PI/2); poster('ICU',32,2,-29.6,0); poster('PHARMACY',10,2,29.6,Math.PI); poster('X-RAY',-32,2,-29.6,0);
@@ -1317,6 +1321,13 @@ async function loadCorpses(){
     {src:'dead4.glb',scale:1.2,ox:-0.165,oy:0,oz:0,rotX:-Math.PI/2,real:true},
     {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
     {src:'cesium-man.glb',scale:PLAYER_BASE,real:false},
+    {src:'dead1.glb',scale:1.2,ox:0,oy:0.4,oz:0,real:true},
+    {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
+    {src:'dead3.glb',scale:0.36,ox:0.68,oy:0.32,oz:0,real:true},
+    {src:'dead4.glb',scale:1.2,ox:-0.165,oy:0,oz:0,rotX:-Math.PI/2,real:true},
+    {src:'dead1.glb',scale:1.2,ox:0,oy:0.4,oz:0,real:true},
+    {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
+    {src:'dead3.glb',scale:0.36,ox:0.68,oy:0.32,oz:0,real:true},
   ];
   for(let ci=0; ci<corpseDefs.length; ci++){
     const c=corpseDefs[ci]; const cs=corpseSrcs[ci]||corpseSrcs[5];
@@ -1546,7 +1557,7 @@ try{ window.__nhCP='CP8 CONTROLS done'; const _bs=document.getElementById('bootS
 /* ============ GAME FLOW ============ */
 let _skipKeyShuffle=false;
 function resetGame(){
-  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=12; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=35; S.randScareTimer=35; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=60; S.hauntTimer=25; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
+  S._dying=false; S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=12; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=35; S.randScareTimer=35; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=60; S.hauntTimer=25; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
   if(scene.fog) scene.fog.density=0.09;
   medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } }
@@ -1675,17 +1686,16 @@ function cancelEscape(){
 }
 try{ window.__nhCP='GF9 before loseHeart'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF9 before loseHeart'; }catch(e){}
 function loseHeart(){
-  S.hearts--; S.invuln=3; scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  if(S._dying) return; S._dying=true; S.hearts--; S.invuln=3; scareSound(); screamSound(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
   const js=$('jumpscare'); if(js){ js.style.display='none'; }
-  const d=$('damage'); d.style.opacity=1; setTimeout(()=>d.style.opacity=0,400);
+  const d=$('damage'); d.style.opacity=1;
   // V53 catch cost: drop one key/item (must re-collect), not just a heart
   let dropped='';
   if(S.keys>0){ const takenKeys=keyMeshes.filter(km=>km.taken && km.def.id<=KEYS_NEEDED); const dk=takenKeys[takenKeys.length-1]; if(dk){ dk.taken=false; dk.mesh.visible=true; S.keys--; dropped=' 🔑 '+dk.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
   else if(S.items>0){ const fmD=floorMission(); const takenItems=itemMeshes.filter((im,idx)=>im.taken && idx<fmD.need); const di=takenItems[takenItems.length-1]; if(di){ di.taken=false; di.mesh.visible=true; S.items--; dropped=' 📦 '+di.def.label+' ကျသွားပြီ! ပြန်ကောက်ပါ'; } }
   toast('💔 ဖမ်းခံရပြီ! အသက် '+S.hearts+' ခု ကျန်သည်'+dropped);
   if(S.escaping){ cancelEscape(); toast('💔 ဖမ်းခံရလို့ တံခါး ပြန်ပိတ်သွားပြီ! တောင်တံခါးကို ပြန်သွားပြီး ပြန်ဖွင့်ပါ'); }
-  playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
-  if(S.hearts<=0) endGame(false); updateHUD();
+  S.paused=true; let cd=5; toast('💀 သေသွားပြီ… '+cd); const cdInt=setInterval(()=>{ cd--; if(cd>0){ toast('💀 '+cd); try{ heartbeatSound(); }catch(e){} } else { clearInterval(cdInt); S._dying=false; S.paused=false; if(d) d.style.opacity=0; if(S.hearts<=0){ endGame(false); } else { playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); S.invuln=3; toast('👻 ပြန်ပေါ်လာပြီ! တိတ်တိတ် ရှာပါ'); } updateHUD(); } },1000); updateHUD();
 }
 try{ window.__nhCP='CP9 GAMEFLOW done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP9 GAMEFLOW done'; }catch(e){}
 window.__nhStart=handleStart;
@@ -2006,8 +2016,8 @@ function update(dt){
     if(heartBeatAcc>interval){ heartBeatAcc=0; thump(0.35); setTimeout(()=>thump(0.25),120); }
   }
   // growl when monster is near (scary, not silent)
-  if(mDist<16 && !S.hidden && monsterState!=='scare'){ growlAcc+=dt; if(growlAcc>15){ growlAcc=0; growlSound(); } } else growlAcc=0;
-  if(mDist<9 && !S.hidden && monsterState!=='scare'){ whisperAcc+=dt; if(whisperAcc>18){ whisperAcc=0; whisperSound(); } } else whisperAcc=0; // V10 close = whisper in your ear
+  if(mDist<20 && !S.hidden && monsterState!=='scare'){ growlAcc+=dt; if(growlAcc>10){ growlAcc=0; growlSound(); } } else growlAcc=0;
+  if(mDist<12 && !S.hidden && monsterState!=='scare'){ whisperAcc+=dt; if(whisperAcc>12){ whisperAcc=0; whisperSound(); } } else whisperAcc=0; // V10 close = whisper in your ear
   // V5: no instant catch - must stay within 1.4m for 0.8s, so player can run away from a scare
   if(monsterState!=='scare' && mDist<1.6 && !S.hidden && S.invuln<=0 && !S.won){
     S.catchTimer+=dt;
@@ -2020,7 +2030,7 @@ function update(dt){
     if(wgCatch){ if(typeof S.wanderCatchTimer!=='number') S.wanderCatchTimer=0; S.wanderCatchTimer+=dt; if(S.wanderCatchTimer>0.4){ S.wanderCatchTimer=0; wgCatch.state='scare'; wgCatch.scareTimer=2.0; loseHeart(); } } else S.wanderCatchTimer=0;
   } else S.wanderCatchTimer=0;
   // V9 distant moan every ~18-30s so the hospital never feels silent
-  if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=90+Math.random()*30; } } // V49: moan every 90-120s, dread without noise
+  if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=45+Math.random()*25; } } // V49: moan every 90-120s, dread without noise
   // V9 wandering ghosts: patrol, scare, vanish, cooldown
   wanderingScare=false;
   for(const wg of wanderingGhosts){
@@ -2098,7 +2108,7 @@ function update(dt){
     dashTimer-=dt;
     if(dashTimer<=0){
       dashTimer=45+Math.random()*35;
-      const it=dashItems[Math.floor(Math.random()*dashItems.length)];
+      const it=dashItems[dashIdx%2]; dashIdx++;
       const fx=playerPos.x+Math.sin(S.yaw)*7, fz=playerPos.z+Math.cos(S.yaw)*7;
       const px=Math.cos(S.yaw), pz=-Math.sin(S.yaw);
       const sx=Math.max(-80,Math.min(80,fx+px*10)), sz=Math.max(-26,Math.min(26,fz+pz*10));
