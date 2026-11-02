@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V78 • ပရိဘောဂ collision — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V79 • ထစ်တာ ပြင် — ချောမွေ့</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -566,7 +566,7 @@ function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpa
 try{ window.__nhCP='CP2 AUDIO done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP2 AUDIO done'; }catch(e){}
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.25)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
 renderer.setSize(innerWidth,innerHeight);
 renderer.domElement.id='game';
 document.body.prepend(renderer.domElement);
@@ -1167,8 +1167,9 @@ makeBloodWriting('ABANDONED',-84.2,2.6,2,Math.PI/2); makeBloodWriting('DO NOT EN
 { const dustGeo=new THREE.BufferGeometry(); const dustPos=[]; for(let i=0;i<240;i++){ dustPos.push(-56+Math.random()*112, 0.4+Math.random()*2.6, -22+Math.random()*44); } dustGeo.setAttribute('position', new THREE.Float32BufferAttribute(dustPos,3)); const dust=new THREE.Points(dustGeo, new THREE.PointsMaterial({color:0xcccccc,size:0.05,transparent:true,opacity:0.35})); scene.add(dust); }
 try{ window.__nhCP='CP5 KEYS+GORE done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP5 KEYS+GORE done'; }catch(e){}
 /* ============ COLLISION HELPERS ============ */
-function collide(x,z,r,allowStair){
+function collide(x,z,r,allowStair,skipFurniture){
   for(const w of walls){
+    if(skipFurniture && w.isFurniture) continue;
     if(w.isDoor && w.doorOpen) continue;
     if(!w.isDoor && (w.z===-3 || w.z===3) && typeof doorWalls!=='undefined'){
       let nearOpen=false;
@@ -1190,7 +1191,7 @@ function lineBlockedFine(x1,z1,x2,z2){
   const d=Math.hypot(x2-x1,z2-z1); const n=Math.max(1,Math.ceil(d/0.5));
   for(let i=1;i<n;i++){
     const x=x1+(x2-x1)*i/n, z=z1+(z2-z1)*i/n;
-    for(const w of walls){ if(w.isDoor) continue; if(Math.abs(x-w.x)<w.w/2+0.2 && Math.abs(z-w.z)<w.d/2+0.2) return true; }
+    for(const w of walls){ if(w.isDoor || w.isFurniture) continue; if(Math.abs(x-w.x)<w.w/2+0.2 && Math.abs(z-w.z)<w.d/2+0.2) return true; }
   }
   return false;
 }
@@ -2003,7 +2004,7 @@ function update(dt){
   else { monsterPath=[]; const pts=S.stage===2?patrolPts2:patrolPts; const p=pts[patrolIdx%pts.length]; target=new THREE.Vector3(p[0],0,p[1]); if(Math.hypot(target.x-monsterPos.x,target.z-monsterPos.z)<1.5)patrolIdx=(patrolIdx+1)%pts.length; }
   if(target && !S.paused){
     const dx=target.x-monsterPos.x, dz=target.z-monsterPos.z; const dl=Math.hypot(dx,dz);
-    if(dl>0.1){ const nm=collide(monsterPos.x+dx/dl*mSpeed*dt, monsterPos.z+dz/dl*mSpeed*dt, 1.0); monsterPos.x=nm[0]; monsterPos.z=nm[1]; monsterAngle=Math.atan2(dx/dl,dz/dl); }
+    if(dl>0.1){ const nm=collide(monsterPos.x+dx/dl*mSpeed*dt, monsterPos.z+dz/dl*mSpeed*dt, 1.0, false, true); monsterPos.x=nm[0]; monsterPos.z=nm[1]; monsterAngle=Math.atan2(dx/dl,dz/dl); }
   }
   if(monster){ monster.position.set(monsterPos.x,0.35+Math.sin(t*2)*0.08,monsterPos.z); monster.rotation.y=monsterAngle; } // V10 ghost floats, not walks
   if(monsterMixer)monsterMixer.update(dt*(monsterState==='chase'?1.8:0.9));
@@ -2039,7 +2040,7 @@ function update(dt){
     const wd=Math.hypot(wg.outer.position.x-playerPos.x, wg.outer.position.z-playerPos.z);
     if(wg.state==='chase'){
       wg.chaseTimer-=dt; const cdx=playerPos.x-wg.outer.position.x, cdz=playerPos.z-wg.outer.position.z; const cdl=Math.hypot(cdx,cdz)||1;
-      const nm2=collide(wg.outer.position.x+cdx/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, wg.outer.position.z+cdz/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, 1.0); wg.outer.position.x=nm2[0]; wg.outer.position.z=nm2[1]; wg.outer.rotation.y=Math.atan2(cdx/cdl,cdz/cdl);
+      const nm2=collide(wg.outer.position.x+cdx/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, wg.outer.position.z+cdz/cdl*(wg.def.speed+1.0+(wg.def.speedBoost||0))*dt, 1.0, false, true); wg.outer.position.x=nm2[0]; wg.outer.position.z=nm2[1]; wg.outer.rotation.y=Math.atan2(cdx/cdl,cdz/cdl);
       if(S.hidden || cdl<1.5 || wg.chaseTimer<=0){ wg.state='scare'; wg.scareTimer=2.0; wanderingScare=true; wanderingScream(); if(navigator.vibrate) navigator.vibrate(150); toast('👻 '+wg.def.name+' ကြောက်စရာ!'); }
     } else if(wg.state==='scare'){
       wanderingScare=true; wg.scareTimer-=dt;
@@ -2055,7 +2056,7 @@ function update(dt){
       if(wg.blinkTimer<=0){ wg.blinkTimer=14+Math.random()*10; const bdx=playerPos.x-wg.outer.position.x, bdz=playerPos.z-wg.outer.position.z; const bl=Math.hypot(bdx,bdz)||1; const nmB=collide(wg.outer.position.x+bdx/bl*4, wg.outer.position.z+bdz/bl*4, 1.0); wg.outer.position.x=nmB[0]; wg.outer.position.z=nmB[1]; if(Math.random()<0.3) whisperSound(); toast('👻 '+wg.def.name+' ရုတ်တရက် နီးလာပြီ!'); }
       const wp=wg.def.wps[wg.wpIdx]; const dx=wp[0]-wg.outer.position.x, dz=wp[1]-wg.outer.position.z; const dl=Math.hypot(dx,dz);
       if(dl<1.5) wg.wpIdx=(wg.wpIdx+1)%wg.def.wps.length;
-      else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 1.0); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
+      else { const nm=collide(wg.outer.position.x+dx/dl*wg.def.speed*dt, wg.outer.position.z+dz/dl*wg.def.speed*dt, 1.0, false, true); wg.outer.position.x=nm[0]; wg.outer.position.z=nm[1]; wg.outer.rotation.y=Math.atan2(dx/dl,dz/dl); }
       if(!S.hidden && (S.floor!==15 || S.keys>=1) && S.invuln<=0 && (S.escaping || (wd<((wg.def.radius+(wg.def.radiusBoost||0))) && !lineBlocked(wg.outer.position.x,wg.outer.position.z,playerPos.x,playerPos.z)))){
         wg.state='chase'; wg.chaseTimer=S.escaping?8:(wg.def.chaseTime||4.5); if(wg.def.sound==='giggle') giggleSound(); else if(wg.def.sound==='whisper') whisperSound(); else if(wg.def.sound==='growl') growlSound(); else if(wg.def.sound==='moan') moanSound(); else wanderingScream(); toast('👻 '+wg.def.name+' လိုက်လာပြီ! ပြေး!');
       }
