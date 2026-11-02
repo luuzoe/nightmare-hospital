@@ -13,12 +13,12 @@ canvas{display:block}
 /* ---------- Screens ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:radial-gradient(circle at 8% 12%, rgba(140,10,10,.5) 0 6%, transparent 7%),radial-gradient(circle at 92% 85%, rgba(120,5,5,.5) 0 7%, transparent 8%),radial-gradient(ellipse at center,#2a0505 0%,#0a0000 55%,#000 100%);z-index:20}
 .screen.hidden{display:none}
-.screen h1{font-size:52px;line-height:1.1;margin:8px 0;color:#ff2d2d;text-shadow:0 0 24px rgba(255,0,0,.8),0 0 60px rgba(255,0,0,.4);letter-spacing:1px;animation:flicker 3s infinite}
+.screen h1{font-size:36px;line-height:1.1;margin:8px 0;color:#ff2d2d;text-shadow:0 0 24px rgba(255,0,0,.8),0 0 60px rgba(255,0,0,.4);letter-spacing:1px;animation:flicker 3s infinite}
 @keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.4}94%{opacity:1}96%{opacity:.6}97%{opacity:1}}
 .screen h2{font-size:30px;margin:8px 0;color:#ff4444}
 .screen p{max-width:520px;line-height:1.7;color:#ddd;font-size:16px}
 .badge{display:inline-block;padding:6px 12px;border:1px solid #ff4444;border-radius:20px;color:#ffb3b3;font-size:13px;margin-bottom:10px}
-.btn{margin-top:16px;padding:18px 38px;font-size:20px;font-weight:800;border:0;border-radius:14px;background:#c81e1e;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,0,0,.5);animation:btnpulse 1.6s infinite}
+.btn{margin-top:12px;padding:12px 24px;font-size:17px;font-weight:800;border:0;border-radius:14px;background:#c81e1e;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,0,0,.5);animation:btnpulse 1.6s infinite}
 @keyframes btnpulse{50%{box-shadow:0 6px 36px rgba(255,0,0,.9);transform:scale(1.03)}}
 .btn:active{transform:scale(.97)}
 .btn.ghost{background:#222;border:1px solid #555;box-shadow:none}
@@ -98,15 +98,15 @@ canvas{display:block}
   <div class="badge">👻 #1 ကြောက်စရာ</div>
   <h1>Nightmare<br>Hospital</h1>
   <p>🏢 15 ထပ် • Ep1-15 • အပေါ်ကနေ အောက်ထိ ဆင်း • တစ်ထပ်ပြီး တစ်ထပ် ပိုခက်</p>
-  <p style="font-size:14px;color:#ffcccc;line-height:1.5">📖 ဇာတ်လမ်း: သူနာပြု မေသူ ဒီစွန့်ပစ်ဆေးရုံထဲ ပျောက်သွားတာ ၃ နှစ်ရှိပြီ။ သူ့အစ်ကို မင်းက သူ့ဒိုင်ယာရီ စာမျက်နှာတွေကို တစ်ထပ်ပြီး တစ်ထပ် လိုက်ရှာရမယ်။ အပေါ်ဆုံး 15 ထပ်က စ၊ အောက်ဆုံး 1 ထပ်မှာ အမှန်တရား ရှိတယ်။ ဆေးရုံက မင်းကို စောင့်နေတယ် — တိတ်တိတ် သွား၊ အသံ မဆူပါနဲ့၊ သူ ကြားလိမ့်မယ်။</p>
+  <p style="font-size:14px;color:#ffcccc;line-height:1.5">📖 သူနာပြု မေသူ ဒီဆေးရုံထဲ ပျောက်သွားတာ ၃ နှစ်ရှိပြီ — သူ့ဒိုင်ယာရီကို တစ်ထပ်ပြီး တစ်ထပ် ရှာပါ။</p>
   <div class="row">
     <button class="btn" id="startBtn">▶ စဆော့မယ်</button>
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
-  <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • စွန့်ပစ်ဆေးရုံ: အခန်း 15x25m, တံခါး 2.5m, လျှောက်လမ်း 10m, လှေကားအစစ်, အပေါ်ဆုံး 15 ထပ်က စ</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V53 • အကုန် ခက်အောင် + smooth + ပြတင်းပေါက် — အကုန်</p>
-  <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
+  <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
+  <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V54 • Start ပြင် + start screen သန့် — အကုန်</p>
 </div>
 
 <!-- Pause -->
@@ -533,7 +533,7 @@ function startAmbient(){
     wlfo.connect(wlg); wlg.connect(wg.gain); wind.connect(wf); wf.connect(wg); wg.connect(ambientGain); wind.start(); wlfo.start();
   }catch(e){}
 }
-document.addEventListener('pointerdown',()=>{ ac(); tryAutoLandscape(); }, {passive:true});
+document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
 let lastGirlTime=-999;
 let lastWanderScream=-999;
 function wanderingScream(){ if(S.time-lastWanderScream<60) return; lastWanderScream=S.time; screamSound(); }
@@ -1633,8 +1633,11 @@ function loseHeart(){
   playerPos.set(-7.5,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; S.chase=false; S.scare=false; S.catchTimer=0; S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active');
   if(S.hearts<=0) endGame(false); updateHUD();
 }
-$('startBtn').addEventListener('click',()=>{ try{ localStorage.removeItem('nh_save'); }catch(e){} startGame(); });
-if($('continueBtn')){ $('continueBtn').addEventListener('click', continueGame); try{ const sv0=JSON.parse(localStorage.getItem('nh_save')||'null'); if(sv0 && sv0.floor>=1 && sv0.floor<=15){ $('continueBtn').style.display='block'; $('continueBtn').textContent='↻ အထပ် '+sv0.floor+' ကနေ ဆက်ဆော့မယ်'; } }catch(e){} }
+let _starting=false;
+function handleStart(e){ if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
+$('startBtn').addEventListener('pointerdown',handleStart);
+$('startBtn').addEventListener('click',handleStart);
+if($('continueBtn')){ $('continueBtn').addEventListener('pointerdown',(e)=>{ e.preventDefault(); try{ continueGame(); }catch(err){ const errEl=$('startError'); if(errEl){ errEl.textContent='⚠️ ဆက်ဆော့မရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }); $('continueBtn').addEventListener('click', continueGame); try{ const sv0=JSON.parse(localStorage.getItem('nh_save')||'null'); if(sv0 && sv0.floor>=1 && sv0.floor<=15){ $('continueBtn').style.display='block'; $('continueBtn').textContent='↻ အထပ် '+sv0.floor+' ကနေ ဆက်ဆော့မယ်'; } }catch(e){} }
 $('pauseBtn').addEventListener('click',pauseGame);
 $('resumeBtn').addEventListener('click',resumeGame);
 $('restartBtn').addEventListener('click',()=>{ $('pauseScreen').classList.add('hidden'); startGame(); });
