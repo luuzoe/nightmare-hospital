@@ -108,7 +108,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V80 • Tutorial + Load + သန့်တဲ့ Start</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V81 • သရဲ အသစ် 3 ကောင်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -458,11 +458,14 @@ function applyFloorLayout(){
 }
 function setActiveGhosts(){
   if(!wanderingGhosts.length) return;
-  const shuffled=shuffleArr(wanderingGhosts.slice());
+  const newNames=['Cloth Ghost','A-Pose Ghost Woman','Scary Halloween Ghost'];
+  const newPresent=wanderingGhosts.filter(wg=>newNames.includes(wg.def.name)).map(wg=>wg.def.name);
+  const oldShuffled=shuffleArr(wanderingGhosts.filter(wg=>!newNames.includes(wg.def.name)));
   const pickCount=S.floor>=15?5:(S.floor>=10?6:7); // V47: more ghosts down, all 7 at bottom
-  const activeSet=new Set(shuffled.slice(0,pickCount).map(wg=>wg.def.name));
+  const fillCount=Math.max(0,pickCount-newPresent.length);
+  const activeSet=new Set([...newPresent, ...oldShuffled.slice(0,fillCount).map(wg=>wg.def.name)]);
   S.activeGhostCount=activeSet.size;
-  S.activeGhostNames=shuffled.slice(0,pickCount).map(wg=>wg.def.name);
+  S.activeGhostNames=Array.from(activeSet);
   const spawnPool=shuffleArr(wanderingGhosts.map(wg=>({pos:wg.def.pos, wps:(wg.def.origWps||wg.def.wps).slice()})));
   let si=0;
   for(const wg of wanderingGhosts){
@@ -1387,6 +1390,9 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     {name:'Low Poly Ghost', src:'ghost-lowpoly.glb', real:true, scale:0.045, yOffset:0.43, pos:[24,-20], wps:[[24,-20],[16,-12],[0,0],[20,0]], speed:3.5, radius:12, floatY:0.2, chaseTime:8, sound:'growl'},
     {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:3.6, radius:13, floatY:0.1, chaseTime:8, sound:'growl'},
     {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:4.0, radius:12, floatY:0.2, chaseTime:7, sound:'scream'},
+    {name:'Cloth Ghost', src:'cloth-ghost.glb', real:true, scale:0.01, yOffset:1.15, pos:[-30,12], wps:[[-30,12],[-20,12],[0,0],[-30,0]], speed:3.5, radius:13, floatY:0.2, chaseTime:8, sound:'moan'},
+    {name:'A-Pose Ghost Woman', src:'ghost-woman-apose.glb', real:true, scale:0.8, yOffset:0.95, pos:[30,-12], wps:[[30,-12],[20,-12],[0,0],[30,0]], speed:3.7, radius:12, floatY:0.2, chaseTime:8, sound:'scream'},
+    {name:'Scary Halloween Ghost', src:'scary-halloween-ghost.glb', real:true, scale:0.6, yOffset:1.0, pos:[-40,0], wps:[[-40,0],[-20,0],[0,0],[-40,0]], speed:3.9, radius:13, floatY:0.2, chaseTime:8, sound:'growl'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
