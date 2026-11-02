@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V74 • နံရံ + တံခါး ပြင် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V75 • ရှုပ်ထွေး + ခက်ခဲ + ပိုကြောက် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -215,24 +215,24 @@ try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElemen
 
 /* ============ STATE ============ */
 const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false, hideSneak:true};
-const KEYS_NEEDED = 3; // V12 floor15: 3 keys (tasks increase later, not start hard)
+const KEYS_NEEDED = 4; // V12 floor15: 3 keys (tasks increase later, not start hard)
 // V12 FLOORS: 15 (top, Ep1) down to 1 (ground, Ep15 Final). Each floor: collect mission items, dodge ghosts, open south door -> descend. Harder step by step.
 const FLOOR_MISSIONS={
-  15:{ep:1,type:'keys',label:'သော့',need:3,keys:true},
-  14:{ep:2,type:'order',label:'ဆေး',need:3},
-  13:{ep:3,type:'switches',label:'Switch',need:3},
-  12:{ep:4,type:'survive',label:'ရှင်သန်',need:60,timer:60},
-  11:{ep:5,type:'lockers',label:'Locker',need:5},
+  15:{ep:1,type:'keys',label:'သော့',need:4,keys:true},
+  14:{ep:2,type:'order',label:'ဆေး',need:4},
+  13:{ep:3,type:'switches',label:'Switch',need:4},
+  12:{ep:4,type:'survive',label:'ရှင်သန်',need:90,timer:90},
+  11:{ep:5,type:'lockers',label:'Locker',need:7},
   10:{ep:6,type:'lure',label:'သရဲကို ဆွဲခေါ်',need:1},
-  9:{ep:7,type:'dark',label:'မှောင်ထဲ ပစ္စည်း',need:5},
-  8:{ep:8,type:'timed',label:'အချိန်မီ ပစ္စည်း',need:6,timer:90},
-  7:{ep:9,type:'hide',label:'ပုန်း',need:30},
-  6:{ep:10,type:'corpse',label:'လူသေကောင်',need:3},
-  5:{ep:11,type:'rooms',label:'အခန်း',need:4},
-  4:{ep:12,type:'distance',label:'လမ်းလျှောက်',need:180},
-  3:{ep:13,type:'darklockers',label:'မှောင် Locker',need:5,dwell:3},
-  2:{ep:14,type:'timedorder',label:'အချိန်မီ အစဉ်',need:8,timer:75},
-  1:{ep:15,type:'final',label:'ထွက်ပေါက်',need:8,switch:true},
+  9:{ep:7,type:'dark',label:'မှောင်ထဲ ပစ္စည်း',need:7},
+  8:{ep:8,type:'timed',label:'အချိန်မီ ပစ္စည်း',need:7,timer:75},
+  7:{ep:9,type:'hide',label:'ပုန်း',need:45},
+  6:{ep:10,type:'corpse',label:'လူသေကောင်',need:4},
+  5:{ep:11,type:'rooms',label:'အခန်း',need:6},
+  4:{ep:12,type:'distance',label:'လမ်းလျှောက်',need:240},
+  3:{ep:13,type:'darklockers',label:'မှောင် Locker',need:6,dwell:4},
+  2:{ep:14,type:'timedorder',label:'အချိန်မီ အစဉ်',need:9,timer:60},
+  1:{ep:15,type:'final',label:'ထွက်ပေါက်',need:10,switch:true},
 }; // V12 each floor DIFFERENT task: keys / order / switches / survive / lockers / lure / dark / timed / hide / corpse, then harder repeats + final // V12 tasks INCREASE down: 3 -> 8, plus Switch task from floor 8 down, plus Final Escape at floor 1
 function floorMission(){ return FLOOR_MISSIONS[S.floor]||FLOOR_MISSIONS[15]; }
 // V47 STORY: sister May Thu's diary, one hint per floor, top to bottom.
@@ -1130,7 +1130,7 @@ const poltergeistItems=[]; let polterTimer=20+Math.random()*15, polterAnim=null;
 function wheelchair(x,z,ry){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6), new THREE.MeshStandardMaterial({color:0x222222})); seat.position.y=0.5; const back=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.7,0.1), seat.material); back.position.set(0,0.9,-0.3); g.add(seat,back); for(const sx of [-0.35,0.35]){ const w=new THREE.Mesh(new THREE.TorusGeometry(0.32,0.04,8,16), new THREE.MeshStandardMaterial({color:0x111111})); w.position.set(sx,0.32,0); g.add(w); } g.position.set(x,0,z); g.rotation.y=ry; scene.add(g); poltergeistItems.push(g); }
 wheelchair(-12,13,0.5); wheelchair(12,-13,2.0);
 function stretcher(x,z,ry){ const g=new THREE.Group(); const bed=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.7), new THREE.MeshStandardMaterial({color:0x3a3a3a})); bed.position.y=0.9; g.add(bed); for(const [px,pz] of [[-0.8,-0.3],[0.8,-0.3],[-0.8,0.3],[0.8,0.3]]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.08), bed.material); leg.position.set(px,0.45,pz); g.add(leg); } g.position.set(x,0,z); g.rotation.y=ry; scene.add(g); poltergeistItems.push(g); }
-stretcher(-2,-13,0); stretcher(20,0,1.57);
+stretcher(-2,-13,0); stretcher(20,0,1.57); stretcher(-30,-20,0.5); stretcher(50,20,1.2); function polterIV(x,z){ const g=new THREE.Group(); const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,1.9,8), new THREE.MeshStandardMaterial({color:0x888888})); pole.position.y=0.95; const top=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.06,0.06), pole.material); top.position.y=1.9; const bag=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.35,0.08), new THREE.MeshStandardMaterial({color:0xffe0a0})); bag.position.set(0.25,1.7,0); g.add(pole,top,bag); g.position.set(x,0,z); scene.add(g); poltergeistItems.push(g); } polterIV(-20,20); polterIV(30,-20); polterIV(-62,-20); polterIV(62,20);
 // V73 abandoned hospital: broken furniture and debris, visual only, no collision
 function brokenChair(x,z,ry){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.08,0.55), new THREE.MeshStandardMaterial({color:0x1a1a1a})); seat.position.y=0.25; const back=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.6,0.08), seat.material); back.position.set(0,0.5,-0.25); g.add(seat,back); g.position.set(x,0.12,z); g.rotation.set(0,ry,1.35); scene.add(g); }
 brokenChair(-70,-22,0.4); brokenChair(-30,22,2.1); brokenChair(55,22,1.2); brokenChair(20,-22,0.9);
@@ -1139,7 +1139,7 @@ debrisPile(-62,-20); debrisPile(-17,20); debrisPile(47,-20); debrisPile(0,0); de
 function dirtStain(x,z,r){ const d=new THREE.Mesh(new THREE.CircleGeometry(r,16), new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:0.55})); d.rotation.x=-Math.PI/2; d.position.set(x,0.02,z); scene.add(d); }
 dirtStain(-47,-16,2.2); dirtStain(-17,16,2.2); dirtStain(47,-16,2.2); dirtStain(0,0,3.0); dirtStain(-62,17,1.8);
 // V73 ghost dash: a bed and a chair that zip across in front of the player, visual only
-function dashBed(){ const g=new THREE.Group(); const bed=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.7), new THREE.MeshStandardMaterial({color:0x3a3a3a})); bed.position.y=0.9; g.add(bed); for(const px of [-0.8,0.8]){ for(const pz of [-0.3,0.3]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.08), bed.material); leg.position.set(px,0.45,pz); g.add(leg); } } g.visible=false; scene.add(g); return g; }
+function dashBed(){ const g=new THREE.Group(); const bed=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.7), new THREE.MeshStandardMaterial({color:0x3a3a3a})); bed.position.y=0.9; g.add(bed); const mattress=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.12,0.65), new THREE.MeshStandardMaterial({color:0xd8d8d0})); mattress.position.y=1.02; g.add(mattress); const pillow=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.1,0.55), new THREE.MeshStandardMaterial({color:0xeeeeee})); pillow.position.set(-0.6,1.12,0); g.add(pillow); for(const px of [-0.8,0.8]){ for(const pz of [-0.3,0.3]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.08), bed.material); leg.position.set(px,0.45,pz); g.add(leg); } } g.visible=false; scene.add(g); return g; }
 function dashChair(){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6), new THREE.MeshStandardMaterial({color:0x222222})); seat.position.y=0.5; const back=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.7,0.1), seat.material); back.position.set(0,0.9,-0.3); g.add(seat,back); g.visible=false; scene.add(g); return g; }
 const dashItems=[dashBed(),dashChair()]; let dashTimer=40+Math.random()*30, dashAnim=null;
 
@@ -1354,18 +1354,18 @@ async function loadGhost(){
 let wanderingGhosts=[], wanderingScare=false;
 async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်နေသည်…');
   const defs=[
-    {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:2.6, radius:13, floatY:0.1, chaseTime:5, sound:'moan'},
-    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.6, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:2.4, radius:14, floatY:0.3, chaseTime:6, sound:'growl'},
-    {name:'Ghost Girl', src:'ghost-saori.glb', real:true, scale:0.2, yOffset:0.79, rotX:Math.PI/2, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.0, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'}, // V28: replaces lying Ghost Girl Animated with Zaw-sent Saori girl (no anim, head at -Z so rotX +PI/2 stands it up, scale 0.2 => 1.84m)
-    {name:'Inktober Ghost', src:'ghost-inktober.glb', real:true, scale:0.9, yOffset:1.01, pos:[-24,-12], wps:[[-24,-12],[-16,-12],[0,0],[-20,0]], speed:2.5, radius:12, floatY:0.2, chaseTime:5, sound:'moan'},
-    {name:'Low Poly Ghost', src:'ghost-lowpoly.glb', real:true, scale:0.045, yOffset:0.43, pos:[24,-20], wps:[[24,-20],[16,-12],[0,0],[20,0]], speed:2.7, radius:12, floatY:0.2, chaseTime:5, sound:'growl'},
-    {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:2.8, radius:13, floatY:0.1, chaseTime:5, sound:'growl'},
-    {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:3.2, radius:12, floatY:0.2, chaseTime:4.5, sound:'scream'},
+    {name:'Ghost Woman', src:'ghost-woman.glb', real:true, scale:1.0, yOffset:0.95, pos:[20,12], wps:[[20,12],[16,12],[0,0],[20,0]], speed:3.4, radius:13, floatY:0.1, chaseTime:8, sound:'moan'},
+    {name:'Darkness Ghost', src:'ghost-dark.glb', real:true, scale:0.6, yOffset:0, pos:[-20,20], wps:[[-20,20],[-16,12],[0,0],[-20,0]], speed:3.2, radius:14, floatY:0.3, chaseTime:9, sound:'growl'},
+    {name:'Ghost Girl', src:'ghost-saori.glb', real:true, scale:0.2, yOffset:0.79, rotX:Math.PI/2, pos:[24,20], wps:[[24,20],[20,12],[0,0],[24,0]], speed:3.8, radius:12, floatY:0.2, chaseTime:7, sound:'scream'}, // V28: replaces lying Ghost Girl Animated with Zaw-sent Saori girl (no anim, head at -Z so rotX +PI/2 stands it up, scale 0.2 => 1.84m)
+    {name:'Inktober Ghost', src:'ghost-inktober.glb', real:true, scale:0.9, yOffset:1.01, pos:[-24,-12], wps:[[-24,-12],[-16,-12],[0,0],[-20,0]], speed:3.3, radius:12, floatY:0.2, chaseTime:8, sound:'moan'},
+    {name:'Low Poly Ghost', src:'ghost-lowpoly.glb', real:true, scale:0.045, yOffset:0.43, pos:[24,-20], wps:[[24,-20],[16,-12],[0,0],[20,0]], speed:3.5, radius:12, floatY:0.2, chaseTime:8, sound:'growl'},
+    {name:'Ghost Pig', src:'ghost-pig.glb', real:true, scale:0.02, yOffset:-0.45, pos:[28,-12], wps:[[28,-12],[20,-12],[0,0],[24,0]], speed:3.6, radius:13, floatY:0.1, chaseTime:8, sound:'growl'},
+    {name:'Lethal Ghost Girl', src:'ghost-lethal.glb', real:true, scale:0.02, yOffset:0, pos:[-26,-12], wps:[[-26,-12],[-16,-12],[0,0],[-20,0]], speed:4.0, radius:12, floatY:0.2, chaseTime:7, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
     const build=(gltf,useReal)=>{
-      const inner=gltf.scene; normalizeGroup(inner,def.scale*1.15,def.yOffset||0,def.rotX||0);
+      const inner=gltf.scene; normalizeGroup(inner,def.scale*1.25,def.yOffset||0,def.rotX||0);
       const outer=new THREE.Group(); outer.add(inner);
       for(const ex of [-0.12,0.12]){ const eye=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:0xff0000})); eye.position.set(ex,1.45,0.28); outer.add(eye); } // V47 ghost red eyes, visible in dark
       if(def.real && useReal){ inner.traverse(o=>{ if(o.isMesh && o.material && o.material.emissive){ o.material.emissive.set(0x000000); } }); }
@@ -1552,7 +1552,7 @@ function resetGame(){
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } }
   for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
   for(const wg of wanderingGhosts){ if(wg.def.origWps){ wg.def.wps=wg.def.origWps; } else { wg.def.origWps=wg.def.wps.slice(); } wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; wg.def.speedBoost=0; wg.def.radiusBoost=0; const wp0=wg.def.wps[0]; if(wp0) wg.outer.position.set(wp0[0],0,wp0[1]); wg.outer.visible=true; }
-  setObjective('Ep1 • သော့ 3 ချောင်း ရှာပါ');
+  setObjective('Ep1 • သော့ 4 ချောင်း ရှာပါ');
   playerPos.set(-81,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=20; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
   for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
@@ -1963,10 +1963,10 @@ function update(dt){
   // Old code only lost you if mDist>3, so a monster standing on your hide spot never left -> hide felt broken.
   if(S.hidden && monsterState==='chase'){
     S.hideTimer+=dt;
-    const loseAfter=(S.hideLocker?5.0:9.0)+(15-S.floor)*0.3; // V50 risky: monster searches longer
+    const loseAfter=(S.hideLocker?7.0:12.0)+(15-S.floor)*0.3; // V50 risky: monster searches longer
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
     // V50 hide search: monster reaches your hide spot (within 2.5m) = hide breaks, you must run (catch still needs 1.4m + grace, so it is fair, not instant)
-    if(S.hidden && monsterState==='chase' && mDist<2.5){ S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); lastSeen=playerPos.clone(); scareSound(); toast('👹 ပုန်းနေတာ တွေ့သွားပြီ! ပြေးပါ!'); }
+    if(S.hidden && monsterState==='chase' && mDist<3.5){ S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); lastSeen=playerPos.clone(); scareSound(); toast('👹 ပုန်းနေတာ တွေ့သွားပြီ! ပြေးပါ!'); }
   } else S.hideTimer=0;
   const canSee=!S.hidden && (S.floor!==15 || S.keys>=1) && monsterState!=='scare' && mDist<32 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V53 harder: detection 28m
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
@@ -2009,7 +2009,7 @@ function update(dt){
   if(mDist<16 && !S.hidden && monsterState!=='scare'){ growlAcc+=dt; if(growlAcc>15){ growlAcc=0; growlSound(); } } else growlAcc=0;
   if(mDist<9 && !S.hidden && monsterState!=='scare'){ whisperAcc+=dt; if(whisperAcc>18){ whisperAcc=0; whisperSound(); } } else whisperAcc=0; // V10 close = whisper in your ear
   // V5: no instant catch - must stay within 1.4m for 0.8s, so player can run away from a scare
-  if(monsterState!=='scare' && mDist<1.4 && !S.hidden && S.invuln<=0 && !S.won){
+  if(monsterState!=='scare' && mDist<1.6 && !S.hidden && S.invuln<=0 && !S.won){
     S.catchTimer+=dt;
     if(S.catchTimer>Math.max(0.30,0.55-(15-S.floor)*0.02)){ S.catchTimer=0; loseHeart(); } // V53 harder: grace to 0.30s at bottom
   } else S.catchTimer=0;
@@ -2017,7 +2017,7 @@ function update(dt){
   if(!S.won && S.invuln<=0 && !S.hidden){
     let wgCatch=null;
     for(const wg of wanderingGhosts){ if(wg.active!==false && wg.outer && wg.outer.visible && wg.state==='chase' && Math.hypot(wg.outer.position.x-playerPos.x,wg.outer.position.z-playerPos.z)<1.4){ wgCatch=wg; break; } }
-    if(wgCatch){ if(typeof S.wanderCatchTimer!=='number') S.wanderCatchTimer=0; S.wanderCatchTimer+=dt; if(S.wanderCatchTimer>0.5){ S.wanderCatchTimer=0; wgCatch.state='scare'; wgCatch.scareTimer=2.0; loseHeart(); } } else S.wanderCatchTimer=0;
+    if(wgCatch){ if(typeof S.wanderCatchTimer!=='number') S.wanderCatchTimer=0; S.wanderCatchTimer+=dt; if(S.wanderCatchTimer>0.4){ S.wanderCatchTimer=0; wgCatch.state='scare'; wgCatch.scareTimer=2.0; loseHeart(); } } else S.wanderCatchTimer=0;
   } else S.wanderCatchTimer=0;
   // V9 distant moan every ~18-30s so the hospital never feels silent
   if(S.playing && !S.paused){ S.moanTimer-=dt; if(S.moanTimer<=0){ moanSound(); S.moanTimer=90+Math.random()*30; } } // V49: moan every 90-120s, dread without noise
@@ -2166,7 +2166,7 @@ if(S.playing && !S.paused){ S.whisperTimer-=dt; if(S.whisperTimer<=0){ let nd=1e
       if(S.hauntTimer<=0){
         S.hauntTimer=25+Math.random()*25;
         const ht=Math.random();
-        if(ht<0.35){ footstepSound(); whisperSound(); const wl=['👣 အဝေးက ခြေသံ…','နောက်မှာ ရှိနေတယ်…','မလှည့်နဲ့…','မင်းကို ကြည့်နေတယ်…']; toast(wl[Math.floor(Math.random()*wl.length)]); }
+        if(ht<0.35){ footstepSound(); whisperSound(); const wl=['👣 အဝေးက ခြေသံ…','နောက်မှာ ရှိနေတယ်…','မလှည့်နဲ့…','မင်းကို ကြည့်နေတယ်…','ဒီမှာလာခဲ့…','ဆေးဒီမှာရှိတယ်… လာယူ…','ကလေးငိုသံ… အဲဒီအခန်းထဲမှာ…','တံခါးနောက်မှာ တစ်ခုခု ရှိတယ်…']; toast(wl[Math.floor(Math.random()*wl.length)]); }
         else if(ht<0.65 && typeof doorWalls!=='undefined' && doorWalls.length){
           const nearDoors=doorWalls.filter(dw=>dw.doorOpen && Math.hypot(dw.x-playerPos.x,dw.z-playerPos.z)<20);
           if(nearDoors.length){ const dw=nearDoors[Math.floor(Math.random()*nearDoors.length)]; dw.doorOpen=false; doorSound(); toast('🚪 တံခါး ကိုယ်တိုင် ပိတ်သွားပြီ!'); }
