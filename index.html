@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V70 • GAME FLOW အပြည့် ပြန်ထည့် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V71 • Joystick+ကင်မရာ မြန်အောင် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1451,7 +1451,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
   camId=e.pointerId; lastCamX=e.clientX; lastCamY=e.clientY;
 });
 renderer.domElement.addEventListener('pointermove',e=>{
-  if(e.pointerId!==camId)return; S.yaw-=(e.clientX-lastCamX)*0.005*(S.camSpeed||1); lastCamX=e.clientX; lastCamY=e.clientY;
+  if(e.pointerId!==camId)return; S.yaw-=(e.clientX-lastCamX)*0.008*(S.camSpeed||1); lastCamX=e.clientX; lastCamY=e.clientY;
 });
 function camEnd(e){ if(e.pointerId===camId)camId=null; }
 renderer.domElement.addEventListener('pointerup',camEnd); renderer.domElement.addEventListener('pointercancel',camEnd);
@@ -1741,7 +1741,7 @@ function update(dt){
   // stamina
   const running=moving && S.run && S.stamina>0 && !S.hidden;
   if(running)S.stamina=Math.max(0,S.stamina-(38+(15-S.floor)*1.5)*dt); else if(!moving) S.stamina=Math.min(100,S.stamina+10*dt); // V53 harder: drain faster, regen only when standing still (walking does not regen)
-  const speed=(running?6.0:3.4)*(0.45+0.55*Math.min(1,il)); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
+  const speed=(running?6.0:3.4)*(0.65+0.35*Math.min(1,il)); // V9 analog: light push = slower, full push = full speed; walk 2.9->3.4, run 5.4->6.0, less heavy
   // camera-relative move (FIX 2026-11-01: old formula mirrored both axes)
   // camera forward F=(sin,cos), camera right R=(-cos,sin) in Three.js lookAt space.
   // joystick up = -iy = forward amount, joystick right = ix = right amount.
@@ -1750,7 +1750,7 @@ function update(dt){
   if(moving){ mx=(-iy*sin - ix*cos); mz=(-iy*cos + ix*sin); const ml=Math.hypot(mx,mz); mx/=ml; mz/=ml; }
   // V53 smooth movement: velocity lerps to target, no instant start/stop snap; model angle lerps too
   const targetVX=moving?mx*speed:0, targetVZ=moving?mz*speed:0;
-  const vk=Math.min(1,dt*10);
+  const vk=Math.min(1,dt*18);
   smoothVX+=(targetVX-smoothVX)*vk; smoothVZ+=(targetVZ-smoothVZ)*vk;
   if(!moving && Math.abs(smoothVX)<0.01 && Math.abs(smoothVZ)<0.01){ smoothVX=0; smoothVZ=0; }
   if(smoothVX!==0 || smoothVZ!==0){
