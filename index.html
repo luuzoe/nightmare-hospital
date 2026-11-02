@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V73 • ပိုကြောက်အောင် + အစုတ်အပြက် အခန်း — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V74 • နံရံ + တံခါး ပြင် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -607,21 +607,21 @@ const floorTex=makeTex((g,s)=>{
   g.strokeStyle='rgba(0,0,0,.6)'; g.lineWidth=2; g.beginPath(); g.moveTo(0,100); g.lineTo(80,120); g.lineTo(140,100); g.lineTo(256,140); g.stroke(); g.beginPath(); g.moveTo(200,0); g.lineTo(190,90); g.lineTo(220,180); g.stroke();
 },8,6);
 const wallTex=makeTex((g,s)=>{
-  g.fillStyle='#5a5a52'; g.fillRect(0,0,s,s);
+  g.fillStyle='#4a4a44'; g.fillRect(0,0,s,s);
   // exposed brick where plaster peeled off (abandoned look, not flat panels)
   for(let by=0;by<4;by++)for(let bx=0;bx<8;bx++){
-    if(Math.random()<0.35){ g.fillStyle='#7a4a3a'; g.fillRect(bx*32+1,by*64+1,30,30); g.fillStyle='#3a3a3a'; g.fillRect(bx*32+1,by*64+31,30,2); }
+    if(Math.random()<0.18){ g.fillStyle='#7a4a3a'; g.fillRect(bx*32+1,by*64+1,30,30); g.fillStyle='#3a3a3a'; g.fillRect(bx*32+1,by*64+31,30,2); }
   }
-  for(let y=0;y<4;y++){ g.fillStyle=y<2?'#6e7266':'#4e524a'; if(Math.random()<0.6) g.fillRect(0,y*64,s,62); g.fillStyle='#383b36'; g.fillRect(0,y*64,s,2); }
+  for(let y=0;y<4;y++){ g.fillStyle=y<2?'#5a5e54':'#42463e'; if(Math.random()<0.6) g.fillRect(0,y*64,s,62); g.fillStyle='#383b36'; g.fillRect(0,y*64,s,2); }
   // large peeling plaster flakes (light)
-  g.fillStyle='rgba(200,190,170,.35)'; for(let i=0;i<16;i++){ g.beginPath(); g.ellipse(Math.random()*256,Math.random()*256,10+Math.random()*20,6+Math.random()*12,0,0,7); g.fill(); }
+  g.fillStyle='rgba(200,190,170,.25)'; for(let i=0;i<7;i++){ g.beginPath(); g.ellipse(Math.random()*256,Math.random()*256,10+Math.random()*20,6+Math.random()*12,0,0,7); g.fill(); }
   // mold / damp blotches (dark green-black)
-  g.fillStyle='rgba(20,35,20,.5)'; for(let i=0;i<14;i++){ g.beginPath(); g.ellipse(Math.random()*256,120+Math.random()*130,12+Math.random()*22,10+Math.random()*16,0,0,7); g.fill(); }
-  g.fillStyle='rgba(40,30,20,.35)'; for(let i=0;i<30;i++)g.fillRect(Math.random()*256,120+Math.random()*130,6,14);
+  g.fillStyle='rgba(20,35,20,.4)'; for(let i=0;i<8;i++){ g.beginPath(); g.ellipse(Math.random()*256,120+Math.random()*130,12+Math.random()*22,10+Math.random()*16,0,0,7); g.fill(); }
+  g.fillStyle='rgba(40,30,20,.35)'; for(let i=0;i<15;i++)g.fillRect(Math.random()*256,120+Math.random()*130,6,14);
   g.fillStyle='rgba(120,20,20,.4)'; g.fillRect(40,150,30,50);
   g.strokeStyle='rgba(20,20,20,.6)'; g.lineWidth=2; g.beginPath(); g.moveTo(20,0); g.lineTo(40,80); g.lineTo(30,160); g.lineTo(50,256); g.stroke();
-  g.fillStyle='rgba(90,70,40,.3)'; for(let i=0;i<10;i++){ g.fillRect(100+Math.random()*80,0,4,120+Math.random()*100); }
-},6,2);
+  g.fillStyle='rgba(90,70,40,.3)'; for(let i=0;i<6;i++){ g.fillRect(100+Math.random()*80,0,4,120+Math.random()*100); }
+},2,1);
 const ceilTex=makeTex((g,s)=>{ g.fillStyle='#1c1c1c'; g.fillRect(0,0,s,s); g.fillStyle='#262626'; for(let i=0;i<4;i++)g.fillRect(0,i*64,s,3); },8,6);
 
 try{ window.__nhCP='CP3 THREE done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP3 THREE done'; }catch(e){}
@@ -668,23 +668,24 @@ const NORTH_ROOMS=[[-84.5,-69.5],[-69.5,-54.5],[-54.5,-39.5],[-39.5,-24.5],[-24.
 for(let i=0;i<NORTH_CENTRES.length;i++){
   const dc=NORTH_CENTRES[i];
   const left=NORTH_ROOMS[i][0], right=NORTH_ROOMS[i][1];
-  if(dc-1.25>left) addWall((left+dc-1.25)/2,-5,dc-1.25-left,0.6);
-  if(dc+1.25<right) addWall((dc+1.25+right)/2,-5,right-dc-1.25,0.6);
+  if(dc-0.7>left) addWall((left+dc-0.7)/2,-5,dc-0.7-left,0.6);
+  if(dc+0.7<right) addWall((dc+0.7+right)/2,-5,right-dc-0.7,0.6);
 }
 for(let i=0;i<SOUTH_CENTRES.length;i++){
   const dc=SOUTH_CENTRES[i];
   const left=SOUTH_BOUNDS[i], right=SOUTH_BOUNDS[i+1];
-  if(dc-1.25>left) addWall((left+dc-1.25)/2,5,dc-1.25-left,0.6);
-  if(dc+1.25<right) addWall((dc+1.25+right)/2,5,right-dc-1.25,0.6);
+  if(dc-0.7>left) addWall((left+dc-0.7)/2,5,dc-0.7-left,0.6);
+  if(dc+0.7<right) addWall((dc+0.7+right)/2,5,right-dc-0.7,0.6);
 }
 for(let i=1;i<NORTH_BOUNDS.length-1;i++){ const bx=NORTH_BOUNDS[i]; addWall(bx,-17.5,0.6,25); }
 for(let i=1;i<SOUTH_BOUNDS.length-1;i++){ const bx=SOUTH_BOUNDS[i]; addWall(bx,17.5,0.6,25); }
 const doorWalls=[];
 const layoutWalls=[]; // V52: per-floor interior walls, rebuilt on every floor start, removed before rebuild
 function addRoomDoor(dc,z){
-  const mesh=new THREE.Mesh(new THREE.BoxGeometry(2.5,3.2,0.3), new THREE.MeshStandardMaterial({color:0x4a1515,roughness:.85,emissive:0x220000}));
-  mesh.position.set(dc,1.6,z); scene.add(mesh);
-  const w={x:dc,z,w:2.5,d:0.6,isDoor:true,doorOpen:false,anim:0,mesh,closedX:dc};
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(1.4,2.2,0.3), new THREE.MeshStandardMaterial({color:0x4a1515,roughness:.85,emissive:0x220000}));
+  mesh.position.set(dc,1.1,z); scene.add(mesh);
+  const header=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.2,0.6), new THREE.MeshStandardMaterial({map:wallTex,roughness:.95})); header.position.set(dc,2.8,z); scene.add(header);
+  const w={x:dc,z,w:1.4,d:0.6,isDoor:true,doorOpen:false,anim:0,mesh,closedX:dc};
   walls.push(w); doorWalls.push(w);
 }
 for(const dc of NORTH_CENTRES) addRoomDoor(dc,-5);
@@ -1838,7 +1839,7 @@ function update(dt){
       if(!dw.doorOpen && near<4){ dw.doorOpen=true; doorSound(); }
       else if(dw.doorOpen && near>6){ dw.doorOpen=false; }
       dw.anim+=((dw.doorOpen?1:0)-dw.anim)*Math.min(1,dt*6);
-      if(dw.mesh) dw.mesh.position.x=dw.closedX+dw.anim*2.5;
+      if(dw.mesh) dw.mesh.position.x=dw.closedX+dw.anim*1.4;
     }
   }
   // V48 STAIRCASE RULE: mission complete -> descend as before. Mission NOT complete + bottom (z <= -21) -> ghost neck-snaps, instant death, no respawn.
