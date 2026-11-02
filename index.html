@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V55 • Start ချက်ချင်း စစေ + error မြင်စေ — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V56 • main thread လွတ် — Start မစခင် render ရပ် — အကုန်</p>
 </div>
 
 <!-- Pause -->
@@ -2213,13 +2213,19 @@ function update(dt){
 }
 function animate(){
   requestAnimationFrame(animate);
+  if(!S.playing) return; // V56: start screen covers canvas, rendering before Start only blocks taps
   const dt=Math.min(0.05,clock.getDelta());
   update(dt);
   renderer.render(scene,camera);
 }
-loadCharacter().then(ok=>{
-  loadCorpses(); loadGhost(); loadWanderingGhosts();
+loadCharacter().then(async ok=>{
   $('load').style.display='none';
+  await new Promise(r=>setTimeout(r,50));
+  await loadCorpses();
+  await new Promise(r=>setTimeout(r,50));
+  await loadGhost();
+  await new Promise(r=>setTimeout(r,50));
+  await loadWanderingGhosts();
   if(!ok) toast('⚠️ Character load မအောင်ဘူး — internet စစ်ပြီး ပြန်ဖွင့်ပါ');
   // still allow start; character may appear via fallback in scene? if no player, start screen still works but game will show no models
 });
