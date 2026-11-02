@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V71 • Joystick+ကင်မရာ မြန်အောင် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V72 • အဝါရောင် တံခါးဘောင် ဖြုတ် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -683,7 +683,6 @@ const doorWalls=[];
 const layoutWalls=[]; // V52: per-floor interior walls, rebuilt on every floor start, removed before rebuild
 function addRoomDoor(dc,z){
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(2.5,3.2,0.3), new THREE.MeshStandardMaterial({color:0x4a1515,roughness:.85,emissive:0x220000}));
-  for(const fx of [dc-1.25,dc+1.25]){ const fr=new THREE.Mesh(new THREE.BoxGeometry(0.3,3.2,0.5), new THREE.MeshBasicMaterial({color:0xffcc00})); fr.position.set(fx,1.6,z); scene.add(fr); }
   mesh.position.set(dc,1.6,z); scene.add(mesh);
   const w={x:dc,z,w:2.5,d:0.6,isDoor:true,doorOpen:false,anim:0,mesh,closedX:dc};
   walls.push(w); doorWalls.push(w);
