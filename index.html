@@ -106,7 +106,7 @@ canvas{display:block}
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V65 • GAME FLOW စမ်းသပ် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V66 • resetGame ပြန်ထည့် — အကုန်</p>
   <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1533,7 +1533,29 @@ function doInteract(){
 try{ window.__nhCP='CP8 CONTROLS done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP8 CONTROLS done'; }catch(e){}
 /* ============ GAME FLOW ============ */
 let _skipKeyShuffle=false;
-function resetGame(){ S.playing=true; }
+function resetGame(){
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=50; S.randScareTimer=50; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=90; S.hauntTimer=45; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
+  if(scene.fog) scene.fog.density=0.09;
+  medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
+  for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } }
+  for(const im of itemMeshes){ im.taken=true; im.mesh.visible=false; }
+  for(const wg of wanderingGhosts){ if(wg.def.origWps){ wg.def.wps=wg.def.origWps; } else { wg.def.origWps=wg.def.wps.slice(); } wg.wpIdx=0; wg.state='patrol'; wg.cooldown=0; wg.chaseTimer=0; wg.def.speedBoost=0; wg.def.radiusBoost=0; const wp0=wg.def.wps[0]; if(wp0) wg.outer.position.set(wp0[0],0,wp0[1]); wg.outer.visible=true; }
+  setObjective('Ep1 • သော့ 3 ချောင်း ရှာပါ');
+  playerPos.set(-81,0,0); S.yaw=Math.PI/2; monsterPos.set(80,0,0); monsterState='patrol'; patrolIdx=0; S.blackout=0; S.blackoutTimer=30; S.doorOpen=false; S.entranceOpen=false; S.doorAnim=0; S.entranceAnim=0; if(typeof closeExitDoor==='function') closeExitDoor(); if(typeof closeEntranceDoor==='function') closeEntranceDoor();
+  for(const km of keyMeshes){ km.taken=false; km.mesh.visible=true; }
+  for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } } // V12 floor15: only 3 keys
+  // V53 key positions random per fresh game (labels stay with id, compass points to new positions)
+  if(!_skipKeyShuffle){
+    const first3=keyMeshes.filter(km=>km.def.id<=KEYS_NEEDED);
+    const pos=first3.map(km=>[km.def.x,km.def.z]);
+    for(let i=pos.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=pos[i]; pos[i]=pos[j]; pos[j]=tmp; }
+    first3.forEach((km,i)=>{ km.def.x=pos[i][0]; km.def.z=pos[i][1]; km.mesh.position.set(pos[i][0],1.1,pos[i][1]); });
+  }
+  _skipKeyShuffle=false;
+  startFloorMission();
+  updateHUD();
+}
+try{ window.__nhCP='GF2 before saveProgress'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='GF2 before saveProgress'; }catch(e){}
 function saveProgress(){}
 function continueGame(){}
 function startGame(){ try{ $('startScreen').classList.add('hidden'); $('hud').classList.add('on'); }catch(e){} S.playing=true; try{ toast('V65 stub start'); }catch(e){} }
