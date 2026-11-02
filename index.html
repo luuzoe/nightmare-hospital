@@ -105,7 +105,7 @@ canvas{display:block}
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN ပြေး • 🫥 HIDE ပုန်း (ရပ်) • စွန့်ပစ်ဆေးရုံ: အခန်း 15x25m, တံခါး 2.5m, လျှောက်လမ်း 10m, လှေကားအစစ်, အပေါ်ဆုံး 15 ထပ်က စ</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V49 • ဆေးရုံအစုတ် အစစ် + ကြောက်စရာ/စိတ်ခြောက်ခြားစရာ: မီးတင်, 3D အပျက်အစီး, ထပ်နိမ့်လေ ပိုစုတ်, shadow glimpse, hunt — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V50 • အကုန်: unseen haunting + dynamic tension + risky chase + story events + jumpscare variety — error မရှိ — အကုန်</p>
   <p style="font-size:11px;color:#666;margin-top:4px">အသံ: SoundBible (လူအစစ် သရဲ အသံ)</p>
 </div>
 
@@ -214,6 +214,7 @@ const FLOOR_MISSIONS={
 }; // V12 each floor DIFFERENT task: keys / order / switches / survive / lockers / lure / dark / timed / hide / corpse, then harder repeats + final // V12 tasks INCREASE down: 3 -> 8, plus Switch task from floor 8 down, plus Final Escape at floor 1
 function floorMission(){ return FLOOR_MISSIONS[S.floor]||FLOOR_MISSIONS[15]; }
 // V47 STORY: sister May Thu's diary, one hint per floor, top to bottom.
+const STORY_DIARY={15:'📖 မေသူ: “ဒီဆေးရုံက မပိတ်သေးဘူး။ ညက တစ်စုံတစ်ခု ငါ့နာမည်ခေါ်တယ်။”',14:'📖 မေသူ: “ညဆိုင်း သူနာပြုတွေ တစ်ယောက်ပြီး တစ်ယောက် ပျောက်နေပြီ။”',13:'📖 မေသူ: “ဒေါက်တာက စမ်းသပ်ခန်းကို သော့ခတ်ထားတယ်။ အထဲမှာ ဘာရှိလဲ မသိဘူး။”',12:'📖 မေသူ: “လူနာတွေ ညက အော်တယ်။ မနက်ကျတော့ ဘယ်သူမှ မရှိတော့ဘူး။”',11:'📖 မေသူ: “Locker ထဲမှာ စာတစ်စောင် ဝှက်ထားခဲ့တယ်။ ဖတ်မိရင် ပြန်မလာနဲ့။”',10:'📖 မေသူ: “သူ့ကို Surgery စားပွဲဆီ ဆွဲခေါ်ရမယ်။ အဲဒါမှ သူ ရပ်မယ်။”',9:'📖 မေသူ: “မှောင်ထဲမှာ ငါ့နာမည် ရေးထားတယ်။ ငါ မရေးခဲ့ဘူး။”',8:'📖 မေသူ: “အချိန်မီ ပြေးရမယ်။ သူက အချိန်ကို စောင့်နေတယ်။”',7:'📖 မေသူ: “ပုန်းနေရင်း ခြေသံ ကြားရတယ်။ ငါ့ဘေး ရပ်နေတယ်။”',6:'📖 မေသူ: “အလောင်းတွေက စကားပြောတယ်။ သူတို့က ငါ့ကို သိတယ်။”',5:'📖 မေသူ: “အခန်း ၄ ခန်းမှာ တစ်ခုစီ ရှိတယ်။ စုမှ အမှန်သိမယ်။”',4:'📖 မေသူ: “180m လမ်းလျှောက်ရင်း အရိပ် တစ်ခု ငါ့နောက် လိုက်လာတယ်။”',3:'📖 မေသူ: “မှောင် Locker ထဲမှာ ဒိုင်ယာရီ တစ်ပိုင်း ကျန်ခဲ့တယ်။”',2:'📖 မေသူ: “အစဉ်လိုက် သော့တွေ — နောက်ဆုံး အဆင့်။ ပြန်လှည့်လို့ မရတော့ဘူး။”',1:'📖 မေသူ: “အမှန်တရား ဒီမှာ ရှိတယ်။ မင်း ဒါကို ဖတ်နေရင် ငါ မရှိတော့ဘူး။”'};
 const STORY_HINTS={15:'Ep1 • မေသူ၏ ပထမဆုံး ဒိုင်ယာရီ — “ဒီဆေးရုံက မပိတ်သေးဘူး”',14:'Ep2 • ညဆိုင်း သူနာပြုတွေ ပျောက်နေပြီ',13:'Ep3 • ဒေါက်တာ၏ စမ်းသပ်ခန်း',12:'Ep4 • လူနာတွေ ညက အော်သံ',11:'Ep5 • Locker ထဲမှာ ဝှက်ထားတဲ့ စာ',10:'Ep6 • သရဲကို ဆွဲခေါ်ရမယ့် အခန်း',9:'Ep7 • မှောင်ထဲမှာ ရေးထားတဲ့ နာမည်',8:'Ep8 • အချိန်မီ ပြေးရမယ့် လူနာ',7:'Ep9 • ပုန်းနေရင်း ကြားရတဲ့ ခြေသံ',6:'Ep10 • အလောင်းတွေက စကားပြောတယ်',5:'Ep11 • အခန်း ၄ ခန်းမှာ ဘာရှိလဲ',4:'Ep12 • 180m လမ်းလျှောက်ရင်း တွေ့တဲ့ အရိပ်',3:'Ep13 • မှောင် Locker ထဲက ဒိုင်ယာရီ',2:'Ep14 • အစဉ်လိုက် သော့တွေ — နောက်ဆုံး အဆင့်',1:'Ep15 FINAL • အမှန်တရား — မေသူ ဘယ်ရောက်သွားလဲ'};
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
 let lastMapDraw=0;
@@ -287,6 +288,7 @@ function startFloorMission(){
   if(typeof flash!=='undefined' && flash){ flash.angle=(fm.type==='dark'||fm.type==='darklockers')?0.30:0.45; }
   if(scene.fog) scene.fog.density=0.07+(15-S.floor)*0.005+((fm.type==='dark'||fm.type==='darklockers')?0.04:0); // V49: less fog, rooms visible
   if(typeof decayGroup2!=='undefined'){ decayGroup2.visible=S.floor<=10; decayGroup3.visible=S.floor<=5; } // V49: lower floors more ruined
+  S.storyTimer=40; S.storyDoneFloor=0; // V50: one story event per floor
   if(typeof applyFloorLayout==='function') applyFloorLayout();
   if(typeof updatePlaques==='function') updatePlaques();
   if(typeof setActiveGhosts==='function') setActiveGhosts();
@@ -1438,7 +1440,7 @@ function doInteract(){
 
 /* ============ GAME FLOW ============ */
 function resetGame(){
-  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=50; S.randScareTimer=50; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=150; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
+  S.hearts=3; S.keys=0; S.stamina=100; S.hidden=false; S.hideTimer=0; S.hideLocker=false; S.moanTimer=40; S.invuln=0; S.chase=false; S.scare=false; S.scareTimer=0; S.catchTimer=0; S.nextScare=15; S.time=0; lastGirlTime=-999; lastWanderScream=-999; nextTwitch=25; S.frontScareTimer=50; S.randScareTimer=50; S.whisperTimer=0; S.shadowScare=false; S.escaping=false; S.escapeProgress=0; S.stage=1; S.items=0; S.switchOn=false; S.escapeDoorX=-7.5; S.escapeDoorZ=-29; S.floor=15; if(typeof shadowGhost!=='undefined' && shadowGhost) shadowGhost.visible=false; S.dead=false; S.won=false; S.neckSnap=false; S._neckSnap=false; S._hallWarn2=false; S.glimpseTimer=60; S.glimpseUntil=0; S.huntTimer=150; S.hauntTimer=45; S.storyTimer=40; S.storyDoneFloor=0; S.yaw=Math.PI/2; const eb0=$('escapeBar'); if(eb0) eb0.style.display='none';
   if(scene.fog) scene.fog.density=0.09;
   medkitTaken=false; if(typeof medkitMesh!=='undefined' && medkitMesh) medkitMesh.visible=true;
   for(const km of keyMeshes){ if(km.def.id>KEYS_NEEDED){ km.taken=true; km.mesh.visible=false; } }
@@ -1816,13 +1818,15 @@ function update(dt){
   // Old code only lost you if mDist>3, so a monster standing on your hide spot never left -> hide felt broken.
   if(S.hidden && monsterState==='chase'){
     S.hideTimer+=dt;
-    const loseAfter=(S.hideLocker?3.0:6.0)+(15-S.floor)*0.3; // V47 harder: monster stays longer
+    const loseAfter=(S.hideLocker?5.0:9.0)+(15-S.floor)*0.3; // V50 risky: monster searches longer
     if(S.hideTimer>=loseAfter){ monsterState='patrol'; S.chase=false; lastSeen=null; S.hideTimer=0; toast('👹 Monster ဖြတ်သွားပြီ — တိတ်တိတ် ထွက်ပါ'); }
+    // V50 hide search: monster reaches your hide spot (within 2.5m) = hide breaks, you must run (catch still needs 1.4m + grace, so it is fair, not instant)
+    if(S.hidden && monsterState==='chase' && mDist<2.5){ S.hidden=false; S.hideTimer=0; $('hideBtn').classList.remove('active'); lastSeen=playerPos.clone(); scareSound(); toast('👹 ပုန်းနေတာ တွေ့သွားပြီ! ပြေးပါ!'); }
   } else S.hideTimer=0;
   const canSee=!S.hidden && (S.floor!==15 || S.keys>=1) && monsterState!=='scare' && mDist<24 && !lineBlocked(monsterPos.x,monsterPos.z,playerPos.x,playerPos.z) && S.invuln<=0; // V47 Ep1 wakes up after Key1
   if(canSee){ if(!S.chase){ S.chase=true; scareSound(); if(navigator.vibrate) navigator.vibrate(100); toast('👹 Monster မြင်သွားပြီ! ပြေးပါ!'); } monsterState='chase'; lastSeen=playerPos.clone(); }
   else if(monsterState==='chase'){
-    if(S.hidden && mDist>3){ monsterState='patrol'; S.chase=false; }
+    if(S.hidden && mDist>28){ monsterState='patrol'; S.chase=false; } // V50: hiding far away no longer ends chase instantly; hideTimer must expire
     else if(mDist>28){ monsterState='patrol'; S.chase=false; } // V10 gives up later, chases longer
     else if(lastSeen){ /* keep chasing last seen */ }
   }
@@ -1849,7 +1853,7 @@ function update(dt){
   if(monster){ monster.position.set(monsterPos.x,0.35+Math.sin(t*2)*0.08,monsterPos.z); monster.rotation.y=monsterAngle; } // V10 ghost floats, not walks
   if(monsterMixer)monsterMixer.update(dt*(monsterState==='chase'?1.8:0.9));
   // heartbeat / danger vignette by distance
-  const danger=mDist<10 && !S.hidden;
+  const danger=(mDist<10 && !S.hidden) || (S.hidden && mDist<5); // V50: hiding near monster still feels dangerous
   $('vignette').classList.toggle('danger',danger||S.chase);
   const bs=$('bloodScreen'); if(bs) bs.style.opacity=(S.chase||danger)?0.55:0;
   if(S.chase||danger){
@@ -1950,7 +1954,7 @@ function update(dt){
     S.frontScareTimer-=dt;
     if(S.frontScareTimer<=0){
       S.frontScareTimer=60+Math.random()*30; // V49: front scare every 60-90s
-      const fx=playerPos.x+Math.sin(S.yaw)*2.5, fz=playerPos.z+Math.cos(S.yaw)*2.5;
+      const behind=Math.random()<0.4; const fx=playerPos.x+(behind?-1:1)*Math.sin(S.yaw)*2.5, fz=playerPos.z+(behind?-1:1)*Math.cos(S.yaw)*2.5; // V50: 40% behind scare
       const fp=collide(fx,fz,0.5);
       if(Math.hypot(fp[0]-playerPos.x,fp[1]-playerPos.z)>1.2 && !lineBlocked(playerPos.x,playerPos.z,fp[0],fp[1])){
         if(monsterState!=='chase'){
@@ -1959,7 +1963,7 @@ function update(dt){
           const actWg=wanderingGhosts.find(wg=>wg.outer && wg.outer.visible && wg.state==='patrol');
           if(actWg){ actWg.outer.position.set(fp[0],0,fp[1]); actWg.outer.rotation.y=Math.atan2(playerPos.x-fp[0],playerPos.z-fp[1]); actWg.state='scare'; actWg.scareTimer=1.5; wanderingScare=true; }
         }
-        S.ghostFaceUntil=S.time+1.0; screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200); toast('👻 သရဲ ရှေ့တည့်တည့် ပေါ်လာပြီ!');
+        S.ghostFaceUntil=S.time+1.0; screamSound(); scareSound(); if(navigator.vibrate) navigator.vibrate(200); toast(behind?'👻 နောက်မှာ တစ်စုံတစ်ခု ရှိနေတယ်! လှည့်ကြည့်ပါ!':'👻 သရဲ ရှေ့တည့်တည့် ပေါ်လာပြီ!');
       }
     }
   }
@@ -1983,6 +1987,30 @@ function update(dt){
     if(nd2<12 && S.heartTimer<=0){ heartbeatSound(); S.heartTimer=Math.max(0.45,nd2*0.07); }
     S.randScareTimer-=dt;
     if(S.randScareTimer<=0){ S.randScareTimer=90+Math.random()*30; if(Math.random()<0.3) screamSound(); else moanSound(); } // V49 rand scare
+    // V50 UNSEEN HAUNTING: distant footsteps, door slams by itself, light flicker (short blackout, flashlight stays) — no catch, pure dread.
+    if(S.playing && !S.paused && !S.chase && !S.escaping){
+      if(typeof S.hauntTimer!=='number') S.hauntTimer=45;
+      S.hauntTimer-=dt;
+      if(S.hauntTimer<=0){
+        S.hauntTimer=45+Math.random()*45;
+        const ht=Math.random();
+        if(ht<0.35){ footstepSound(); whisperSound(); toast('👣 အဝေးက ခြေသံ…'); }
+        else if(ht<0.65 && typeof doorWalls!=='undefined' && doorWalls.length){
+          const nearDoors=doorWalls.filter(dw=>dw.doorOpen && Math.hypot(dw.x-playerPos.x,dw.z-playerPos.z)<20);
+          if(nearDoors.length){ const dw=nearDoors[Math.floor(Math.random()*nearDoors.length)]; dw.doorOpen=false; doorSound(); toast('🚪 တံခါး ကိုယ်တိုင် ပိတ်သွားပြီ!'); }
+          else { footstepSound(); whisperSound(); toast('👣 အဝေးက ခြေသံ…'); }
+        } else { S.blackout=Math.max(S.blackout,1.0); whisperSound(); toast('💡 မီး မှိတ်တုတ်မှိတ်တုတ် ဖြစ်သွားပြီ…'); }
+      }
+    }
+    // V50 STORY EVENT: once per floor, diary line + whisper + brief flicker. No new interact, so it cannot break missions.
+    if(S.playing && !S.paused && !S.chase && S.storyDoneFloor!==S.floor){
+      if(typeof S.storyTimer!=='number') S.storyTimer=40;
+      S.storyTimer-=dt;
+      if(S.storyTimer<=0){
+        S.storyDoneFloor=S.floor; S.blackout=Math.max(S.blackout,1.0); whisperSound();
+        toast(typeof STORY_DIARY!=='undefined' && STORY_DIARY[S.floor] ? STORY_DIARY[S.floor] : '📖 မေသူ၏ ဒိုင်ယာရီ…');
+      }
+    }
     // V49 HAUNTING: shadow glimpse (far, brief, no chase) + periodic hunt (monster knows where you are for a while)
     if(S.playing && !S.paused && !S.chase && !S.escaping && (S.floor!==15 || S.keys>=1)){
       if(typeof S.glimpseTimer!=='number') S.glimpseTimer=60;
