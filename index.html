@@ -100,13 +100,14 @@ canvas{display:block}
   <p>🏢 15 ထပ် • Ep1-15 • အပေါ်ကနေ အောက်ထိ ဆင်း • တစ်ထပ်ပြီး တစ်ထပ် ပိုခက်</p>
   <p style="font-size:14px;color:#ffcccc;line-height:1.5">📖 သူနာပြု မေသူ ဒီဆေးရုံထဲ ပျောက်သွားတာ ၃ နှစ်ရှိပြီ — သူ့ဒိုင်ယာရီကို တစ်ထပ်ပြီး တစ်ထပ် ရှာပါ။</p>
   <div class="row">
-    <button class="btn" id="startBtn">▶ စဆော့မယ်</button>
+    <button class="btn" id="startBtn" onclick="window.__nhStart?window.__nhStart(event):(document.getElementById('startError').textContent='⚠️ JS handler မရှိဘူး',document.getElementById('startError').style.display='block')">▶ စဆော့မယ်</button>
     <button class="btn ghost" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
     <button class="btn ghost" id="soundBtn">🔊 အသံ: ဖွင့်</button>
   </div>
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V56 • main thread လွတ် — Start မစခင် render ရပ် — အကုန်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V57 • tap မြင်စေ + fallback — အကုန်</p>
+  <p id="bootStatus" style="font-size:11px;color:#888;margin-top:2px">JS loading…</p>
 </div>
 
 <!-- Pause -->
@@ -1641,10 +1642,12 @@ function loseHeart(){
   if(S.hearts<=0) endGame(false); updateHUD();
 }
 let _starting=false;
-function handleStart(e){ if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
+function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='Start tapped!'; }catch(err){} if(e) e.preventDefault(); if(_starting) return; _starting=true; const errEl=$('startError'); if(errEl) errEl.style.display='none'; try{ localStorage.removeItem('nh_save'); }catch(err){} try{ startGame(); }catch(err){ _starting=false; S.playing=false; $('startScreen').classList.remove('hidden'); $('hud').classList.remove('on'); if(errEl){ errEl.textContent='⚠️ စမရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }
+window.__nhStart=handleStart;
 $('startBtn').addEventListener('touchstart',handleStart,{passive:false});
 $('startBtn').addEventListener('pointerdown',handleStart);
 $('startBtn').addEventListener('click',handleStart);
+try{ const bs=$('bootStatus'); if(bs) bs.textContent='JS OK • listeners ready'; }catch(e){}
 if($('continueBtn')){ $('continueBtn').addEventListener('pointerdown',(e)=>{ e.preventDefault(); try{ continueGame(); }catch(err){ const errEl=$('startError'); if(errEl){ errEl.textContent='⚠️ ဆက်ဆော့မရဘူး: '+(err&&err.message?err.message:err); errEl.style.display='block'; } } }); $('continueBtn').addEventListener('click', continueGame); try{ const sv0=JSON.parse(localStorage.getItem('nh_save')||'null'); if(sv0 && sv0.floor>=1 && sv0.floor<=15){ $('continueBtn').style.display='block'; $('continueBtn').textContent='↻ အထပ် '+sv0.floor+' ကနေ ဆက်ဆော့မယ်'; } }catch(e){} }
 $('pauseBtn').addEventListener('click',pauseGame);
 $('resumeBtn').addEventListener('click',resumeGame);
