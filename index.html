@@ -108,7 +108,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V81 • သရဲ အသစ် 3 ကောင်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V82 • Frame ထစ်တာ ပြင်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -148,7 +148,7 @@ canvas{display:block}
   <div class="row">
     <button class="btn ghost" id="camSpeedBtn">📷 ကင်မရာ: ပုံမှန်</button>
     <button class="btn ghost" id="volBtn">🔊 အသံ: ပုံမှန်</button>
-    <button class="btn ghost" id="qualityBtn">🖥️ အရည်အသွေး: မြင့်</button>
+    <button class="btn ghost" id="qualityBtn">🖥️ အရည်အသွေး: နိမ့်</button>
   </div>
   <p class="small">🕹️ လမ်း • 👆 Camera • 🏃 RUN • 🫥 HIDE</p>
 </div>
@@ -228,7 +228,7 @@ function handleStart(e){ try{ const bs=$('bootStatus'); if(bs) bs.textContent='S
 try{ const _sb=document.getElementById('startBtn'); const _ee=document.getElementById('earlyError'); if(!_sb){ if(_ee){ _ee.textContent='⚠️ Early: startBtn not found in DOM'; _ee.style.display='block'; } } else { _sb.addEventListener('touchstart',handleStart,{passive:false}); _sb.addEventListener('pointerdown',handleStart); _sb.addEventListener('click',handleStart); window.__nhStart=handleStart; window.__nhEarlyOK=true; if(_ee){ _ee.textContent='Early listeners OK'; } const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='Early listeners ready'; } }catch(e){ window.__nhEarlyError=e.message||String(e); const _ee2=document.getElementById('earlyError'); if(_ee2){ _ee2.textContent='⚠️ Early listeners failed: '+(e.message||String(e)); _ee2.style.display='block'; } }
 
 /* ============ STATE ============ */
-const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:false, hideSneak:true};
+const S = {fpp:true, frontScareTimer:50, ghostFaceUntil:0, pathTimer:0, lastPathTX:0, lastPathTZ:0, activeGhostCount:0, playing:false, paused:false, hearts:3, keys:0, stamina:100, hidden:false, invuln:0, chase:false, scare:false, shadowScare:false, hideTimer:0, hideLocker:false, moanTimer:40, scareTimer:0, catchTimer:0, nextScare:22, escaping:false, escapeProgress:0, stage:1, items:0, switchOn:false, escapeDoorX:0, escapeDoorZ:24, floor:15, missionDone:false, missionTimer:0, hideTotal:0, switchIdx:0, corpseIdx:0, dwell:0, visited:[], blackout:0, blackoutTimer:30, time:0, sound:true, yaw:Math.PI, joy:{x:0,y:0,active:false,mag:0}, run:false, interactTarget:null, hideTarget:null, dead:false, won:false, doorOpen:false, entranceOpen:false, entranceTimer:0, doorAnim:0, entranceAnim:0, inStair:false, distance:0, whisperTimer:0, beaconX:0, beaconZ:24, stuckTimer:0, lastPX:-18, lastPZ:12, stuckWarn:0, heartTimer:0, randScareTimer:50, showMap:true, showHands:true, camSpeed:1, volume:1, lowQuality:true, hideSneak:true};
 const KEYS_NEEDED = 4; // V12 floor15: 3 keys (tasks increase later, not start hard)
 // V12 FLOORS: 15 (top, Ep1) down to 1 (ground, Ep15 Final). Each floor: collect mission items, dodge ghosts, open south door -> descend. Harder step by step.
 const FLOOR_MISSIONS={
@@ -583,7 +583,7 @@ function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpa
 try{ window.__nhCP='CP2 AUDIO done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP2 AUDIO done'; }catch(e){}
 /* ============ THREE SETUP ============ */
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.25)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.0)); // V53 smooth FPS: cap 1.5 (was 1.75, heavy on phone GPU)
 renderer.setSize(innerWidth,innerHeight);
 renderer.domElement.id='game';
 document.body.prepend(renderer.domElement);
@@ -1745,7 +1745,7 @@ if($('mapToggleBtn')){ $('mapToggleBtn').addEventListener('click',()=>{ S.showMa
 if($('handToggleBtn')){ $('handToggleBtn').addEventListener('click',()=>{ S.showHands=!S.showHands; $('handToggleBtn').textContent=S.showHands?'✋ လက်: ဖွင့်':'✋ လက်: ပိတ်'; }); }
 if($('camSpeedBtn')){ $('camSpeedBtn').addEventListener('click',()=>{ S.camSpeed=(S.camSpeed===1)?1.5:((S.camSpeed===1.5)?0.7:1); $('camSpeedBtn').textContent=S.camSpeed===1.5?'📷 ကင်မရာ: မြန်':(S.camSpeed===0.7?'📷 ကင်မရာ: နှေး':'📷 ကင်မရာ: ပုံမှန်'); }); }
 if($('volBtn')){ $('volBtn').addEventListener('click',()=>{ S.volume=(S.volume===1)?1.2:((S.volume===1.2)?0.4:1); $('volBtn').textContent=S.volume===1.2?'🔊 အသံ: ကျယ်':(S.volume===0.4?'🔊 အသံ: တိုး':'🔊 အသံ: ပုံမှန်'); }); }
-if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.5)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
+if($('qualityBtn')){ $('qualityBtn').addEventListener('click',()=>{ S.lowQuality=!S.lowQuality; try{ renderer.setPixelRatio(S.lowQuality?1:Math.min(devicePixelRatio,1.25)); }catch(e){} $('qualityBtn').textContent=S.lowQuality?'🖥️ အရည်အသွေး: နိမ့်':'🖥️ အရည်အသွေး: မြင့်'; }); }
 // Landscape: fullscreen + orientation lock (needs a user tap on Android Chrome)
 let rotateDismissed=false;
 function checkOrientation(){
@@ -1947,6 +1947,7 @@ function update(dt){
   } else if(fmC.type==='lure'){
     tx=20; tz=-16; tlabel='Surgery';
   } else { tx=-7.5; tz=-5; tlabel=S.floor===1?'Final လှေကား':'အောက်ထပ် လှေကား'; }
+  if(!S._compassT || S.time-S._compassT>=0.5){ S._compassT=S.time;
   S.beaconX=tx; S.beaconZ=tz; beacon.position.set(tx,3.5,tz); beacon.visible=false;
   let cTx=tx, cTz=tz;
   const step=compassWaypoint(playerPos.x,playerPos.z,tx,tz);
@@ -1955,6 +1956,7 @@ function update(dt){
   const dirs=['↑','↗','→','↘','↓','↙','←','↖'];
   const idx=Math.round(((ang-S.yaw)%(Math.PI*2))/(Math.PI/4));
   const compDist=S.floor<=10?'':(' '+Math.round(Math.hypot(tx-playerPos.x,tz-playerPos.z))+'m'); $('compass').textContent='🧭 '+dirs[((idx%8)+8)%8]+compDist; // V53 harder: lower floors show direction only, no exact metres
+  }
   // ---- monster AI ----
   const mDist=Math.hypot(monsterPos.x-playerPos.x,monsterPos.z-playerPos.z);
   // V5 SCARE SYSTEM: ghost scares from different places, does NOT catch instantly.
