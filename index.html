@@ -108,7 +108,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V83 • ထိုင်ခုံ collision</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V84 • ခြေသံ ကျယ်အောင်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -542,7 +542,7 @@ function playTone(freqStart,freqEnd,dur,type,vol,vibRate){
   o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur);
 }
 function thump(vol){ playTone(55,40,0.16,'sine',vol||0.25,0); }
-function footstepSound(){ playNoise(0.09,'lowpass',300,1,0.12,0); }
+function footstepSound(){ playNoise(0.15,'lowpass',500,1,0.35,0); }
 let realSounds={};
 let realLoaded={};
 function loadRealSound(name,file){ try{ const a=new Audio(file); a.preload='auto'; a.addEventListener('canplaythrough',()=>{ realLoaded[name]=true; }); a.addEventListener('error',()=>{ realLoaded[name]=false; }); realSounds[name]=a; }catch(e){} }
@@ -1815,7 +1815,7 @@ function update(dt){
   playerRing.visible=false; monsterRing.visible=false; // V18 user: hide bottom rings
   if(playerMixer)playerMixer.update(dt*(moving?1.4:0.15));
   // footsteps while walking/running (so the game is never silent)
-  if(moving){ stepAcc+=dt*speed; if(stepAcc>2.4){ stepAcc=0; footstepSound(); } } else stepAcc=0;
+  if(moving){ stepAcc+=dt*speed; if(stepAcc>2.0){ stepAcc=0; footstepSound(); } } else stepAcc=0;
   // V18 FPP default: camera at eye, no TPP pull-in, camera cannot go through walls (it is at player)
   if(S.fpp){
     camera.position.set(playerPos.x+Math.sin(S.yaw)*0.2, playerPos.y+1.65, playerPos.z+Math.cos(S.yaw)*0.2);
