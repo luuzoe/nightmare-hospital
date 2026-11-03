@@ -108,7 +108,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V82 • Frame ထစ်တာ ပြင်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V83 • ထိုင်ခုံ collision</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -793,6 +793,7 @@ for(const [dx,dz] of [[-50,0],[0,0],[50,0],[-7.5,-17.5],[80,17.5]]){ addProp(dx,
   for(const [tx,tz] of [[-45,-20],[19,-20],[-45,20],[15,20],[73,-20],[73,20]]) placeAsset('medical-trolley.glb',1.0,0.36,tx,0,tz,0.3,0);
   // Real wheelchairs (base -0.34, yOff 0.34)
   for(const [wx,wz] of [[-50,0],[50,0],[-47,-22],[43,22]]) placeAsset('wheelchair-real.glb',1.0,0.34,wx,0,wz,0.6,0);
+  if(typeof walls!=='undefined'){ for(const [wx,wz] of [[-50,0],[50,0],[-47,-22],[43,22]]) walls.push({x:wx,z:wz,w:0.8,d:0.8,isFurniture:true}); }
   // Crash carts (base -0.35, yOff 0.35)
   for(const [cx,cz] of [[32,-20],[-17,20],[80,0]]) placeAsset('crash-cart.glb',1.0,0.35,cx,0,cz,0.2,0);
   // Syringes on beds/trolleys, scale 2x for visibility (real syringe 16cm, game-visible 32cm)
@@ -1153,7 +1154,7 @@ wheelchair(-12,13,0.5); wheelchair(12,-13,2.0);
 function stretcher(x,z,ry){ const g=new THREE.Group(); const bed=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.7), new THREE.MeshStandardMaterial({color:0x3a3a3a})); bed.position.y=0.9; g.add(bed); for(const [px,pz] of [[-0.8,-0.3],[0.8,-0.3],[-0.8,0.3],[0.8,0.3]]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.08), bed.material); leg.position.set(px,0.45,pz); g.add(leg); } g.position.set(x,0,z); g.rotation.y=ry; scene.add(g); poltergeistItems.push(g); }
 stretcher(-2,-13,0); stretcher(20,0,1.57); stretcher(-30,-20,0.5); stretcher(50,20,1.2); function polterIV(x,z){ const g=new THREE.Group(); const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,1.9,8), new THREE.MeshStandardMaterial({color:0x888888})); pole.position.y=0.95; const top=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.06,0.06), pole.material); top.position.y=1.9; const bag=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.35,0.08), new THREE.MeshStandardMaterial({color:0xffe0a0})); bag.position.set(0.25,1.7,0); g.add(pole,top,bag); g.position.set(x,0,z); scene.add(g); poltergeistItems.push(g); } polterIV(-20,20); polterIV(30,-20); polterIV(-62,-20); polterIV(62,20);
 // V73 abandoned hospital: broken furniture and debris, visual only, no collision
-function brokenChair(x,z,ry){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.08,0.55), new THREE.MeshStandardMaterial({color:0x1a1a1a})); seat.position.y=0.25; const back=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.6,0.08), seat.material); back.position.set(0,0.5,-0.25); g.add(seat,back); g.position.set(x,0.12,z); g.rotation.set(0,ry,1.35); scene.add(g); }
+function brokenChair(x,z,ry){ const g=new THREE.Group(); const seat=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.08,0.55), new THREE.MeshStandardMaterial({color:0x1a1a1a})); seat.position.y=0.25; const back=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.6,0.08), seat.material); back.position.set(0,0.5,-0.25); g.add(seat,back); g.position.set(x,0.12,z); g.rotation.set(0,ry,1.35); scene.add(g); if(typeof walls!=='undefined') walls.push({x:x,z:z,w:0.7,d:0.7,isFurniture:true}); }
 brokenChair(-70,-22,0.4); brokenChair(-30,22,2.1); brokenChair(55,22,1.2); brokenChair(20,-22,0.9);
 function debrisPile(x,z){ const g=new THREE.Group(); for(let di=0; di<5; di++){ const d=new THREE.Mesh(new THREE.BoxGeometry(0.4+Math.random()*0.5,0.12,0.3+Math.random()*0.4), new THREE.MeshStandardMaterial({color:0x2a2520})); d.position.set((Math.random()-0.5)*1.6,0.06,(Math.random()-0.5)*1.6); d.rotation.y=Math.random()*3; g.add(d); } g.position.set(x,0,z); scene.add(g); }
 debrisPile(-62,-20); debrisPile(-17,20); debrisPile(47,-20); debrisPile(0,0); debrisPile(62,20); debrisPile(-77,20);
