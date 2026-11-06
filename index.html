@@ -108,7 +108,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V85 • ခြေသံ ကြောက်စရာ</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V86 • Shazia သရဲ + အလောင်းအသစ်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -458,7 +458,7 @@ function applyFloorLayout(){
 }
 function setActiveGhosts(){
   if(!wanderingGhosts.length) return;
-  const newNames=['Cloth Ghost','A-Pose Ghost Woman','Scary Halloween Ghost'];
+  const newNames=['Cloth Ghost','A-Pose Ghost Woman','Scary Halloween Ghost','Shazia Ghost'];
   const newPresent=wanderingGhosts.filter(wg=>newNames.includes(wg.def.name)).map(wg=>wg.def.name);
   const oldShuffled=shuffleArr(wanderingGhosts.filter(wg=>!newNames.includes(wg.def.name)));
   const pickCount=S.floor>=15?5:(S.floor>=10?6:7); // V47: more ghosts down, all 7 at bottom
@@ -1339,7 +1339,7 @@ async function loadCorpses(){
     {src:'dead3.glb',scale:0.36,ox:0.68,oy:0.32,oz:0,real:true},
     {src:'dead4.glb',scale:1.2,ox:-0.165,oy:0,oz:0,rotX:-Math.PI/2,real:true},
     {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
-    {src:'cesium-man.glb',scale:PLAYER_BASE,real:false},
+    {src:'dead-body-real.glb',scale:0.55,ox:0,oy:0.05,oz:0,real:true},
     {src:'dead1.glb',scale:1.2,ox:0,oy:0.4,oz:0,real:true},
     {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
     {src:'dead3.glb',scale:0.36,ox:0.68,oy:0.32,oz:0,real:true},
@@ -1394,6 +1394,7 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     {name:'Cloth Ghost', src:'cloth-ghost.glb', real:true, scale:0.01, yOffset:1.15, pos:[-30,12], wps:[[-30,12],[-20,12],[0,0],[-30,0]], speed:3.5, radius:13, floatY:0.2, chaseTime:8, sound:'moan'},
     {name:'A-Pose Ghost Woman', src:'ghost-woman-apose.glb', real:true, scale:0.8, yOffset:0.95, pos:[30,-12], wps:[[30,-12],[20,-12],[0,0],[30,0]], speed:3.7, radius:12, floatY:0.2, chaseTime:8, sound:'scream'},
     {name:'Scary Halloween Ghost', src:'scary-halloween-ghost.glb', real:true, scale:0.6, yOffset:1.0, pos:[-40,0], wps:[[-40,0],[-20,0],[0,0],[-40,0]], speed:3.9, radius:13, floatY:0.2, chaseTime:8, sound:'growl'},
+    {name:'Shazia Ghost', src:'shazia-ghost.glb', real:true, scale:1.6, yOffset:0.9, pos:[-35,-12], wps:[[-35,-12],[-20,-12],[0,0],[-35,0]], speed:3.6, radius:13, floatY:0.2, chaseTime:8, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
   for(const def of defs){
