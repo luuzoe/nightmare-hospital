@@ -107,7 +107,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V87 • UI ကြောက်စရာ + သပ်ရပ်အောင်</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V88 • အသံအစစ် 6 ခု</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -541,7 +541,7 @@ function playTone(freqStart,freqEnd,dur,type,vol,vibRate){
   o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur);
 }
 function thump(vol){ playTone(55,40,0.16,'sine',vol||0.25,0); }
-function footstepSound(){ playNoise(0.18,'lowpass',220,1,0.30,0); playTone(900,250,0.22,'sawtooth',0.06,8); setTimeout(()=>{ try{ playNoise(0.12,'lowpass',300,1,0.12,0); }catch(e){} },140); S._footCount=(S._footCount||0)+1; if(S._footCount%10===0){ setTimeout(()=>{ try{ playNoise(0.15,'lowpass',200,1,0.15,0); }catch(e){} },350); } }
+function footstepSound(){ if(!playReal('woodstep',0.5)) playNoise(0.18,'lowpass',220,1,0.30,0); playTone(900,250,0.22,'sawtooth',0.06,8); setTimeout(()=>{ try{ playNoise(0.12,'lowpass',300,1,0.12,0); }catch(e){} },140); S._footCount=(S._footCount||0)+1; if(S._footCount%10===0){ setTimeout(()=>{ try{ playNoise(0.15,'lowpass',200,1,0.15,0); }catch(e){} },350); } }
 let realSounds={};
 let realLoaded={};
 function loadRealSound(name,file){ try{ const a=new Audio(file); a.preload='auto'; a.addEventListener('canplaythrough',()=>{ realLoaded[name]=true; }); a.addEventListener('error',()=>{ realLoaded[name]=false; }); realSounds[name]=a; }catch(e){} }
@@ -551,18 +551,20 @@ loadRealSound('moan','ghost-moan.mp3');
 loadRealSound('growl','ghost-growl.mp3');
 loadRealSound('roar','ghost-roar.mp3');
 loadRealSound('girl','ghost-girl.mp3');
+loadRealSound('drone','horror-drone.mp3'); loadRealSound('door','door-creak.mp3'); loadRealSound('scream2','scream-female.mp3'); loadRealSound('whisper','ghost-whisper.mp3'); loadRealSound('thunder','thunder.mp3'); loadRealSound('woodstep','footsteps-wood.mp3');
 function growlSound(){ if(playReal('growl',0.8)) return; playTone(60,35,1.5,'sawtooth',0.50,9); playNoise(1.5,'lowpass',180,1,0.35,9); playTone(40,28,1.5,'sine',0.40,0); }
 function heartbeatSound(){ thump(0.5); setTimeout(()=>thump(0.4),180); }
 function giggleSound(){ playTone(900,1200,0.4,'sine',0.12,10); setTimeout(()=>playTone(1100,800,0.4,'sine',0.10,12),250); setTimeout(()=>playTone(1000,1300,0.3,'sine',0.10,10),550); } // child ghost giggle
 function moanSound(){ if(playReal('moan',0.6)) return; playTone(240,120,3.0,'sine',0.35,5); playNoise(3.0,'bandpass',400,2,0.25,3); playTone(120,80,3.0,'sawtooth',0.20,4); }
 function pickupSound(){ beep(880,.12); setTimeout(()=>beep(1320,.18),90); }
-function doorSound(){ playTone(180,320,0.5,'sawtooth',0.07,0); playNoise(0.5,'bandpass',600,2,0.03,0); } // creak, not beep
+function doorSound(){ if(playReal('door',0.8)) return; playTone(180,320,0.5,'sawtooth',0.07,0); playNoise(0.5,'bandpass',600,2,0.03,0); } // creak, not beep
 function scareSound(){ if(playReal('roar',0.9)) { thump(0.7); return; } playTone(110,35,1.4,'sawtooth',0.60,0); playNoise(1.4,'lowpass',300,1,0.45,0); thump(0.7); playTone(50,30,1.4,'sine',0.45,0); }
-let ambientGain=null, ambientStarted=false;
+let ambientGain=null, ambientStarted=false, droneAudio=null;
 function startAmbient(){
   if(ambientStarted)return; const c=ac(); if(!c)return; ambientStarted=true;
   try{
     ambientGain=c.createGain(); ambientGain.gain.value=S.sound?0.04:0; // V29 scarier ambient louder ambientGain.connect(c.destination);
+    try{ const da=realSounds['drone']; if(da && S.sound){ da.loop=true; da.volume=0.22*(S.volume||1); da.play().catch(()=>{}); droneAudio=da; } }catch(e){}
     const o=c.createOscillator(); o.type='sine'; o.frequency.value=48; o.connect(ambientGain); o.start();
     const o2=c.createOscillator(); o2.type='sine'; o2.frequency.value=48.7; const g2=c.createGain(); g2.gain.value=0.5; o2.connect(g2); g2.connect(ambientGain); o2.start();
     const wind=c.createBufferSource(); wind.buffer=getNoise(c); wind.loop=true;
@@ -576,8 +578,8 @@ document.addEventListener('pointerdown',()=>{ ac(); }, {passive:true});
 let lastGirlTime=-999;
 let lastWanderScream=-999;
 function wanderingScream(){ if(S.time-lastWanderScream<60) return; lastWanderScream=S.time; screamSound(); }
-function whisperSound(){ if(S.time-lastGirlTime<30) return; lastGirlTime=S.time; if(playReal('girl',0.7)) return; playNoise(1.6,'bandpass',1100,1.5,0.25,7); }
-function screamSound(){ if(playReal('scream',0.9)) return; playNoise(1.4,'highpass',900,1,0.65,0); playTone(950,200,1.4,'sawtooth',0.55,0); setTimeout(()=>playTone(1300,350,0.8,'sawtooth',0.45,0),150); setTimeout(()=>playTone(850,180,0.9,'sawtooth',0.35,0),400); setTimeout(()=>playTone(1100,300,0.7,'sawtooth',0.25,0),800); playTone(55,30,1.4,'sine',0.45,0); }
+function whisperSound(){ if(S.time-lastGirlTime<30) return; lastGirlTime=S.time; if(playReal('whisper',0.7)) return; if(playReal('girl',0.7)) return; playNoise(1.6,'bandpass',1100,1.5,0.25,7); }
+function screamSound(){ if(Math.random()<0.5 && playReal('scream2',0.9)) return; if(playReal('scream',0.9)) return; playNoise(1.4,'highpass',900,1,0.65,0); playTone(950,200,1.4,'sawtooth',0.55,0); setTimeout(()=>playTone(1300,350,0.8,'sawtooth',0.45,0),150); setTimeout(()=>playTone(850,180,0.9,'sawtooth',0.35,0),400); setTimeout(()=>playTone(1100,300,0.7,'sawtooth',0.25,0),800); playTone(55,30,1.4,'sine',0.45,0); }
 
 try{ window.__nhCP='CP2 AUDIO done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP2 AUDIO done'; }catch(e){}
 /* ============ THREE SETUP ============ */
@@ -1733,6 +1735,7 @@ $('againBtn').addEventListener('click',()=>{ $('endScreen').classList.add('hidde
 function toggleSound(){
   S.sound=!S.sound;
   if(ambientGain)ambientGain.gain.value=S.sound?0.04:0;
+  if(droneAudio){ if(S.sound) droneAudio.play().catch(()=>{}); else droneAudio.pause(); }
   $('soundBtn').textContent=S.sound?'🔊 အသံ: ဖွင့်':'🔇 အသံ: ပိတ်';
   $('muteBtn').textContent=S.sound?'🔊':'🔇';
 }
@@ -2281,7 +2284,7 @@ if(S.playing && !S.paused){ S.whisperTimer-=dt; if(S.whisperTimer<=0){ let nd=1e
     }
     // Blackout: every ~30-45s, lights out 2s, scream, flashlight only = very scary hospital
     if(S.blackout>0){ S.blackout-=dt; }
-    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=6.0; S.blackoutTimer=Math.max(10,18-(15-S.floor))+Math.random()*6; thump(0.4); toast('⚡ မီး ပျက်သွားပြီ! တိတ်တိတ် နေ!'); } }
+    else { S.blackoutTimer-=dt; if(S.blackoutTimer<=0){ S.blackout=6.0; S.blackoutTimer=Math.max(10,18-(15-S.floor))+Math.random()*6; thump(0.4); playReal('thunder',0.6); toast('⚡ မီး ပျက်သွားပြီ! တိတ်တိတ် နေ!'); } }
   }
   // key bob
   for(const km of keyMeshes){ if(!km.taken){ km.mesh.rotation.y+=dt*2; km.mesh.position.y=1.1+Math.sin(t*2+km.def.id)*0.15; } }
