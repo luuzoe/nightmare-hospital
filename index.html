@@ -107,7 +107,7 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V88 • အသံအစစ် 6 ခု</p>
+  <p style="font-size:11px;color:#666;margin-top:8px">V89 • လက်အစစ် + ဓာတ်မီးအစစ်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -597,13 +597,12 @@ const handsGroup=new THREE.Group(); camera.add(handsGroup);
 const handL=new THREE.Group(); handL.position.set(-0.20,-0.22,-0.45); handL.rotation.set(0.1,0.15,0); handsGroup.add(handL);
 const handR=new THREE.Group(); handR.position.set(0.20,-0.22,-0.45); handR.rotation.set(0.1,-0.15,0); handsGroup.add(handR);
 const flashMeshGroup=new THREE.Group(); flashMeshGroup.position.set(0.07,-0.03,-0.08); flashMeshGroup.rotation.set(0,0.4,0); handR.add(flashMeshGroup);
-const flashBody=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.026,0.14,12), new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.4,metalness:0.3})); flashBody.rotation.x=Math.PI/2; flashMeshGroup.add(flashBody);
-const flashLens=new THREE.Mesh(new THREE.CircleGeometry(0.02,12), new THREE.MeshBasicMaterial({color:0xfff2cc})); flashLens.position.set(0,0,-0.075); flashLens.rotation.y=Math.PI; flashMeshGroup.add(flashLens);
+const flashLoader=new GLTFLoader(); flashLoader.load('flashlight-real.glb', g=>{ const inner=g.scene; inner.scale.set(0.000125,0.000125,0.000125); flashMeshGroup.add(inner); }, undefined, ()=>{});
 const handLight=new THREE.PointLight(0xffe0b3,0.6,1.2,1); handLight.position.set(0,-0.1,-0.3); camera.add(handLight);
 handsGroup.visible=false;
 const handLoader=new GLTFLoader();
-handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(1.15,1.15,1.15); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handR.add(inner); }, undefined, ()=>{});
-handLoader.load('hand-real.glb', g=>{ const inner=g.scene; inner.scale.set(-1.15,1.15,1.15); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.side=THREE.DoubleSide; o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handL.add(inner); }, undefined, ()=>{});
+handLoader.load('hand-woman.glb', g=>{ const inner=g.scene; inner.scale.set(0.008,0.008,0.008); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handR.add(inner); }, undefined, ()=>{});
+handLoader.load('hand-woman.glb', g=>{ const inner=g.scene; inner.scale.set(-0.008,0.008,0.008); inner.traverse(o=>{ if(o.isMesh){ o.material=o.material.clone(); o.material.side=THREE.DoubleSide; o.material.roughness=0.6; o.material.color.setRGB(0.68,0.48,0.34); } }); handL.add(inner); }, undefined, ()=>{});
 scene.add(new THREE.HemisphereLight(0x8899aa,0x111111,0.08)); // V49: dim moonlight, abandoned shapes visible, still dark
 const dir=new THREE.DirectionalLight(0xffe0b3,0.08); dir.position.set(10,20,10); scene.add(dir);
 
