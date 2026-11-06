@@ -84,13 +84,14 @@ canvas{display:block}
   .btn{padding:10px 20px;font-size:16px}
   .iconbtn{width:42px;height:42px;font-size:18px}
 }
+@media (orientation:landscape){ .screen{padding:12px 20px} .screen h1{font-size:30px;margin:2px 0} .screen p{font-size:14px;margin:4px 0;line-height:1.5} .btn{padding:10px 20px} #loadBarWrap{bottom:10px} }
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<div id="load">ဆေးရုံဟောင်း ဖွင့်နေသည်…<br><span id="loadStage" style="font-size:13px;color:#aaa">Character (website က ရတဲ့ တကယ့် 3D လူ) ကို ဆွဲနေသည်</span><br><span style="font-size:12px;color:#888">internet နှေးရင် 2-4 မိနစ် ကြာနိုင်တယ် — ခဏစောင့်ပေးပါ</span></div>
+<div id="load" style="display:none">ဆေးရုံဟောင်း ဖွင့်နေသည်…<br><span id="loadStage" style="font-size:13px;color:#aaa">Character (website က ရတဲ့ တကယ့် 3D လူ) ကို ဆွဲနေသည်</span><br><span style="font-size:12px;color:#888">internet နှေးရင် 2-4 မိနစ် ကြာနိုင်တယ် — ခဏစောင့်ပေးပါ</span></div>
 
 <!-- Start -->
 <div id="startScreen" class="screen">
@@ -107,7 +108,8 @@ canvas{display:block}
   <p id="startError" style="color:#ff6666;font-size:13px;display:none"></p>
   <p id="coreStatus" style="font-size:12px;color:#ffcc66;margin-top:6px">⏳ သရဲတွေ တင်နေသည်…</p>
   <p class="small">🕹️ Joystick = လမ်း • ညာဘက် ဆွဲ = Camera • RUN • HIDE</p>
-  <p style="font-size:11px;color:#666;margin-top:8px">V90 • တင်တာ မြန်အောင်</p>
+  <div id="loadBarWrap" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:min(520px,86vw)"><div style="height:14px;background:#1a1a1a;border:2px solid #ff2222;border-radius:8px;overflow:hidden"><div id="loadBarFill" style="height:100%;width:0%;background:linear-gradient(90deg,#7a0000,#ff2222);transition:width .2s"></div></div><p id="loadBarText" style="font-size:12px;color:#ffd166;margin:4px 0 0;text-align:center">ဒေါင်းလုတ် 0 / 72.1 MB</p></div>
+  <p style="font-size:11px;color:#666;margin-top:8px">V91 • Download bar + မြန်အောင်</p>
   <p id="bootStatus" style="display:none">JS loading…</p>
   <p id="bootError" style="color:#ff6666;font-size:12px;display:none"></p>
   <p id="earlyError" style="color:#ffcc66;font-size:12px;display:none"></p>
@@ -1279,6 +1281,11 @@ function lineBlocked(x1,z1,x2,z2){
 try{ window.__nhCP='CP6 COLLISION done'; const _bs=document.getElementById('bootStatus'); if(_bs) _bs.textContent='CP6 COLLISION done'; }catch(e){}
 /* ============ CHARACTERS (real GLB from website) ============ */
 const loader=new GLTFLoader();
+let loadProgBytes={}, loadProgTotal={'cesium-man.glb':490956,'ghost-blood.glb':7322628,'dead1.glb':1611768,'dead2.glb':4085192,'dead3.glb':2630916,'dead4.glb':2731052,'dead-body-real.glb':1619896,'bodybags.glb':5625464,'ghost-dark.glb':8644964,'ghost-woman.glb':2276024,'ghost-saori.glb':1694048,'ghost-inktober.glb':16490652,'ghost-lowpoly.glb':2018120,'ghost-pig.glb':6615648,'ghost-lethal.glb':1535248,'cloth-ghost.glb':2205000,'ghost-woman-apose.glb':2276024,'scary-halloween-ghost.glb':4106484,'shazia-ghost.glb':2655560};
+function updLoadBar(){ try{ let l=0,tt=0; for(const k in loadProgTotal){ l+=loadProgBytes[k]||0; tt+=loadProgTotal[k]; } const pct=tt>0?Math.min(100,Math.round(l/tt*100)):0; const bar=$('loadBarFill'); if(bar) bar.style.width=pct+'%'; const tx=$('loadBarText'); if(tx) tx.textContent='ဒေါင်းလုတ် '+(l/1048576).toFixed(1)+' / '+(tt/1048576).toFixed(1)+' MB — '+Math.max(0,(tt-l)/1048576).toFixed(1)+' MB ကျန်သေးတယ်'; }catch(e){} }
+const _origLoaderLoad=loader.load.bind(loader);
+loader.load=function(url,onLoad,onProgress,onError){ return _origLoaderLoad(url, gltf=>{ if(loadProgTotal[url]) loadProgBytes[url]=loadProgTotal[url]; updLoadBar(); if(onLoad) onLoad(gltf); }, ev=>{ if(ev && ev.total>0 && loadProgTotal[url]){ loadProgTotal[url]=ev.total; loadProgBytes[url]=ev.loaded; updLoadBar(); } if(onProgress) onProgress(ev); }, onError); };
+updLoadBar();
 let player=null, monster=null, playerMixer=null, monsterMixer=null;
 // V4 FIX (same bug as Wan Lone v12): Box3 auto-scale does NOT match a skinned
 // GLB's world height (geometry Y ~1.14 vs skinned world ~3x) -> ~5m giant, head cut off.
@@ -1347,9 +1354,10 @@ async function loadCorpses(){
     {src:'dead2.glb',scale:0.012,ox:0.45,oy:0,oz:1.17,real:true},
     {src:'dead3.glb',scale:0.36,ox:0.68,oy:0.32,oz:0,real:true},
   ];
+  const corpseOuters=await Promise.all(corpseSrcs.map(cs=>loadCorpse(cs.src,cs.scale,cs)));
   for(let ci=0; ci<corpseDefs.length; ci++){
     const c=corpseDefs[ci]; const cs=corpseSrcs[ci]||corpseSrcs[5];
-    let outer=await loadCorpse(cs.src,cs.scale,cs);
+    let outer=corpseOuters[ci];
     if(!outer && cs.real) outer=await loadCorpse('cesium-man.glb',PLAYER_BASE,{});
     if(!outer) outer=await loadCorpse('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb',PLAYER_BASE,{});
     if(!outer) continue;
@@ -1396,7 +1404,8 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
     {name:'Shazia Ghost', src:'shazia-ghost.glb', real:true, scale:1.6, yOffset:0.9, pos:[-35,-12], wps:[[-35,-12],[-20,-12],[0,0],[-35,0]], speed:3.6, radius:13, floatY:0.2, chaseTime:8, sound:'scream'},
     // V22 user: toy ghosts removed - only Zaw-sent real ghosts remain (Woman, Darkness, Girl Animated + main blood monster)
   ];
-  for(const def of defs){
+  const ghostLoads=defs.map(def=>new Promise(res=>{ loader.load(def.src, gltf=>res({def,gltf}), undefined, ()=>res({def,gltf:null})); }));
+  for(const {def,gltf} of await Promise.all(ghostLoads)){ if(!gltf) continue;
     const build=(gltf,useReal)=>{
       const inner=gltf.scene; normalizeGroup(inner,def.scale*1.25,def.yOffset||0,def.rotX||0);
       const outer=new THREE.Group(); outer.add(inner);
@@ -1427,17 +1436,15 @@ async function loadWanderingGhosts(){ toast('👻 သရဲတွေ တင်�
       outer.position.set(def.pos[0],0,def.pos[1]); scene.add(outer);
       return {outer,mixer,def,wpIdx:0,scareTimer:0,chaseTimer:0,cooldown:0,state:'patrol'};
     };
-    let g=null;
-    if(def.src){ g=await new Promise(res=>{ loader.load(def.src, gltf=>res(build(gltf,true)), undefined, ()=>res(null)); }); }
-    if(g) wanderingGhosts.push(g); // V22: no CesiumMan fallback - sent ghosts only
+    const g=build(gltf,true);
+    if(g) wanderingGhosts.push(g);
   }
   if(typeof setActiveGhosts==='function') setActiveGhosts(); toast('👻 သရဲတွေ အဆင်သင့်');
 }
 async function loadCharacter(){
   const CDN='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
-  let p=await loadOne('cesium-man.glb',PLAYER_BASE,1.8,false);
+  let [p,m]=await Promise.all([loadOne('cesium-man.glb',PLAYER_BASE,1.8,false), loadOne('ghost-blood.glb',2.8,2.8,false,{real:true,yOffset:1.4,rotX:-Math.PI/2})]);
   if(!p)p=await loadOne(CDN,PLAYER_BASE,1.8,false);
-  let m=await loadOne('ghost-blood.glb',2.8,2.8,false,{real:true,yOffset:1.4,rotX:-Math.PI/2});
   if(!m)m=await loadOne('cesium-man.glb',MONSTER_BASE,2.97,true);
   if(!m)m=await loadOne(CDN,MONSTER_BASE,2.97,true);
   if(!p||!m)return false;
@@ -2334,6 +2341,7 @@ loadCharacter().then(async ok=>{
   setCoreStatus('⏳ နောက်ထပ် သရဲတွေ တင်နေသည်…');
   await loadWanderingGhosts();
   window.__nhCoreReady=true;
+  try{ for(const k in loadProgTotal) loadProgBytes[k]=loadProgTotal[k]; updLoadBar(); const tx=$('loadBarText'); if(tx) tx.textContent='✅ အဆင်သင့် — စဆော့လို့ရပြီ'; }catch(e){}
   setCoreStatus('✅ အားလုံး အဆင်သင့် — စဆော့လို့ရပြီ');
   if(!ok) toast('⚠️ Character load မအောင်ဘူး — internet စစ်ပြီး ပြန်ဖွင့်ပါ');
   // still allow start; character may appear via fallback in scene? if no player, start screen still works but game will show no models
