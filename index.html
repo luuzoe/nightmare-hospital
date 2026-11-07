@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>သရဲဆေးရုံ — Ghost Hospital</title>
+<style>
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#050505;font-family:-apple-system,"Noto Sans Myanmar","Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
+#app{position:fixed;inset:0}
+canvas.game{display:block;width:100%;height:100%}
+.hidden{display:none!important}
+#menu{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#1a0505 0%,#050505 70%);color:#e8e0d0;text-align:center;padding:20px}
+#menu h1{font-size:42px;margin:0;color:#ff2a2a;text-shadow:0 0 30px #ff0000,2px 2px 0 #000;letter-spacing:2px}
+#menu h2{font-size:16px;margin:8px 0 4px;color:#ffd166;font-weight:400}
+#menu p{font-size:14px;line-height:1.7;max-width:520px;color:#c9bfa8;margin:10px 0}
+#menu .warn{color:#ff6666;font-size:13px}
+.bigbtn{display:block;width:min(320px,84vw);margin:8px auto;padding:14px 10px;font-size:18px;font-weight:900;border:0;border-radius:12px;cursor:pointer;color:#fff;background:linear-gradient(#c81e1e,#7f0d0d);box-shadow:0 4px 0 #4a0505,0 0 24px rgba(255,0,0,.35)}
+.bigbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #4a0505}
+.bigbtn.alt{background:linear-gradient(#2a4a6a,#12233a);box-shadow:0 4px 0 #0a1626}
+#loadBarWrap{width:min(320px,84vw);height:10px;background:#222;border-radius:5px;margin:12px auto 4px;overflow:hidden}
+#loadBar{height:100%;width:0%;background:#c81e1e}
+#loadText{font-size:12px;color:#999}
+#startError{color:#ff8888;font-size:13px;max-width:520px;margin-top:8px}
+#hud{position:fixed;inset:0;z-index:20;pointer-events:none;display:none}
+#hud.on{display:block}
+#topbar{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start}
+#hearts{font-size:22px;text-shadow:0 0 8px #f00}
+#floorInfo{font-size:13px;color:#ffd166;font-weight:900;letter-spacing:1px;text-shadow:1px 1px 0 #000}
+#objective{position:absolute;top:40px;left:10px;right:10px;text-align:center;font-size:14px;font-weight:700;color:#fff;text-shadow:1px 1px 0 #000,0 0 12px #000}
+#objective small{color:#ffd166}
+#staminaWrap{position:absolute;top:64px;left:10px;width:110px;height:8px;background:rgba(0,0,0,.6);border:1px solid #555;border-radius:4px;overflow:hidden}
+#stamina{height:100%;width:100%;background:#37d67a}
+#minimap{position:absolute;right:10px;top:64px;width:104px;height:150px;border:1px solid rgba(255,255,255,.25);border-radius:6px;background:rgba(0,0,0,.55)}
+#toast{position:absolute;left:50%;bottom:34%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .3s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{opacity:1}
+#floorBanner{position:fixed;left:50%;top:16%;transform:translate(-50%,-50%);font-size:30px;font-weight:900;letter-spacing:2px;color:#ffd166;text-shadow:0 0 24px #ff0000,2px 2px 0 #000;z-index:45;display:none;text-align:center}
+#floorBanner.on{display:block}
+#joy{position:absolute;left:18px;bottom:26px;width:124px;height:124px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.25);pointer-events:auto}
+#joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;background:rgba(255,42,42,.55);border:2px solid rgba(255,255,255,.5);transform:translate(-50%,-50%)}
+#btns{position:absolute;right:14px;bottom:22px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
+.rowbtn{display:flex;gap:10px}
+.cbtn{min-width:64px;height:52px;padding:0 12px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);color:#fff;font-size:15px;font-weight:900}
+.cbtn.on{background:rgba(200,30,30,.75)}
+.cbtn.small{min-width:48px;height:40px;font-size:13px}
+#interactBtn{position:absolute;right:14px;bottom:170px;pointer-events:auto;width:84px;height:84px;border-radius:50%;border:2px solid rgba(255,209,102,.7);background:rgba(120,80,0,.5);color:#ffd166;font-size:15px;font-weight:900}
+#interactBtn.pulse{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.5)}50%{box-shadow:0 0 0 12px rgba(255,209,102,0)}}
+#storyCard{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82)}
+#storyCard.on{display:flex}
+#storyBox{width:min(480px,88vw);background:#14100c;border:1px solid #6a4a2a;border-radius:12px;padding:22px;color:#e8dcc0}
+#storyBox h3{margin:0 0 10px;color:#ffd166;font-size:19px}
+#storyBox p{font-size:15px;line-height:1.8;margin:0 0 16px}
+#jumpscare{position:fixed;inset:0;z-index:70;display:none;background:#000}
+#jumpscare.on{display:block}
+#jumpscare .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px}
+#jumpscare .vig{position:absolute;inset:0;box-shadow:inset 0 0 120px 60px rgba(255,0,0,.85);animation:shake .12s infinite}
+@keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(4px,-3px)}50%{transform:translate(-4px,3px)}75%{transform:translate(3px,3px)}100%{transform:translate(0,0)}}
+#tut{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.8)}
+#tut.on{display:flex}
+#tutBox{width:min(460px,88vw);background:#111;border:1px solid #444;border-radius:12px;padding:20px;color:#ddd;font-size:14px;line-height:1.8}
+#tutBox h3{color:#ffd166;margin:0 0 8px}
+#portraitWarn{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);color:#fff;font-size:20px;font-weight:900;text-align:center;padding:20px}
+#pauseMenu{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75)}
+#pauseMenu.on{display:flex}
+#pauseBox{background:#111;border:1px solid #444;border-radius:12px;padding:22px;text-align:center;color:#ddd}
+#deadScreen,#winScreen{position:fixed;inset:0;z-index:75;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.9);color:#fff;text-align:center}
+#deadScreen.on,#winScreen.on{display:flex}
+#deadScreen h1{color:#ff2a2a;font-size:36px;margin:0}
+#winScreen h1{color:#ffd166;font-size:32px;margin:0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="menu">
+  <h1>သရဲဆေးရုံ</h1>
+  <h2>GHOST HOSPITAL • 15 ထပ် • Ep1–15</h2>
+  <p>ညသန်းခေါင် ဆေးရုံအဟောင်း — အပေါ်ဆုံး 15 လွှာကနေ အောက်ဆုံး 1 လွှာထိ ဆင်းရမယ်။<br>တစ်ထပ်ပြီး တစ်ထပ် mission ပြီးမှ လှေကားက ဆင်းလို့ရမယ်။ သရဲ 4 ကောင် စောင့်နေတယ်။<br>မေသူ့ကို ရှာပါ။ အသက်ရှင်လျက် ထွက်ပါ။</p>
+  <p class="warn">⚠️ အရမ်းကြောက်စရာကောင်းတယ် — အသံကျယ်ကျယ် ဖွင့်မဆော့ပါနဲ့ • နှလုံးအားနည်းသူများ မဆော့ပါနဲ့</p>
+  <div id="loadBarWrap"><div id="loadBar"></div></div>
+  <div id="loadText">တင်နေသည်…</div>
+  <button class="bigbtn" id="startBtn">▶ စဆော့မယ်</button>
+  <button class="bigbtn alt" id="continueBtn" style="display:none">↻ ဆက်ဆော့မယ်</button>
+  <button class="bigbtn alt" id="howBtn" style="font-size:15px;padding:10px">📖 ဘယ်လိုဆော့ရမလဲ</button>
+  <div id="startError"></div>
+  <p style="font-size:12px;color:#777">သရဲဆေးရုံ V1 • ဖုန်းအတွက် Landscape အကောင်းဆုံး • သရဲ model များ: CoryRichards, deankagura, deathcow, Zorg_Sinister (CC-BY) • ဆေးရုံ: Alexandrovich, olegolegperepelica (CC-BY) • အသံများ: Freesound CC0</p>
+</div>
+<div id="hud">
+  <div id="topbar"><div id="hearts">❤️❤️❤️</div><div id="floorInfo">🏢 15 လွှာ • Ep1</div><button class="cbtn small" id="pauseBtn">⏸</button></div>
+  <div id="objective">🎯 …</div>
+  <div id="staminaWrap"><div id="stamina"></div></div>
+  <canvas id="minimap" width="104" height="150"></canvas>
+  <div id="toast"></div>
+  <div id="joy"><div id="joyKnob"></div></div>
+  <button id="interactBtn">ယူ</button>
+  <div id="btns">
+    <div class="rowbtn"><button class="cbtn" id="runBtn">RUN</button><button class="cbtn" id="hideBtn">HIDE</button></div>
+    <div class="rowbtn"><button class="cbtn" id="tppBtn">TPP</button><button class="cbtn small" id="soundBtn">🔊</button></div>
+  </div>
+</div>
+<div id="floorBanner"></div>
+<div id="storyCard"><div id="storyBox"><h3 id="storyTitle"></h3><p id="storyText"></p><button class="bigbtn" id="storyClose">ဆက်သွားမယ်</button></div></div>
+<div id="jumpscare"><div class="vig"></div><div class="face">👁️</div></div>
+<div id="tut"><div id="tutBox"><h3>📖 ဘယ်လိုဆော့ရမလဲ</h3>
+🕹️ Joystick / WASD — လမ်းလျှောက် • ဖန်သားပြင်ကို ဆွဲပြီး ကင်မရာ လှည့်<br>
+🏃 RUN — ပြေး (အား ကုန်မယ်) • 🙈 HIDE — ရပ်နေပြီး ပုန်း (သရဲ မမြင်ဘူး)<br>
+🎯 Mission ပြီးမှ တောင်ဘက် လှေကားက ဆင်းလို့ရမယ် — မပြီးပဲ ဆင်းရင် သရဲက ချက်ချင်း သတ်မယ်<br>
+❤️ နှလုံး 3 ခု — သရဲ မိရင် 1 ခု လျော့မယ်<br>
+👻 သရဲ နားရောက်ရင် နှလုံးခုန်သံ ကြားရမယ် — အဲဒီအချိန် HIDE ရပ် (သို့) ပြေး<br>
+<div style="text-align:center;margin-top:12px"><button class="bigbtn" id="tutClose" style="width:200px">စဆော့မယ်</button></div>
+</div></div>
+<div id="pauseMenu"><div id="pauseBox"><h3 style="color:#ffd166">⏸ ရပ်နားထားသည်</h3><p>အထပ် <span id="pauseFloor"></span> • နှလုံး <span id="pauseHearts"></span></p><button class="bigbtn" id="resumeBtn">▶ ဆက်ဆော့မယ်</button><button class="bigbtn alt" id="quitBtn">🏠 Menu ပြန်သွားမယ်</button></div></div>
+<div id="deadScreen"><h1>💀 သေသွားပြီ</h1><p id="deadText">သရဲက မိသွားပြီ…</p><button class="bigbtn" id="retryBtn">🔄 အဲဒီအထပ်ကနေ ပြန်စမယ်</button><button class="bigbtn alt" id="deadMenuBtn">🏠 Menu</button></div>
+<div id="winScreen"><h1>🎉 လွတ်မြောက်ပြီ!</h1><p id="winText"></p><button class="bigbtn" id="winMenuBtn">🏠 Menu</button></div>
+<div id="portraitWarn">📱 ဖုန်းကို Landscape လှည့်ပါ<br><span style="font-size:15px;font-weight:400">ဒီဂိမ်းက Landscape မှ အဆင်ပြေတယ်</span></div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+const V='V1';
+const $=id=>document.getElementById(id);
+const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'hand-real.glb':506696,'sounds/carmsie__dont-look-behind-you.mp3':98752,'sounds/xl57__horror-movie-scream-female.mp3':122349,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/mlsprovideos__moan222-combined-triple-great-with-patch-echo.mp3':90547,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633};
+const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
+const FLOOR_MISSIONS={
+  15:{ep:1,type:'keys',label:'သော့',need:4},
+  14:{ep:2,type:'order',label:'ဆေး',need:4},
+  13:{ep:3,type:'switches',label:'Switch',need:4},
+  12:{ep:4,type:'survive',label:'ရှင်သန်',need:90,timer:90},
+  11:{ep:5,type:'lockers',label:'Locker',need:7},
+  10:{ep:6,type:'lure',label:'သရဲကို ဆွဲခေါ်',need:1},
+  9:{ep:7,type:'dark',label:'မှောင်ထဲ ပစ္စည်း',need:7},
+  8:{ep:8,type:'timed',label:'အချိန်မီ ပစ္စည်း',need:7,timer:75},
+  7:{ep:9,type:'hide',label:'ပုန်း',need:45},
+  6:{ep:10,type:'corpse',label:'လူသေကောင်',need:4},
+  5:{ep:11,type:'rooms',label:'အခန်း',need:6},
+  4:{ep:12,type:'distance',label:'လမ်းလျှောက်',need:240},
+  3:{ep:13,type:'darklockers',label:'မှောင် Locker',need:6,dwell:4},
+  2:{ep:14,type:'timedorder',label:'အချိန်မီ အစဉ်',need:9,timer:60},
+  1:{ep:15,type:'final',label:'ထွက်ပေါက်',need:10,switch:true}
+};
+const STORY_HINTS={15:'Ep1 • မေသူ၏ ပထမဆုံး ဒိုင်ယာရီ — “ဒီဆေးရုံက မပိတ်သေးဘူး… ညတိုင်း အပေါ်ထပ်က ခြေသံ ကြားရတယ်”',14:'Ep2 • ညဆိုင်း သူနာပြုတွေ ပျောက်နေပြီ — နာ့စ်အခန်းထဲက ယူနီဖောင်းပဲ ကျန်ခဲ့တယ်',13:'Ep3 • ဒေါက်တာ၏ စမ်းသပ်ခန်း — ဆေးတွေ အစဉ်လိုက် သောက်ရမယ့် လူနာစာရင်း',12:'Ep4 • လူနာတွေ ညက အော်သံ — ၉၀ စက္ကန့် ရှင်သန်ရမယ်',11:'Ep5 • Locker ထဲမှာ ဝှက်ထားတဲ့ စာ — “မဖွင့်နဲ့… သူ အထဲမှာ ရှိတယ်”',10:'Ep6 • သရဲကို ခွဲစိတ်ခန်းဆီ ဆွဲခေါ်ရမယ့် အခန်း',9:'Ep7 • မှောင်ထဲမှာ ရေးထားတဲ့ နာမည် — မီးမရှိတဲ့ အခန်းတွေထဲ ပစ္စည်း ရှာပါ',8:'Ep8 • အချိန်မီ ပြေးရမယ့် လူနာ — ၇၅ စက္ကန့်ပဲ ရှိတယ်',7:'Ep9 • ပုန်းနေရင်း ကြားရတဲ့ ခြေသံ — သရဲ အနားမှာ ၄၅ စက္ကန့် ပုန်းပါ',6:'Ep10 • အလောင်းတွေက စကားပြောတယ် — အလောင်း ၄ လောင်း စစ်ပါ',5:'Ep11 • အခန်း ၆ ခန်း ဝင်ပါ — တစ်ခန်းချင်းစီမှာ တစ်ခုခု ရှိတယ်',4:'Ep12 • ၂၄၀ မီတာ လမ်းလျှောက်ရင်း တွေ့တဲ့ အရိပ်',3:'Ep13 • မှောင် Locker ထဲက ဒိုင်ယာရီ — မီးမရှိပဲ Locker ဖွင့်ပါ',2:'Ep14 • အစဉ်လိုက် သော့တွေ — နောက်ဆုံး အဆင့် မရောက်ခင် ၉ ခု',1:'Ep15 FINAL • အမှန်တရား — မေသူ ဘယ်ရောက်သွားလဲ… ထွက်ပေါက်ကို ဖွင့်ပါ'};
+const SCARY_TEXTS=['ထွက်မသွားနဲ့','သူ ဒီမှာ ရှိတယ်','နောက်ကို မလှည့်နဲ့','ကူညီပါ','ငါ့ကို ရှာပါ','သွေးက မခြောက်သေးဘူး','ညတိုင်း ပြန်လာတယ်','မင်းကို မြင်နေတယ်'];
+const GHOST_DEFS=[
+  {name:'Samara',file:'ghosts/samara.glb',height:1.7,speed:2.6,chase:3.4,scary:3},
+  {name:'Nurse',file:'ghosts/bubble-head-nurse.glb',height:1.8,speed:2.4,chase:3.2,scary:2},
+  {name:'Doll',file:'ghosts/scary-doll.glb',height:1.8,speed:3.0,chase:3.8,scary:2},
+  {name:'Spider Witch',file:'ghosts/spider-witch.glb',height:1.8,speed:2.2,chase:3.0,scary:3,crawl:true,crawlLen:2.0,faceBack:true}
+];
+const S={playing:false,paused:false,dead:false,won:false,fpp:true,hearts:3,stamina:100,hidden:false,invuln:0,chase:false,floor:15,missionDone:false,missionTimer:0,hideTotal:0,switchIdx:0,corpseIdx:0,distance:0,keys:0,items:0,switchOn:false,time:0,sound:true,volume:1,yaw:Math.PI,pitch:0,joy:{x:0,y:0,active:false,mag:0},run:false,interactTarget:null,hideTarget:null,blackout:0,blackoutTimer:28,whisperTimer:0,moanTimer:45,heartTimer:0,scareTimer:0,flicker:0,visited:[],corpseTouched:[],dwell:0,escapeReady:false,storyShown:false};
+let scene,camera,renderer,clock,hemiLight,flashLight,flashTarget,handMesh,playerMesh;
+let walls=[],ghosts=[],keyMeshes=[],itemMeshes=[],switchMeshes=[],corpseMeshes=[],hideSpots=[],roomZones=[],propMeshes=[],bloodWritings=[],poltergeists=[];
+let exitDoor=null,exitBlock=null,stairOpen=false,coreReady=false,loadedBytes=0,menuCamAngle=0;
+let AC=null,noiseBuf=null,realSounds={},realLoaded={};
+let playerPos=new THREE.Vector3(0,0,-13.5),lastPos=new THREE.Vector3(0,0,-13.5);
+const ROOM_DEFS=[
+  {id:0,x:-3.5,z:-12,label:'အခန်း A1'},{id:1,x:3.5,z:-12,label:'အခန်း A2'},
+  {id:2,x:-3.5,z:-6,label:'အခန်း B1'},{id:3,x:3.5,z:-6,label:'အခန်း B2'},
+  {id:4,x:-3.5,z:0,label:'အခန်း C1'},{id:5,x:3.5,z:0,label:'အခန်း C2'},
+  {id:6,x:-3.5,z:6,label:'အခန်း D1'},{id:7,x:3.5,z:6,label:'အခန်း D2'},
+  {id:8,x:-3.5,z:12,label:'အခန်း E1'},{id:9,x:3.5,z:12,label:'အခန်း E2'}
+];
+function floorMission(){return FLOOR_MISSIONS[S.floor]||FLOOR_MISSIONS[15];}
+function floorEp(){return 16-S.floor;}
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const tmp=a[i];a[i]=a[j];a[j]=tmp;}return a;}
+function rngFor(seed){let s=(seed*2654435761)>>>0;return ()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function setLoad(pct,text){$('loadBar').style.width=Math.min(100,pct)+'%';if(text)$('loadText').textContent=text;}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function setObjective(t){$('objective').innerHTML='🎯 '+t;}
+function showFloorBanner(txt){const fb=$('floorBanner');if(!fb)return;fb.textContent=txt;fb.classList.add('on');setTimeout(()=>fb.classList.remove('on'),3000);}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function beep(freq,dur,type,vol){if(!S.sound)return;const c=ac();if(!c)return;try{const o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.setValueAtTime(vol||0.12,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+(dur||0.15));o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+(dur||0.15));}catch(e){}}
+function getNoise(c){if(noiseBuf)return noiseBuf;const len=c.sampleRate;noiseBuf=c.createBuffer(1,len,c.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;return noiseBuf;}
+function playNoise(dur,filterType,freq,q,vol){if(!S.sound)return;const c=ac();if(!c)return;try{const s=c.createBufferSource();s.buffer=getNoise(c);s.loop=true;const f=c.createBiquadFilter();f.type=filterType;f.frequency.value=freq;f.Q.value=q||1;const g=c.createGain();g.gain.setValueAtTime(vol||0.2,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);s.connect(f);f.connect(g);g.connect(c.destination);s.start();s.stop(c.currentTime+dur);}catch(e){}}
+function playTone(f0,f1,dur,type,vol,vib){if(!S.sound)return;const c=ac();if(!c)return;try{const o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,c.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),c.currentTime+dur);g.gain.setValueAtTime(vol||0.2,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+dur);}catch(e){}}
+function loadRealSound(name,file){try{const a=new Audio(file);a.preload='auto';a.addEventListener('canplaythrough',()=>{realLoaded[name]=true;});a.addEventListener('error',()=>{realLoaded[name]=false;});realSounds[name]=a;}catch(e){}}
+function playReal(name,vol){if(!S.sound)return false;const a=realSounds[name];if(!a||!realLoaded[name])return false;try{const c=a.cloneNode();c.volume=Math.min(1,(vol||0.8)*(S.volume||1));const pr=c.play();if(pr&&pr.catch)pr.catch(()=>{});return true;}catch(e){return false;}}
+function thump(vol){playTone(55,40,0.16,'sine',vol||0.25);}
+function heartbeatSound(){thump(0.5);setTimeout(()=>thump(0.4),180);}
+function footstepSound(){if(!playReal('footsteps',0.4))playNoise(0.15,'lowpass',220,1,0.25);}
+function growlSound(){if(playReal('growl',0.8))return;playTone(60,35,1.5,'sawtooth',0.5,9);playNoise(1.5,'lowpass',180,1,0.35);}
+function moanSound(){if(playReal('moan',0.55))return;playTone(240,120,3.0,'sine',0.3,5);playNoise(3.0,'bandpass',400,2,0.22);}
+function whisperSound(){if(playReal('whisper',0.7))return;playNoise(1.6,'bandpass',1100,1.5,0.22);}
+function screamSound(){if(playReal('scream',0.95))return;playTone(950,200,1.4,'sawtooth',0.55);setTimeout(()=>playTone(1300,350,0.8,'sawtooth',0.45),150);playTone(55,30,1.4,'sine',0.45);}
+function scareSound(){if(playReal('scream',0.9)){thump(0.7);return;}playTone(110,35,1.4,'sawtooth',0.6);playNoise(1.4,'lowpass',300,1,0.45);thump(0.7);}
+function creakSound(){if(playReal('creak',0.8))return;playTone(180,320,0.5,'sawtooth',0.07);playNoise(0.5,'bandpass',600,2,0.03);}
+function pickupSound(){beep(880,0.12);setTimeout(()=>beep(1320,0.18),90);}
+function droneStart(){const a=realSounds['drone'];if(!a||!realLoaded['drone'])return;try{a.loop=true;a.volume=0.14;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});}catch(e){}}
+function droneStop(){try{const a=realSounds['drone'];if(a){a.pause();a.currentTime=0;}}catch(e){}}
+
+let kitParts={},kitBuilt={};
+function bakeKitPiece(mesh){
+  const geo=mesh.geometry.clone();
+  geo.applyMatrix4(mesh.matrixWorld);
+  geo.computeBoundingBox();
+  const bb=geo.boundingBox;
+  const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;
+  geo.translate(-cx,-bb.min.y,-cz);
+  return {geo,mat:mesh.material};
+}
+function extractKitParts(gltf){
+  gltf.scene.updateMatrixWorld(true);
+  const byName={};
+  gltf.scene.traverse(o=>{if(o.isMesh)byName[o.name]=o;});
+  const pick=(...names)=>{for(const n of names){if(byName[n])return bakeKitPiece(byName[n]);}return null;};
+  kitParts.wall2=pick('SM_Wall_2*3_M_modular_0');
+  kitParts.wall1=pick('SM_Wall_1*3_M_modular_0');
+  kitParts.wall05=pick('SM_Wall_0,5*3_M_modular_0');
+  kitParts.floor=pick('SM_Floor_2*2_M_modular_0');
+  kitParts.ceil=pick('SM_Ceiling_2*2_M_modular_0');
+  kitParts.doorway=pick('SM_Doorway_2*3_1_M_modular_0');
+  kitParts.window=pick('SM_Window_opening_M_modular_0');
+  kitParts.column=pick('SM_Wall_Colonum_M_modular_0');
+}
+function kitGeo(part){
+  const p=kitParts[part];
+  if(!p)return null;
+  return {geo:p.geo.clone(),mat:p.mat};
+}
+function placeKit(part,x,z,ry,collide){
+  const p=kitGeo(part);
+  if(!p)return;
+  const g=p.geo;
+  const m=new THREE.Matrix4();
+  const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(0,ry||0,0));
+  m.compose(new THREE.Vector3(x,0,z),q,new THREE.Vector3(1,1,1));
+  g.applyMatrix4(m);
+  const key=part;
+  if(!kitBuilt[key])kitBuilt[key]={geos:[],mat:p.mat};
+  kitBuilt[key].geos.push(g);
+  if(collide){
+    const len=part==='wall2'?2:part==='wall1'?1:part==='wall05'?0.5:part==='doorway'?2:2;
+    const alongX=Math.abs(Math.sin(ry||0))>0.5;
+    walls.push({x,z,w:alongX?len:0.3,d:alongX?0.3:len});
+  }
+}
+function flushKit(){
+  for(const k of Object.keys(kitBuilt)){
+    const b=kitBuilt[k];
+    if(!b.geos.length)continue;
+    try{
+      const merged=mergeGeometries(b.geos,false);
+      const mesh=new THREE.Mesh(merged,b.mat);
+      mesh.receiveShadow=false;
+      mesh.userData.floorBuilt=true;
+      floorMeshes.push(mesh);
+      scene.add(mesh);
+    }catch(e){console.warn('merge failed',k,e);}
+  }
+  kitBuilt={};
+}
+function addCollider(x,z,w,d){walls.push({x,z,w,d});}
+function collideAt(nx,nz){
+  for(const w of walls){
+    if(Math.abs(nx-w.x)<w.w/2+0.45&&Math.abs(nz-w.z)<w.d/2+0.45)return true;
+  }
+  if(nx<-5.6||nx>5.6||nz<-14.6||nz>14.6)return true;
+  return false;
+}
+function makeBloodWriting(text,x,y,z,ry){
+  const cv=document.createElement('canvas');cv.width=512;cv.height=128;
+  const g=cv.getContext('2d');g.clearRect(0,0,512,128);
+  g.fillStyle='rgba(120,0,0,0.92)';g.font='bold 44px sans-serif';g.textAlign='center';g.textBaseline='middle';
+  g.fillText(text,256,64);
+  const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.65),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+  m.position.set(x,y,z);m.rotation.y=ry;scene.add(m);bloodWritings.push(m);return m;
+}
+function makeBloodPool(x,z,r){
+  const m=new THREE.Mesh(new THREE.CircleGeometry(r||0.9,20),new THREE.MeshStandardMaterial({color:0x4a0202,roughness:0.15,transparent:true,opacity:0.85}));
+  m.rotation.x=-Math.PI/2;m.position.set(x,0.03,z);scene.add(m);return m;
+}
+function makeKeyMesh(x,z,id){
+  const g=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(0.14,0.045,8,16),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xaa7700,emissiveIntensity:1.2,metalness:0.8,roughness:0.3}));
+  const stem=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.3,0.05),ring.material);
+  stem.position.set(0.16,-0.1,0);
+  const tooth=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.05,0.05),ring.material);
+  tooth.position.set(0.2,-0.22,0);
+  g.add(ring,stem,tooth);
+  g.position.set(x,1.0,z);scene.add(g);
+  const km={id,def:{x,z},mesh:g,taken:false};
+  keyMeshes.push(km);return km;
+}
+function makeItemMesh(x,z,id,label){
+  const g=new THREE.Group();
+  const bottle=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,0.28,10),new THREE.MeshStandardMaterial({color:0x88ccff,emissive:0x2266aa,emissiveIntensity:0.9,roughness:0.2}));
+  bottle.position.y=0.14;
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.08,8),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x888888,emissiveIntensity:0.5}));
+  cap.position.y=0.32;
+  g.add(bottle,cap);
+  g.position.set(x,0.7,z);scene.add(g);
+  const im={id,def:{x,z},mesh:g,taken:false,label};
+  itemMeshes.push(im);return im;
+}
+function makeSwitchMesh(x,z,id){
+  const g=new THREE.Group();
+  const box=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.7,0.12),new THREE.MeshStandardMaterial({color:0x333333,roughness:0.6}));
+  const btn=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.08),new THREE.MeshStandardMaterial({color:0xcc2222,emissive:0x881111,emissiveIntensity:1}));
+  btn.position.set(0,0,0.09);
+  g.add(box,btn);
+  g.position.set(x,1.5,z);scene.add(g);
+  const sm={id,def:{x,z},mesh:g,btn,pressed:false};
+  switchMeshes.push(sm);return sm;
+}
+function makeCorpse(x,z,ry){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.3,0.6),new THREE.MeshStandardMaterial({color:0xd8d8d0,roughness:0.95}));
+  body.position.y=0.25;
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8),new THREE.MeshStandardMaterial({color:0xc9a689,roughness:0.8}));
+  head.position.set(0.95,0.32,0);
+  const sheet=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.55),new THREE.MeshStandardMaterial({color:0xbbbbbb,roughness:1}));
+  sheet.position.set(-0.2,0.42,0);
+  g.add(body,head,sheet);
+  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
+  const cm={def:{x,z},mesh:g,touched:false};
+  corpseMeshes.push(cm);return cm;
+}
+function makeLocker(x,z,ry){
+  const g=new THREE.Group();
+  const box=new THREE.Mesh(new THREE.BoxGeometry(0.9,2.0,0.6),new THREE.MeshStandardMaterial({color:0x2a4a3a,roughness:0.7,metalness:0.3}));
+  box.position.y=1.0;
+  const door=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.8,0.05),new THREE.MeshStandardMaterial({color:0x35594a,roughness:0.6,metalness:0.3}));
+  door.position.set(0,1.0,0.32);
+  g.add(box,door);
+  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
+  const hs={def:{x,z},mesh:g};
+  hideSpots.push(hs);return hs;
+}
+function makeBed(x,z,ry){
+  const g=new THREE.Group();
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.8),new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:0.8}));
+  frame.position.y=0.85;
+  const mat=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.14,0.7),new THREE.MeshStandardMaterial({color:0x9a9a8a,roughness:1}));
+  mat.position.y=0.98;
+  const pil=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.1,0.5),new THREE.MeshStandardMaterial({color:0xcccccc,roughness:1}));
+  pil.position.set(-0.6,1.08,0);
+  g.add(frame,mat,pil);
+  for(const px of[-0.8,0.8])for(const pz of[-0.32,0.32]){const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.85,0.08),frame.material);leg.position.set(px,0.42,pz);g.add(leg);}
+  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
+  propMeshes.push(g);
+  addCollider(x,z,1.9,0.9);
+  return g;
+}
+function makeChair(x,z,ry,tipped){
+  const g=new THREE.Group();
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.08,0.55),new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.9}));
+  seat.position.y=0.45;
+  const back=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.6,0.08),seat.material);
+  back.position.set(0,0.75,-0.25);
+  g.add(seat,back);
+  g.position.set(x,0.05,z);g.rotation.y=ry||0;
+  if(tipped)g.rotation.z=1.35;
+  scene.add(g);propMeshes.push(g);return g;
+}
+function makeDebris(x,z){
+  const g=new THREE.Group();
+  for(let i=0;i<5;i++){
+    const d=new THREE.Mesh(new THREE.BoxGeometry(0.3+Math.random()*0.4,0.1+Math.random()*0.2,0.25+Math.random()*0.35),new THREE.MeshStandardMaterial({color:0x2a2520,roughness:1}));
+    d.position.set((Math.random()-0.5)*1.4,0.06,(Math.random()-0.5)*1.4);d.rotation.y=Math.random()*3;g.add(d);
+  }
+  g.position.set(x,0,z);scene.add(g);propMeshes.push(g);return g;
+}
+function makeWheelchair(x,z,ry){
+  const g=new THREE.Group();
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6),new THREE.MeshStandardMaterial({color:0x222222,roughness:0.8}));
+  seat.position.y=0.5;
+  const back=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.7,0.1),seat.material);
+  back.position.set(0,0.9,-0.3);
+  g.add(seat,back);
+  for(const sx of[-0.35,0.35]){const w=new THREE.Mesh(new THREE.TorusGeometry(0.32,0.04,8,16),new THREE.MeshStandardMaterial({color:0x111111}));w.position.set(sx,0.32,0);g.add(w);}
+  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);propMeshes.push(g);
+  addCollider(x,z,0.8,0.8);
+  poltergeists.push(g);
+  return g;
+}
+let floorMeshes=[],stairGroup=null;
+function clearFloor(){
+  for(const m of floorMeshes)scene.remove(m);
+  floorMeshes.length=0;
+  for(const km of keyMeshes)scene.remove(km.mesh);
+  for(const im of itemMeshes)scene.remove(im.mesh);
+  for(const sm of switchMeshes)scene.remove(sm.mesh);
+  for(const cm of corpseMeshes)scene.remove(cm.mesh);
+  for(const hs of hideSpots)scene.remove(hs.mesh);
+  for(const pm of propMeshes)scene.remove(pm);
+  for(const bw of bloodWritings)scene.remove(bw);
+  if(stairGroup){scene.remove(stairGroup);stairGroup=null;}
+}
+function buildFloor(){
+  clearFloor();
+  for(const arr of [walls,keyMeshes,itemMeshes,switchMeshes,corpseMeshes,hideSpots,roomZones,propMeshes,bloodWritings,poltergeists])arr.length=0;
+  const rng=rngFor(S.floor*7+3);
+  const openRooms=[];
+  const shuffled=shuffleArr(ROOM_DEFS.slice());
+  const nOpen=7+Math.floor(rng()*2);
+  for(let i=0;i<nOpen;i++)openRooms.push(shuffled[i].id);
+  const isOpen=id=>openRooms.includes(id);
+  for(let x=-6;x<6;x+=2)for(let z=-15;z<15;z+=2){
+    const g=kitGeo('floor');if(!g)continue;
+    const geo=g.geo;
+    geo.applyMatrix4(new THREE.Matrix4().makeTranslation(x+1,0.02,z+1));
+    if(!kitBuilt.floor)kitBuilt.floor={geos:[],mat:g.mat};
+    kitBuilt.floor.geos.push(geo);
+  }
+  for(let x=-6;x<6;x+=2)for(let z=-15;z<15;z+=2){
+    const inRoom=ROOM_DEFS.some(r=>Math.abs(x+1-r.x)<2.5&&Math.abs(z+1-r.z)<3);
+    if(!inRoom)continue;
+    const g=kitGeo('ceil');if(!g)continue;
+    const geo=g.geo;
+    geo.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI));
+    geo.applyMatrix4(new THREE.Matrix4().makeTranslation(x+1,3.05,z+1));
+    if(!kitBuilt.ceil)kitBuilt.ceil={geos:[],mat:g.mat};
+    kitBuilt.ceil.geos.push(geo);
+  }
+  const wallAt=(x,z,ry,len)=>{
+    const part=len>=2?'wall2':len>=1?'wall1':'wall05';
+    placeKit(part,x,z,ry,true);
+  };
+  for(let z=-15;z<15;z+=2){wallAt(-6,z+1,0,2);wallAt(6,z+1,0,2);}
+  for(let x=-6;x<6;x+=2){wallAt(x+1,-15,Math.PI/2,2);wallAt(x+1,15,Math.PI/2,2);}
+  for(const r of ROOM_DEFS){
+    const side=r.x<0?-1:1;
+    const wx=side*1;
+    const zc=r.z;
+    placeKit('wall2',wx,zc-2,0,true);
+    placeKit('wall1',wx,zc+2.5,0,true);
+    if(isOpen(r.id)){
+      placeKit('wall05',wx,zc-0.75,0,true);
+      placeKit('wall05',wx,zc+1.75,0,true);
+      placeKit('doorway',wx,zc+0.5,0,false);
+    }else{
+      placeKit('wall1',wx,zc-0.5,0,true);
+      placeKit('wall2',wx,zc+1,0,true);
+    }
+  }
+  const bands=[-9,-3,3,9];
+  for(const bz of bands){
+    for(const sx of[2,4]){wallAt(sx,bz,Math.PI/2,2);wallAt(-sx,bz,Math.PI/2,2);}
+    wallAt(5.5,bz,Math.PI/2,1);wallAt(-5.5,bz,Math.PI/2,1);
+  }
+  flushKit();
+  const stair=new THREE.Group();
+  const door=new THREE.Mesh(new THREE.BoxGeometry(2.2,2.6,0.2),new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:0.8}));
+  door.position.y=1.3;
+  const sign=new THREE.Mesh(new THREE.BoxGeometry(1.6,0.4,0.05),new THREE.MeshStandardMaterial({color:0x111111,emissive:0x00aa44,emissiveIntensity:0.8}));
+  sign.position.set(0,2.9,0.12);
+  stair.add(door,sign);
+  stair.position.set(0,0,14.9);stair.userData.floorBuilt=true;scene.add(stair);
+  stairGroup=stair;
+  exitDoor=door;
+  exitBlock={x:0,z:14.9,w:2.4,d:0.5};
+  walls.push(exitBlock);
+  makeLocker(-0.9,-8,Math.PI/2);makeLocker(0.9,-2,-Math.PI/2);makeLocker(-0.9,4,Math.PI/2);makeLocker(0.9,10,-Math.PI/2);
+  const bedRooms=shuffled.slice(0,4);
+  for(const r of bedRooms)makeBed(r.x+(rng()-0.5)*1.5,r.z+(rng()-0.5)*1.5,rng()*3);
+  makeWheelchair(-0.6,2.5,0.6);
+  makeWheelchair(0.7,-11,2.4);
+  for(let i=0;i<4;i++)makeChair((rng()-0.5)*10,(rng()-0.5)*26,rng()*3,rng()<0.5);
+  for(let i=0;i<5;i++)makeDebris((rng()-0.5)*10,(rng()-0.5)*26);
+  for(let i=0;i<3;i++)makeBloodPool((rng()-0.5)*9,(rng()-0.5)*26,0.6+rng()*0.7);
+  const bw=SCARY_TEXTS[Math.floor(rng()*SCARY_TEXTS.length)];
+  makeBloodWriting(bw,-0.95,1.7,-4,Math.PI/2);
+  makeBloodWriting(SCARY_TEXTS[Math.floor(rng()*SCARY_TEXTS.length)],0.95,1.7,7,-Math.PI/2);
+  const fm=floorMission();
+  const openShuffled=shuffleArr(ROOM_DEFS.filter(r=>isOpen(r.id)));
+  if(fm.type==='keys'||fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='timedorder'||fm.type==='final'){
+    const n=fm.need;
+    for(let i=0;i<n;i++){
+      const r=openShuffled[i%openShuffled.length];
+      const x=r.x+(rng()-0.5)*2.5,z=r.z+(rng()-0.5)*3;
+      if(fm.type==='keys')makeKeyMesh(x,z,i+1);
+      else makeItemMesh(x,z,i+1,fm.label);
+    }
+  }
+  if(fm.type==='switches'||fm.type==='final'){
+    const swSpots=[[-0.95,-12],[0.95,-6],[-0.95,0],[0.95,6],[-0.95,12]];
+    const n=fm.type==='final'?1:fm.need;
+    for(let i=0;i<n;i++){const s=swSpots[i%swSpots.length];makeSwitchMesh(s[0],s[1],i+1);}
+  }
+  if(fm.type==='corpse'){
+    for(let i=0;i<fm.need;i++){
+      const r=openShuffled[i%openShuffled.length];
+      makeCorpse(r.x+(rng()-0.5)*2,r.z+(rng()-0.5)*2.5,rng()*3);
+    }
+  }
+  for(const r of ROOM_DEFS)roomZones.push({id:r.id,x:r.x,z:r.z,open:isOpen(r.id)});
+  const lightColors=[0xffd9a0,0xa0ffd9,0xffa0a0,0xa0c8ff,0xffe080];
+  const lc=lightColors[Math.floor(rng()*lightColors.length)];
+  if(hemiLight)hemiLight.color.set(lc);
+  if(scene.fog)scene.fog.density=0.055+(15-S.floor)*0.003+((fm.type==='dark'||fm.type==='darklockers')?0.035:0);
+}
+async function loadShell(){
+  const loader=new GLTFLoader();
+  const gltf=await loader.loadAsync('hospital/abandoned-hospital.glb');
+  const shell=gltf.scene;
+  const box=new THREE.Box3().setFromObject(shell);
+  const c=box.getCenter(new THREE.Vector3());
+  shell.position.set(14-c.x,-box.min.y+0,0-c.z);
+  shell.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+  scene.add(shell);
+  return shell;
+}
+
+function normalizeGhost(group,def){
+  const box=new THREE.Box3().setFromObject(group);
+  const size=box.getSize(new THREE.Vector3());
+  let s;
+  if(def.crawl){
+    s=def.crawlLen/Math.max(size.x,size.z);
+  }else{
+    s=def.height/(size.y||1);
+  }
+  group.scale.setScalar(s);
+  const box2=new THREE.Box3().setFromObject(group);
+  const c=box2.getCenter(new THREE.Vector3());
+  group.position.set(-c.x,-box2.min.y,-c.z);
+  return group;
+}
+async function loadGhosts(){
+  const loader=new GLTFLoader();
+  for(const def of GHOST_DEFS){
+    try{
+      const gltf=await loader.loadAsync(def.file);
+      const g=gltf.scene;
+      g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+      normalizeGhost(g,def);
+      const outer=new THREE.Group();
+      outer.add(g);
+      outer.visible=false;
+      scene.add(outer);
+      ghosts.push({def,group:outer,inner:g,pos:new THREE.Vector3(0,0,0),state:'patrol',wp:0,speed:def.speed,chase:false,wpList:[],stun:0});
+    }catch(e){console.warn('ghost load failed',def.name,e);}
+  }
+}
+function ghostWaypoints(){
+  const pts=[new THREE.Vector3(0,-13,0),new THREE.Vector3(0,-7,0),new THREE.Vector3(0,-1,0),new THREE.Vector3(0,5,0),new THREE.Vector3(0,11,0),new THREE.Vector3(0,14,0)];
+  for(const r of ROOM_DEFS){if(roomZones.find(z=>z.id===r.id&&z.open))pts.push(new THREE.Vector3(r.x,0,r.z));}
+  return shuffleArr(pts);
+}
+function setActiveGhosts(){
+  const fm=floorMission();
+  const n=S.floor>=13?2:(S.floor>=7?3:3);
+  const order=shuffleArr(ghosts.slice());
+  const active=order.slice(0,Math.min(n,ghosts.length));
+  const wps=ghostWaypoints();
+  active.forEach((gh,i)=>{
+    gh.group.visible=true;
+    gh.pos.set(wps[i%wps.length].x,0,wps[i%wps.length].z);
+    gh.group.position.copy(gh.pos);
+    gh.wpList=wps;
+    gh.wp=(i*2)%wps.length;
+    gh.state='patrol';gh.chase=false;gh.stun=0;
+    gh.speed=gh.def.speed*(fm.type==='survive'?1.25:1)*(1+(15-S.floor)*0.03);
+  });
+  for(const gh of ghosts){if(!active.includes(gh))gh.group.visible=false;}
+  return active;
+}
+function ghostFaceTarget(gh){
+  const dx=playerPos.x-gh.pos.x,dz=playerPos.z-gh.pos.z;
+  gh.group.rotation.y=Math.atan2(dx,dz)+(gh.def.faceBack?Math.PI:0);
+}
+function updateGhosts(dt){
+  const fm=floorMission();
+  for(const gh of ghosts){
+    if(!gh.group.visible)continue;
+    if(gh.stun>0){gh.stun-=dt;continue;}
+    const dx=playerPos.x-gh.pos.x,dz=playerPos.z-gh.pos.z;
+    const dist=Math.sqrt(dx*dx+dz*dz);
+    const canSee=!S.hidden&&S.invuln<=0&&!S.dead;
+    if(canSee&&dist<13&&dist>0.01){
+      if(gh.state!=='chase'){gh.state='chase';gh.chase=true;growlSound();if(dist<8)toast('👻 သရဲ လာနေပြီ!');}
+    }else if(gh.state==='chase'&&(!canSee||dist>18)){
+      gh.state='patrol';gh.chase=false;
+    }
+    let speed=gh.state==='chase'?gh.def.chase*(1+(15-S.floor)*0.02):gh.speed;
+    let tx,tz;
+    if(gh.state==='chase'){tx=playerPos.x;tz=playerPos.z;}
+    else{
+      const wp=gh.wpList[gh.wp%gh.wpList.length];
+      tx=wp.x;tz=wp.z;
+      const wdx=tx-gh.pos.x,wdz=tz-gh.pos.z;
+      if(Math.sqrt(wdx*wdx+wdz*wdz)<0.8){gh.wp=(gh.wp+1)%gh.wpList.length;continue;}
+    }
+    const mdx=tx-gh.pos.x,mdz=tz-gh.pos.z;
+    const ml=Math.sqrt(mdx*mdx+mdz*mdz)||1;
+    let nx=gh.pos.x+mdx/ml*speed*dt,nz=gh.pos.z+mdz/ml*speed*dt;
+    if(!collideAt(nx,gh.pos.z))gh.pos.x=nx;
+    if(!collideAt(gh.pos.x,nz))gh.pos.z=nz;
+    gh.pos.x=Math.max(-5.6,Math.min(5.6,gh.pos.x));
+    gh.pos.z=Math.max(-14.6,Math.min(14.6,gh.pos.z));
+    gh.group.position.set(gh.pos.x,0,gh.pos.z);
+    ghostFaceTarget(gh);
+    if(dist<1.7&&S.invuln<=0&&!S.dead)catchPlayer(gh);
+    if(fm.type==='lure'&&!S.missionDone&&gh.state==='chase'){
+      const op={x:3.5,z:0};
+      const od=Math.sqrt((gh.pos.x-op.x)*(gh.pos.x-op.x)+(gh.pos.z-op.z)*(gh.pos.z-op.z));
+      if(od<2.5){S.missionDone=true;onMissionComplete('သရဲကို ခွဲစိတ်ခန်းထဲ ဆွဲခေါ်နိုင်ပြီ!');}
+    }
+  }
+}
+function catchPlayer(gh){
+  S.hearts--;S.invuln=2.5;S.chase=false;
+  $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(Math.max(0,3-S.hearts));
+  screamSound();
+  const js=$('jumpscare');js.classList.add('on');
+  setTimeout(()=>js.classList.remove('on'),900);
+  gh.pos.set((Math.random()-0.5)*8,0,-12+Math.random()*6);
+  gh.group.position.copy(gh.pos);
+  gh.state='patrol';gh.stun=2;
+  playerPos.set(0,0,-13.5);S.yaw=Math.PI;
+  if(S.hearts<=0){die();}
+  else toast('💀 သရဲ မိသွားပြီ! နှလုံး '+S.hearts+' ခု ကျန်တယ်');
+}
+function die(){
+  S.dead=true;S.playing=false;
+  droneStop();
+  $('deadScreen').classList.add('on');
+  $('hud').classList.remove('on');
+  try{localStorage.removeItem('nh2_save');}catch(e){}
+}
+function makePlayerMesh(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CapsuleGeometry(0.28,0.75,4,10),new THREE.MeshStandardMaterial({color:0x1a1a22,roughness:0.9}));
+  body.position.y=0.95;
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshStandardMaterial({color:0xc9a689,roughness:0.8}));
+  head.position.y=1.62;
+  const hood=new THREE.Mesh(new THREE.ConeGeometry(0.22,0.35,10),new THREE.MeshStandardMaterial({color:0x111116,roughness:0.9}));
+  hood.position.y=1.72;
+  g.add(body,head,hood);
+  g.visible=false;
+  scene.add(g);
+  playerMesh=g;
+  return g;
+}
+async function loadHand(){
+  try{
+    const loader=new GLTFLoader();
+    const gltf=await loader.loadAsync('hand-real.glb');
+    handMesh=gltf.scene;
+    handMesh.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    const box=new THREE.Box3().setFromObject(handMesh);
+    const size=box.getSize(new THREE.Vector3());
+    const s=0.35/Math.max(size.x,size.y,size.z);
+    handMesh.scale.setScalar(s);
+    handMesh.position.set(0.32,-0.28,-0.55);
+    handMesh.rotation.set(0.4,-0.5,0.15);
+    handMesh.visible=false;
+    camera.add(handMesh);
+  }catch(e){console.warn('hand load failed',e);}
+}
+function setupControls(){
+  const joy=$('joy'),knob=$('joyKnob');
+  let joyId=null,joyCx=0,joyCy=0;
+  const joyStart=e=>{
+    const t=e.changedTouches?e.changedTouches[0]:e;
+    joyId=t.identifier!==undefined?t.identifier:'mouse';
+    const r=joy.getBoundingClientRect();joyCx=r.left+r.width/2;joyCy=r.top+r.height/2;
+    joyMove(t);
+  };
+  const joyMove=t=>{
+    const dx=t.clientX-joyCx,dy=t.clientY-joyCy;
+    const len=Math.sqrt(dx*dx+dy*dy),max=48;
+    const cl=len>max?max/len:1;
+    const nx=dx*cl,ny=dy*cl;
+    knob.style.transform='translate(calc(-50% + '+nx+'px), calc(-50% + '+ny+'px))';
+    S.joy.x=nx/max;S.joy.y=ny/max;S.joy.active=true;S.joy.mag=Math.min(1,len/max);
+  };
+  const joyEnd=e=>{
+    S.joy.x=0;S.joy.y=0;S.joy.active=false;S.joy.mag=0;
+    knob.style.transform='translate(-50%,-50%)';
+    joyId=null;
+  };
+  joy.addEventListener('touchstart',e=>{e.preventDefault();joyStart(e);},{passive:false});
+  joy.addEventListener('touchmove',e=>{e.preventDefault();const t=[...e.changedTouches].find(t=>t.identifier===joyId);if(t)joyMove(t);},{passive:false});
+  joy.addEventListener('touchend',joyEnd);joy.addEventListener('touchcancel',joyEnd);
+  let lookId=null,lastX=0,lastY=0;
+  const lookStart=e=>{
+    const t=e.changedTouches?e.changedTouches[0]:e;
+    if(t.clientX<window.innerWidth*0.4&&t.clientY>window.innerHeight*0.5)return;
+    lookId=t.identifier!==undefined?t.identifier:'mouse';lastX=t.clientX;lastY=t.clientY;
+  };
+  const lookMove=e=>{
+    const t=[...e.changedTouches].find(t=>t.identifier===lookId);
+    if(!t)return;
+    S.yaw-=(t.clientX-lastX)*0.005;
+    S.pitch=(S.pitch||0)+(t.clientY-lastY)*0.004;
+    S.pitch=Math.max(-1.1,Math.min(1.1,S.pitch));
+    lastX=t.clientX;lastY=t.clientY;
+  };
+  const lookEnd=()=>{lookId=null;};
+  document.addEventListener('touchstart',e=>{if(e.target.closest('#joy,.cbtn,#interactBtn,#btns'))return;lookStart(e);},{passive:true});
+  document.addEventListener('touchmove',e=>{lookMove(e);},{passive:true});
+  document.addEventListener('touchend',lookEnd);
+  document.addEventListener('touchcancel',lookEnd);
+  const keys={};
+  window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();});
+  window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+  S.kb=keys;
+}
+function movePlayer(dt){
+  if(!S.playing||S.paused||S.dead)return;
+  let fx=0,fz=0;
+  if(S.joy.active){fx=S.joy.x;fz=S.joy.y;}
+  const k=S.kb||{};
+  if(k['w']||k['arrowup'])fz-=1;
+  if(k['s']||k['arrowdown'])fz+=1;
+  if(k['a']||k['arrowleft'])fx-=1;
+  if(k['d']||k['arrowright'])fx+=1;
+  const mag=Math.sqrt(fx*fx+fz*fz);
+  if(mag>1){fx/=mag;fz/=mag;}
+  if(S.hidden){fx=0;fz=0;}
+  const wantRun=S.run||k['shift'];
+  let speed=wantRun?5.5:3.2;
+  if(mag>0.1){
+    if(wantRun&&S.stamina>0){S.stamina=Math.max(0,S.stamina-25*dt);}else{speed=3.2;}
+  }
+  if(!wantRun)S.stamina=Math.min(100,S.stamina+15*dt);
+  const sin=Math.sin(S.yaw),cos=Math.cos(S.yaw);
+  const vx=(fx*cos-fz*sin)*speed*dt;
+  const vz=(fx*sin+fz*cos)*speed*dt;
+  const nx=playerPos.x+vx,nz=playerPos.z+vz;
+  if(!collideAt(nx,playerPos.z))playerPos.x=nx;
+  if(!collideAt(playerPos.x,nz))playerPos.z=nz;
+  const moved=Math.sqrt((playerPos.x-lastPos.x)*(playerPos.x-lastPos.x)+(playerPos.z-lastPos.z)*(playerPos.z-lastPos.z));
+  if(moved>0.01){
+    S.distance+=moved;
+    if(Math.random()<moved*0.55)footstepSound();
+  }
+  lastPos.copy(playerPos);
+  if(playerPos.z>14.2&&Math.abs(playerPos.x)<1.1){
+    if(S.missionDone)descendFloor();
+    else if(S.invuln<=0){S.invuln=3;S.hearts--; $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(Math.max(0,3-S.hearts));screamSound();toast('👻 Mission မပြီးသေးဘူး — သရဲက သတ်မယ်!');playerPos.set(0,0,-13.5);S.yaw=Math.PI;if(S.hearts<=0)die();}
+  }
+}
+function nearestInteract(){
+  let best=null,bd=2.2;
+  const check=(x,z,kind,obj)=>{
+    const d=Math.sqrt((playerPos.x-x)*(playerPos.x-x)+(playerPos.z-z)*(playerPos.z-z));
+    if(d<bd){bd=d;best={kind,obj,x,z};}
+  };
+  for(const km of keyMeshes)if(!km.taken)check(km.def.x,km.def.z,'key',km);
+  for(const im of itemMeshes)if(!im.taken)check(im.def.x,im.def.z,'item',im);
+  for(const sm of switchMeshes)if(!sm.pressed)check(sm.def.x,sm.def.z,'switch',sm);
+  for(const cm of corpseMeshes)if(!cm.touched)check(cm.def.x,cm.def.z,'corpse',cm);
+  return best;
+}
+function doInteract(){
+  const t=nearestInteract();
+  if(!t)return;
+  if(t.kind==='key'){t.obj.taken=true;t.obj.mesh.visible=false;S.keys++;pickupSound();toast('🔑 သော့ ရပြီ ('+S.keys+'/'+floorMission().need+')');}
+  else if(t.kind==='item'){
+    if(floorMission().type==='timedorder'&&t.obj.id!==S.items+1){toast('🔢 အစဉ်လိုက် ယူပါ! နောက် #'+(S.items+1));beep(200,0.2,'sawtooth',0.15);return;}
+    t.obj.taken=true;t.obj.mesh.visible=false;S.items++;pickupSound();toast('💊 ပစ္စည်း ရပြီ ('+S.items+'/'+floorMission().need+')');
+  }
+  else if(t.kind==='switch'){t.obj.pressed=true;t.obj.btn.material.emissive.set(0x00ff00);t.obj.btn.material.color.set(0x00ff00);S.switchIdx++;if(floorMission().type==='final')S.switchOn=true;creakSound();toast('⚡ Switch ဖွင့်ပြီ ('+S.switchIdx+'/'+floorMission().need+')');}
+  else if(t.kind==='corpse'){t.obj.touched=true;S.corpseIdx++;whisperSound();toast('🧟 လူသေကောင် စစ်ပြီ ('+S.corpseIdx+'/'+floorMission().need+')');}
+  updateObjective();
+  if(missionComplete())onMissionComplete();
+}
+function missionComplete(){
+  const fm=floorMission();
+  switch(fm.type){
+    case 'keys':return S.keys>=fm.need;
+    case 'order':case 'dark':case 'timed':case 'timedorder':return S.items>=fm.need;
+    case 'switches':return S.switchIdx>=fm.need;
+    case 'survive':return S.missionTimer<=0;
+    case 'lockers':case 'darklockers':return S.visited.length>=fm.need;
+    case 'lure':return S.missionDone;
+    case 'hide':return S.hideTotal>=fm.need;
+    case 'corpse':return S.corpseIdx>=fm.need;
+    case 'rooms':return S.visited.length>=fm.need;
+    case 'distance':return S.distance>=fm.need;
+    case 'final':return S.switchOn&&S.items>=fm.need;
+    default:return false;
+  }
+}
+function onMissionComplete(msg){
+  if(S.missionDone&&missionComplete()&&!msg)return;
+  S.missionDone=true;
+  const idx=walls.indexOf(exitBlock);
+  if(idx>=0)walls.splice(idx,1);
+  if(exitDoor)exitDoor.material.emissive.set(0x00ff00);
+  if(msg)toast(msg);
+  else toast('✅ Mission ပြီးပြီ! တောင်ဘက် လှေကား (အစိမ်းရောင် တံခါး) က ဆင်းပါ');
+  setObjective('✅ <small>လှေကား (တောင်ဘက်) က ဆင်းပါ</small>');
+  beep(660,0.15);setTimeout(()=>beep(880,0.2),120);
+}
+function descendFloor(){
+  S.floor--;
+  if(S.floor<1){winGame();return;}
+  S.missionDone=false;S.keys=0;S.items=0;S.switchIdx=0;S.corpseIdx=0;S.distance=0;S.hideTotal=0;S.switchOn=false;S.visited=[];S.corpseTouched=[];S.dwell=0;
+  const fm=floorMission();
+  S.missionTimer=fm.timer||0;
+  playerPos.set(0,0,-13.5);lastPos.copy(playerPos);S.yaw=Math.PI;S.pitch=0;
+  buildFloor();
+  setActiveGhosts();
+  startFloorUI();
+  saveProgress();
+}
+function winGame(){
+  S.won=true;S.playing=false;
+  droneStop();
+  $('winText').textContent='15 ထပ်လုံး ဖြတ်ပြီး မေသူ့ကို ရှာတွေ့ခဲ့ပြီ… ဆေးရုံကနေ အသက်ရှင်လျက် ထွက်နိုင်ခဲ့ပြီ။';
+  $('winScreen').classList.add('on');
+  $('hud').classList.remove('on');
+  try{localStorage.removeItem('nh2_save');}catch(e){}
+}
+
+let lureSign=null;
+function makeSign(text,x,y,z,ry,color){
+  const cv=document.createElement('canvas');cv.width=512;cv.height=128;
+  const g=cv.getContext('2d');g.clearRect(0,0,512,128);
+  g.fillStyle=color||'#00ff88';g.font='bold 52px sans-serif';g.textAlign='center';g.textBaseline='middle';
+  g.fillText(text,256,64);
+  const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2.4,0.6),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+  m.position.set(x,y,z);m.rotation.y=ry;scene.add(m);return m;
+}
+let lastObjective='';
+function updateObjective(){
+  const fm=floorMission();
+  let t='';
+  if(S.missionDone){t='✅ လှေကား (တောင်ဘက်) က ဆင်းပါ';}
+  else{
+    switch(fm.type){
+      case 'keys':t='🔑 သော့ ရှာပါ ('+S.keys+'/'+fm.need+')';break;
+      case 'order':t='💊 ဆေး ရှာပါ ('+S.items+'/'+fm.need+')';break;
+      case 'dark':t='💊 မှောင်ထဲ ပစ္စည်း ရှာပါ ('+S.items+'/'+fm.need+')';break;
+      case 'switches':t='⚡ Switch ဖွင့်ပါ ('+S.switchIdx+'/'+fm.need+')';break;
+      case 'survive':t='⏱️ ရှင်သန်ပါ ('+Math.ceil(S.missionTimer)+' စက္ကန့်)';break;
+      case 'lockers':t='🗄️ Locker မှာ ပုန်းပါ ('+S.visited.length+'/'+fm.need+')';break;
+      case 'lure':t='👻 သရဲကို ခွဲစိတ်ခန်း (အရှေ့ C2) ဆီ ဆွဲခေါ်ပါ';break;
+      case 'timed':t='⏱️ ပစ္စည်း ရှာပါ ('+S.items+'/'+fm.need+') — '+Math.ceil(S.missionTimer)+'s';break;
+      case 'hide':t='🙈 သရဲ အနားမှာ ပုန်းပါ ('+Math.floor(S.hideTotal)+'s/'+fm.need+'s)';break;
+      case 'corpse':t='🧟 လူသေကောင် စစ်ပါ ('+S.corpseIdx+'/'+fm.need+')';break;
+      case 'rooms':t='🚪 အခန်း ဝင်ပါ ('+S.visited.length+'/'+fm.need+')';break;
+      case 'distance':t='🚶 လမ်းလျှောက်ပါ ('+Math.floor(S.distance)+'m/'+fm.need+'m)';break;
+      case 'darklockers':t='🗄️ မှောင် Locker မှာ ပုန်းပါ ('+S.visited.length+'/'+fm.need+')';break;
+      case 'timedorder':t='🔢 အစဉ်လိုက် ပစ္စည်း ယူပါ ('+S.items+'/'+fm.need+') — '+Math.ceil(S.missionTimer)+'s';break;
+      case 'final':t='🚪 ထွက်ပေါက်: ပစ္စည်း ('+S.items+'/'+fm.need+') + Switch '+(S.switchOn?'✅':'❌');break;
+      default:t='🎯 Mission လုပ်ပါ';
+    }
+  }
+  if(t!==lastObjective){lastObjective=t;setObjective(t);}
+}
+function startFloorUI(){
+  const fm=floorMission();
+  $('floorInfo').textContent='🏢 '+S.floor+' လွှာ • Ep'+floorEp();
+  $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(Math.max(0,3-S.hearts));
+  showFloorBanner('Ep'+floorEp()+' • '+S.floor+' လွှာ');
+  updateObjective();
+  if(lureSign){scene.remove(lureSign);lureSign=null;}
+  if(fm.type==='lure')lureSign=makeSign('✚ ခွဲစိတ်ခန်း',1,2.6,0,-Math.PI/2,'#00ff88');
+  if(S.floor===15&&!S.storyShown){
+    S.storyShown=true;
+    $('storyTitle').textContent='📖 မေသူ၏ ဒိုင်ယာရီ — Ep1';
+    $('storyText').textContent=STORY_HINTS[15];
+    $('storyCard').classList.add('on');
+  }else if(S.floor===1){
+    $('storyTitle').textContent='📖 နောက်ဆုံး အမှန်တရား — Ep15';
+    $('storyText').textContent=STORY_HINTS[1];
+    $('storyCard').classList.add('on');
+  }else{
+    toast(STORY_HINTS[S.floor]);
+  }
+  if(fm.type==='dark'||fm.type==='darklockers'){
+    for(const im of itemMeshes){
+      const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.6,8,1,true),new THREE.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:0.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+      beam.position.set(im.def.x,1.4,im.def.z);scene.add(beam);propMeshes.push(beam);
+    }
+    for(const km of keyMeshes){
+      const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.6,8,1,true),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:0.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+      beam.position.set(km.def.x,1.4,km.def.z);scene.add(beam);propMeshes.push(beam);
+    }
+  }
+}
+function drawMinimap(){
+  const cv=$('minimap');if(!cv)return;
+  const g=cv.getContext('2d');
+  g.clearRect(0,0,104,150);
+  g.fillStyle='rgba(20,20,20,0.9)';g.fillRect(0,0,104,150);
+  const mx=x=>4+(x+6)/12*96;
+  const mz=z=>4+(z+15)/30*142;
+  g.strokeStyle='#555';g.lineWidth=1;
+  g.strokeRect(mx(-6),mz(-15),96,142);
+  g.strokeStyle='#333';
+  g.beginPath();g.moveTo(mx(-1),mz(-15));g.lineTo(mx(-1),mz(15));g.moveTo(mx(1),mz(-15));g.lineTo(mx(1),mz(15));g.stroke();
+  for(const r of ROOM_DEFS){
+    const open=roomZones.find(z=>z.id===r.id&&z.open);
+    g.fillStyle=open?'rgba(60,90,60,0.5)':'rgba(60,60,60,0.4)';
+    g.fillRect(mx(r.x-2.5),mz(r.z-3),48,28);
+  }
+  g.fillStyle='#00ff88';g.fillRect(mx(-1.1),mz(14.6),8,4);
+  for(const gh of ghosts){
+    if(!gh.group.visible)continue;
+    g.fillStyle='#ff2222';
+    g.beginPath();g.arc(mx(gh.pos.x),mz(gh.pos.z),3,0,7);g.fill();
+  }
+  g.fillStyle='#37d67a';
+  g.beginPath();g.arc(mx(playerPos.x),mz(playerPos.z),3.5,0,7);g.fill();
+  g.strokeStyle='#fff';g.lineWidth=1;
+  g.beginPath();g.moveTo(mx(playerPos.x),mz(playerPos.z));
+  g.lineTo(mx(playerPos.x)-Math.sin(S.yaw)*8,mz(playerPos.z)-Math.cos(S.yaw)*8);g.stroke();
+}
+function nearestGhostDist(){
+  let bd=999;
+  for(const gh of ghosts){if(!gh.group.visible)continue;const d=Math.sqrt((playerPos.x-gh.pos.x)*(playerPos.x-gh.pos.x)+(playerPos.z-gh.pos.z)*(playerPos.z-gh.pos.z));if(d<bd)bd=d;}
+  return bd;
+}
+function updateScares(dt){
+  const fm=floorMission();
+  const ngd=nearestGhostDist();
+  if(ngd<12){
+    S.heartTimer-=dt;
+    if(S.heartTimer<=0){heartbeatSound();S.heartTimer=0.4+ngd/12*1.1;}
+  }
+  if(ngd<8){
+    S.whisperTimer-=dt;
+    if(S.whisperTimer<=0){whisperSound();S.whisperTimer=25+Math.random()*15;}
+  }
+  S.moanTimer-=dt;
+  if(S.moanTimer<=0){moanSound();S.moanTimer=45+Math.random()*30;}
+  S.blackoutTimer-=dt;
+  if(S.blackoutTimer<=0&&S.blackout<=0){
+    S.blackout=2.5;S.blackoutTimer=28+Math.random()*14;
+    whisperSound();
+    toast('🌑 မီး ပိတ်သွားပြီ…');
+  }
+  if(S.blackout>0){
+    S.blackout-=dt;
+    if(hemiLight)hemiLight.intensity=0.02;
+    if(flashLight)flashLight.intensity=0;
+  }else{
+    if(hemiLight)hemiLight.intensity=0.14;
+    const dark=fm.type==='dark'||fm.type==='darklockers';
+    if(flashLight)flashLight.intensity=dark?0:2.2;
+  }
+  S.flicker-=dt;
+  if(S.flicker<=0){
+    S.flicker=8+Math.random()*12;
+    if(hemiLight){
+      const base=hemiLight.intensity;
+      hemiLight.intensity=0.03;
+      setTimeout(()=>{if(hemiLight)hemiLight.intensity=0.16;},120);
+      setTimeout(()=>{if(hemiLight)hemiLight.intensity=0.05;},240);
+      setTimeout(()=>{if(hemiLight)hemiLight.intensity=base;},420);
+    }
+  }
+  S.scareTimer-=dt;
+  if(S.scareTimer<=0){
+    S.scareTimer=22+Math.random()*18;
+    const pg=poltergeists[Math.floor(Math.random()*poltergeists.length)];
+    if(pg&&Math.random()<0.6){
+      const dx=(Math.random()-0.5)*2,dz=(Math.random()-0.5)*2;
+      pg.position.x=Math.max(-5.4,Math.min(5.4,pg.position.x+dx));
+      pg.position.z=Math.max(-14.4,Math.min(14.4,pg.position.z+dz));
+      creakSound();
+    }
+  }
+}
+function updateMissionLogic(dt){
+  const fm=floorMission();
+  if(fm.type==='survive'){
+    if(S.missionTimer>0){S.missionTimer-=dt;if(S.missionTimer<=0){S.missionTimer=0;onMissionComplete();}}
+  }
+  if(fm.type==='timed'||fm.type==='timedorder'){
+    if(!S.missionDone&&S.missionTimer>0){
+      S.missionTimer-=dt;
+      if(S.missionTimer<=0){
+        S.hearts--;S.missionTimer=fm.timer;
+        $('hearts').textContent='❤️'.repeat(Math.max(0,S.hearts))+'🖤'.repeat(Math.max(0,3-S.hearts));
+        toast('⏱️ အချိန်ကုန်ပြီ! နှလုံး 1 ခု လျော့သွားပြီ');
+        screamSound();
+        if(S.hearts<=0)die();
+      }
+    }
+  }
+  if(fm.type==='hide'){
+    const ngd=nearestGhostDist();
+    if(S.hidden&&ngd<10){S.hideTotal+=dt;if(S.hideTotal>=fm.need)onMissionComplete();}
+  }
+  if(fm.type==='rooms'){
+    for(const r of roomZones){
+      if(!r.open||S.visited.includes(r))continue;
+      const d=Math.sqrt((playerPos.x-r.x)*(playerPos.x-r.x)+(playerPos.z-r.z)*(playerPos.z-r.z));
+      if(d<2.2){S.visited.push(r);toast('🚪 '+ROOM_DEFS[r.id].label+' ဝင်ပြီ ('+S.visited.length+'/'+fm.need+')');updateObjective();if(missionComplete())onMissionComplete();}
+    }
+  }
+  if(fm.type==='lockers'||fm.type==='darklockers'){
+    let near=null;
+    for(const hs of hideSpots){
+      const d=Math.sqrt((playerPos.x-hs.def.x)*(playerPos.x-hs.def.x)+(playerPos.z-hs.def.z)*(playerPos.z-hs.def.z));
+      if(d<1.6){near=hs;break;}
+    }
+    if(S.hidden&&near&&!S.visited.includes(near)){
+      S.dwell+=dt;
+      if(S.dwell>=(fm.dwell||1)){S.visited.push(near);S.dwell=0;toast('🗄️ Locker မှာ ပုန်းပြီ ('+S.visited.length+'/'+fm.need+')');updateObjective();if(missionComplete())onMissionComplete();}
+    }else S.dwell=0;
+  }
+}
+function saveProgress(){
+  try{
+    if(!S.playing)return;
+    const data={floor:S.floor,hearts:S.hearts,keys:S.keys,items:S.items,switchIdx:S.switchIdx,corpseIdx:S.corpseIdx,hideTotal:S.hideTotal,distance:S.distance,missionTimer:S.missionTimer,switchOn:S.switchOn,missionDone:S.missionDone,visitedRooms:S.visited.filter(v=>v&&v.id!==undefined).map(v=>v.id),visitedLockers:S.visited.filter(v=>v&&v.def).map(v=>hideSpots.indexOf(v)).filter(i=>i>=0)};
+    localStorage.setItem('nh2_save',JSON.stringify(data));
+  }catch(e){}
+}
+function applySave(sv){
+  S.hearts=sv.hearts||3;
+  S.keys=sv.keys||0;S.items=sv.items||0;S.switchIdx=sv.switchIdx||0;S.corpseIdx=sv.corpseIdx||0;
+  S.hideTotal=sv.hideTotal||0;S.distance=sv.distance||0;S.missionTimer=sv.missionTimer||0;S.switchOn=!!sv.switchOn;
+  for(let i=0;i<S.keys&&i<keyMeshes.length;i++){keyMeshes[i].taken=true;keyMeshes[i].mesh.visible=false;}
+  for(let i=0;i<S.items&&i<itemMeshes.length;i++){itemMeshes[i].taken=true;itemMeshes[i].mesh.visible=false;}
+  for(let i=0;i<S.switchIdx&&i<switchMeshes.length;i++){switchMeshes[i].pressed=true;switchMeshes[i].btn.material.emissive.set(0x00ff00);switchMeshes[i].btn.material.color.set(0x00ff00);}
+  if(Array.isArray(sv.visitedRooms))for(const id of sv.visitedRooms){const rz=roomZones.find(z=>z.id===id);if(rz)S.visited.push(rz);}
+  if(Array.isArray(sv.visitedLockers))for(const i of sv.visitedLockers){if(hideSpots[i])S.visited.push(hideSpots[i]);}
+  if(sv.missionDone){S.missionDone=true;const idx=walls.indexOf(exitBlock);if(idx>=0)walls.splice(idx,1);if(exitDoor)exitDoor.material.emissive.set(0x00ff00);}
+  updateObjective();
+}
+function startGame(fromSave){
+  if(!coreReady){$('startError').textContent='⏳ သရဲတွေ တင်နေတုန်း… ခဏစောင့်, ပြီးရင် ထပ်နှိပ်';return;}
+  let sv=null;
+  if(fromSave){try{sv=JSON.parse(localStorage.getItem('nh2_save')||'null');}catch(e){}}
+  S.floor=sv&&sv.floor>=1&&sv.floor<=15?sv.floor:15;
+  S.hearts=3;S.missionDone=false;S.keys=0;S.items=0;S.switchIdx=0;S.corpseIdx=0;S.distance=0;S.hideTotal=0;S.switchOn=false;S.visited=[];S.dwell=0;S.dead=false;S.won=false;S.storyShown=false;
+  S.missionTimer=(floorMission().timer)||0;
+  playerPos.set(0,0,-13.5);lastPos.copy(playerPos);S.yaw=Math.PI;S.pitch=0;
+  buildFloor();
+  setActiveGhosts();
+  if(sv)applySave(sv);
+  S.playing=true;S.paused=false;
+  $('menu').classList.add('hidden');
+  $('hud').classList.add('on');
+  $('deadScreen').classList.remove('on');
+  $('winScreen').classList.remove('on');
+  if(handMesh)handMesh.visible=S.fpp;
+  if(playerMesh)playerMesh.visible=!S.fpp;
+  startFloorUI();
+  droneStart();
+  try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}
+  toast('👻 Ep'+floorEp()+' — '+S.floor+' လွှာ');
+}
+function pauseGame(){
+  if(!S.playing)return;
+  S.paused=true;
+  $('pauseFloor').textContent=S.floor;
+  $('pauseHearts').textContent=S.hearts;
+  $('pauseMenu').classList.add('on');
+}
+function resumeGame(){
+  S.paused=false;
+  $('pauseMenu').classList.remove('on');
+}
+function retryFloor(){
+  S.hearts=3;S.dead=false;S.won=false;
+  S.missionDone=false;S.keys=0;S.items=0;S.switchIdx=0;S.corpseIdx=0;S.distance=0;S.hideTotal=0;S.switchOn=false;S.visited=[];S.dwell=0;S.hidden=false;S.invuln=0;
+  S.missionTimer=(floorMission().timer)||0;
+  playerPos.set(0,0,-13.5);lastPos.copy(playerPos);S.yaw=Math.PI;S.pitch=0;
+  buildFloor();
+  setActiveGhosts();
+  S.playing=true;S.paused=false;
+  $('deadScreen').classList.remove('on');
+  $('hud').classList.add('on');
+  startFloorUI();
+  droneStart();
+  toast('🔄 အထပ် '+S.floor+' ကနေ ပြန်စမယ်');
+}
+function quitToMenu(){
+  saveProgress();
+  S.playing=false;S.paused=false;
+  droneStop();
+  $('pauseMenu').classList.remove('on');
+  $('hud').classList.remove('on');
+  $('menu').classList.remove('hidden');
+  const sv0=(()=>{try{return JSON.parse(localStorage.getItem('nh2_save')||'null');}catch(e){return null;}})();
+  if(sv0&&sv0.floor>=1&&sv0.floor<=15){$('continueBtn').style.display='block';$('continueBtn').textContent='↻ အထပ် '+sv0.floor+' ကနေ ဆက်ဆော့မယ်';}
+}
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(0.05,clock.getDelta());
+  if(!S.playing){
+    menuCamAngle+=dt*0.12;
+    camera.position.set(14+Math.cos(menuCamAngle)*26,9+Math.sin(menuCamAngle*0.5)*3,Math.sin(menuCamAngle)*26);
+    camera.lookAt(14,2.5,0);
+  }else if(!S.paused&&!S.dead){
+    S.time+=dt;
+    if(S.invuln>0)S.invuln-=dt;
+    movePlayer(dt);
+    updateGhosts(dt);
+    updateScares(dt);
+    updateMissionLogic(dt);
+    updateObjective();
+    if(S.fpp){
+      camera.position.set(playerPos.x,1.6,playerPos.z);
+      camera.rotation.set(S.pitch||0,S.yaw,0,'YXZ');
+      if(playerMesh)playerMesh.visible=false;
+      if(handMesh){handMesh.visible=true;handMesh.position.x=0.32+Math.sin(S.time*2)*0.004;handMesh.position.y=-0.28+Math.cos(S.time*1.7)*0.004;}
+    }else{
+      const bx=playerPos.x+Math.sin(S.yaw)*3.2,bz=playerPos.z+Math.cos(S.yaw)*3.2;
+      camera.position.set(bx,2.6,bz);
+      camera.lookAt(playerPos.x,1.4,playerPos.z);
+      if(playerMesh){playerMesh.visible=true;playerMesh.position.copy(playerPos);playerMesh.rotation.y=S.yaw+Math.PI;}
+      if(handMesh)handMesh.visible=false;
+    }
+    flashTarget.position.set(playerPos.x-Math.sin(S.yaw)*6,1.4-Math.tan(S.pitch||0)*3,playerPos.z-Math.cos(S.yaw)*6);
+    $('stamina').style.width=Math.max(0,S.stamina)+'%';
+    const it=nearestInteract();
+    const ib=$('interactBtn');
+    if(it){ib.classList.add('pulse');ib.textContent=it.kind==='corpse'?'စစ်':it.kind==='switch'?'ဖွင့်':'ယူ';}
+    else ib.classList.remove('pulse');
+    drawMinimap();
+    if(Math.floor(S.time)%10===0&&Math.random()<0.02)saveProgress();
+  }
+  renderer.render(scene,camera);
+}
+async function init(){
+  clock=new THREE.Clock();
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x050505);
+  scene.fog=new THREE.FogExp2(0x050505,0.07);
+  camera=new THREE.PerspectiveCamera(72,window.innerWidth/window.innerHeight,0.1,200);
+  camera.position.set(14,8,26);
+  scene.add(camera);
+  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled=false;
+  renderer.domElement.className='game';
+  $('app').appendChild(renderer.domElement);
+  hemiLight=new THREE.HemisphereLight(0xffd9a0,0x0a0505,0.14);
+  scene.add(hemiLight);
+  flashLight=new THREE.SpotLight(0xfff2cc,2.2,18,0.5,0.4,1.2);
+  flashLight.position.set(0,1.6,0);
+  flashTarget=new THREE.Object3D();
+  flashTarget.position.set(0,1.4,-6);
+  scene.add(flashTarget);
+  flashLight.target=flashTarget;
+  camera.add(flashLight);
+  const fill=new THREE.PointLight(0xffffff,0.35,5);
+  fill.position.set(0,0.2,0);
+  camera.add(fill);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x0a0a08,roughness:1}));
+  ground.rotation.x=-Math.PI/2;ground.position.y=-0.05;scene.add(ground);
+  const totalBytes=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0);
+  const bump=file=>{loadedBytes+=LOAD_SIZES[file]||0;setLoad(loadedBytes/totalBytes*100,'တင်နေသည်… '+Math.round(loadedBytes/totalBytes*100)+'% ('+(loadedBytes/1048576).toFixed(1)+' / '+TOTAL_MB.toFixed(1)+' MB)');};
+  try{
+    const loader=new GLTFLoader();
+    const kitGltf=await loader.loadAsync('hospital/modular-kit.glb');
+    extractKitParts(kitGltf);
+    bump('hospital/modular-kit.glb');
+    await loadShell();
+    bump('hospital/abandoned-hospital.glb');
+    await loadGhosts();
+    for(const def of GHOST_DEFS)bump(def.file);
+    await loadHand();
+    bump('hand-real.glb');
+    for(const [name,file] of [['whisper','sounds/carmsie__dont-look-behind-you.mp3'],['scream','sounds/xl57__horror-movie-scream-female.mp3'],['growl','sounds/thevoicejournals__devil-beast.mp3'],['moan','sounds/mlsprovideos__moan222-combined-triple-great-with-patch-echo.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['creak','sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3'],['drone','sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
+      loadRealSound(name,file);
+      bump(file);
+    }
+    makePlayerMesh();
+    setupControls();
+    buildFloor();
+    setActiveGhosts();
+    coreReady=true;
+    setLoad(100,'အဆင်သင့် — စဆော့လို့ရပြီ 👻');
+    window.__nh2={ver:V,ready:true,pos:()=>({x:+playerPos.x.toFixed(1),z:+playerPos.z.toFixed(1),floor:S.floor}),playing:()=>S.playing};
+  }catch(e){
+    $('loadText').textContent='⚠️ တင်မရဘူး: '+(e&&e.message?e.message:e);
+    console.error(e);
+  }
+  animate();
+}
+$('startBtn').addEventListener('click',()=>{try{localStorage.removeItem('nh2_save');}catch(e){}startGame(false);});
+$('continueBtn').addEventListener('click',()=>startGame(true));
+$('howBtn').addEventListener('click',()=>{$('tut').classList.add('on');});
+$('tutClose').addEventListener('click',()=>{$('tut').classList.remove('on');});
+$('storyClose').addEventListener('click',()=>{$('storyCard').classList.remove('on');});
+$('pauseBtn').addEventListener('click',pauseGame);
+$('resumeBtn').addEventListener('click',resumeGame);
+$('quitBtn').addEventListener('click',quitToMenu);
+$('retryBtn').addEventListener('click',retryFloor);
+$('deadMenuBtn').addEventListener('click',()=>{$('deadScreen').classList.remove('on');quitToMenu();});
+$('winMenuBtn').addEventListener('click',()=>{$('winScreen').classList.remove('on');quitToMenu();});
+$('runBtn').addEventListener('touchstart',e=>{e.preventDefault();S.run=true;$('runBtn').classList.add('on');},{passive:false});
+$('runBtn').addEventListener('touchend',()=>{S.run=false;$('runBtn').classList.remove('on');});
+$('runBtn').addEventListener('mousedown',()=>{S.run=true;$('runBtn').classList.add('on');});
+$('runBtn').addEventListener('mouseup',()=>{S.run=false;$('runBtn').classList.remove('on');});
+$('hideBtn').addEventListener('click',()=>{
+  S.hidden=!S.hidden;
+  $('hideBtn').classList.toggle('on',S.hidden);
+  toast(S.hidden?'🙈 ပုန်းနေပြီ — မလှုပ်နဲ့':'👁️ ထွက်လာပြီ');
+  if(S.hidden)beep(300,0.2,'sine',0.1);
+});
+$('tppBtn').addEventListener('click',()=>{
+  S.fpp=!S.fpp;
+  $('tppBtn').textContent=S.fpp?'TPP':'FPP';
+  if(handMesh)handMesh.visible=S.fpp&&S.playing;
+  if(playerMesh)playerMesh.visible=!S.fpp&&S.playing;
+});
+$('soundBtn').addEventListener('click',()=>{
+  S.sound=!S.sound;
+  $('soundBtn').textContent=S.sound?'🔊':'🔇';
+  if(!S.sound)droneStop();else if(S.playing)droneStart();
+});
+$('interactBtn').addEventListener('click',doInteract);
+window.addEventListener('resize',()=>{
+  if(!camera||!renderer)return;
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+function checkPortrait(){
+  const isPortrait=window.innerHeight>window.innerWidth;
+  $('portraitWarn').style.display=isPortrait?'flex':'none';
+}
+window.addEventListener('resize',checkPortrait);
+window.addEventListener('orientationchange',checkPortrait);
+checkPortrait();
+try{
+  const sv0=JSON.parse(localStorage.getItem('nh2_save')||'null');
+  if(sv0&&sv0.floor>=1&&sv0.floor<=15){$('continueBtn').style.display='block';$('continueBtn').textContent='↻ အထပ် '+sv0.floor+' ကနေ ဆက်ဆော့မယ်';}
+}catch(e){}
+init();
+</script>
+</body>
+</html>
