@@ -104,7 +104,7 @@ canvas.game{display:block;width:100%;height:100%}
   </div>
   <p id="installHint" style="display:none;font-size:11px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V20</p>
+  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V21</p>
   </div>
 </div>
 <div id="hud">
@@ -137,7 +137,7 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V20';
+const V='V21';
 const $=id=>document.getElementById(id);
 const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
@@ -1124,15 +1124,8 @@ function drawMinimap(){
   for(const sm of switchMeshes){if(!sm.pressed){g.beginPath();g.arc(mx(sm.def.x),mz(sm.def.z),2,0,7);g.fill();}}
   g.fillStyle='#e8e8e8';
   for(const cm of corpseMeshes){if(!cm.touched){g.beginPath();g.arc(mx(cm.def.x),mz(cm.def.z),2,0,7);g.fill();}}
-  for(const gh of ghosts){
-    if(!gh.group.visible)continue;
-    const pulse=5+Math.sin(Date.now()/280)*1.6;
-    g.strokeStyle='rgba(255,60,60,0.7)';g.lineWidth=1.5;
-    g.beginPath();g.arc(mx(gh.pos.x),mz(gh.pos.z),pulse+2.5,0,7);g.stroke();
-    g.fillStyle='#ff2222';
-    g.beginPath();g.arc(mx(gh.pos.x),mz(gh.pos.z),5,0,7);g.fill();
-    g.strokeStyle='#ffbbbb';g.lineWidth=1.5;g.stroke();
-  }
+  g.fillStyle='#ffd166';
+  for(const km of keyMeshes){if(!km.taken){g.beginPath();g.arc(mx(km.def.x),mz(km.def.z),2.5,0,7);g.fill();}}
   const fx=-Math.sin(S.yaw),fz=-Math.cos(S.yaw);
   const px=-fz,pz=fx;
   g.fillStyle='rgba(255,255,255,0.35)';
