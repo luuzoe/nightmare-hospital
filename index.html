@@ -19,7 +19,7 @@ canvas.game{display:block;width:100%;height:100%}
 #menu h2{font-size:16px;margin:8px 0 4px;color:#ffd166;font-weight:400}
 #menu p{font-size:14px;line-height:1.7;max-width:420px;color:#c9bfa8;margin:10px 0}
 #menu .warn{color:#ff6666;font-size:13px}
-.bigbtn{display:block;width:min(280px,72vw);margin:8px auto;padding:11px 10px;font-size:16px;font-weight:900;border:0;border-radius:12px;cursor:pointer;color:#fff;background:linear-gradient(#c81e1e,#7f0d0d);box-shadow:0 4px 0 #4a0505,0 0 24px rgba(255,0,0,.35)}
+.bigbtn{display:block;width:min(230px,62vw);margin:8px auto;padding:10px 10px;font-size:15px;font-weight:900;border:0;border-radius:12px;cursor:pointer;color:#fff;background:linear-gradient(#c81e1e,#7f0d0d);box-shadow:0 4px 0 #4a0505,0 0 24px rgba(255,0,0,.35)}
 .bigbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #4a0505}
 .bigbtn.alt{background:linear-gradient(#2a4a6a,#12233a);box-shadow:0 4px 0 #0a1626}
 #loadBarWrap{width:min(280px,72vw);height:10px;background:#222;border-radius:5px;margin:12px auto 4px;overflow:hidden}
@@ -91,7 +91,7 @@ canvas.game{display:block;width:100%;height:100%}
   <button class="bigbtn alt" id="installBtn" style="display:none;font-size:15px;padding:10px">📲 Install တင်မယ် (App လို ဆော့လို့ရပြီ)</button>
   <p id="installHint" style="display:none;font-size:12px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:12px;color:#777">သရဲဆေးရုံ V5 • ဖုန်းအတွက် Landscape အကောင်းဆုံး • သရဲ model များ: CoryRichards, deankagura, deathcow, Zorg_Sinister (CC-BY) • ဆေးရုံ: Alexandrovich, olegolegperepelica (CC-BY) • အသံများ: Freesound CC0</p>
+  <p style="font-size:12px;color:#777">သရဲဆေးရုံ V6 • ဖုန်းအတွက် Landscape အကောင်းဆုံး • သရဲ model များ: CoryRichards, deankagura, deathcow, Zorg_Sinister (CC-BY) • ဆေးရုံ: Alexandrovich, olegolegperepelica (CC-BY) • အသံများ: Freesound CC0</p>
 </div>
 <div id="hud">
   <div id="topbar"><div id="hearts">❤️❤️❤️</div><div id="floorInfo">🏢 15 လွှာ • Ep1</div><div><button class="cbtn small" id="fsBtn">⛶</button> <button class="cbtn small" id="pauseBtn">⏸</button></div></div>
@@ -128,7 +128,7 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V5';
+const V='V6';
 const $=id=>document.getElementById(id);
 const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
@@ -186,7 +186,7 @@ function playTone(f0,f1,dur,type,vol,vib){if(!S.sound)return;const c=ac();if(!c)
 function loadRealSound(name,file){try{const a=new Audio(file);a.preload='auto';a.addEventListener('canplaythrough',()=>{realLoaded[name]=true;});a.addEventListener('error',()=>{realLoaded[name]=false;});realSounds[name]=a;}catch(e){}}
 function playReal(name,vol){if(!S.sound)return false;const a=realSounds[name];if(!a||!realLoaded[name])return false;try{const c=a.cloneNode();c.volume=Math.min(1,(vol||0.8)*(S.volume||1));const pr=c.play();if(pr&&pr.catch)pr.catch(()=>{});return true;}catch(e){return false;}}
 function thump(vol){playTone(55,40,0.16,'sine',vol||0.25);}
-function heartbeatSound(){thump(0.3);setTimeout(()=>thump(0.22),180);}
+function heartbeatSound(){thump(0.18);setTimeout(()=>thump(0.12),180);}
 function footstepSound(){if(!playReal('footsteps',0.15))playNoise(0.15,'lowpass',220,1,0.12);}
 function growlSound(){if(playReal('growl',0.5))return;playTone(60,35,1.5,'sawtooth',0.3,9);playNoise(1.5,'lowpass',180,1,0.2);}
 function ghostRoarSound(){if(playReal('growl',0.85)){playTone(55,28,1.6,'sine',0.5);thump(0.5);return;}playTone(70,30,1.6,'sawtooth',0.5,12);playNoise(1.6,'lowpass',220,1,0.4);playTone(55,28,1.6,'sine',0.5);thump(0.5);}
@@ -276,8 +276,22 @@ function makeBloodWriting(text,x,y,z,ry){
   m.position.set(x,y,z);m.rotation.y=ry;scene.add(m);bloodWritings.push(m);return m;
 }
 function makeBloodPool(x,z,r){
-  const m=new THREE.Mesh(new THREE.CircleGeometry(r||0.9,20),new THREE.MeshStandardMaterial({color:0x4a0202,roughness:0.15,transparent:true,opacity:0.85}));
-  m.rotation.x=-Math.PI/2;m.position.set(x,0.03,z);scene.add(m);return m;
+  const g=new THREE.Group();
+  const m=new THREE.Mesh(new THREE.CircleGeometry(r||0.9,20),new THREE.MeshStandardMaterial({color:0x8a0f0f,emissive:0x2a0000,emissiveIntensity:0.7,roughness:0.15,transparent:true,opacity:0.9}));
+  m.rotation.x=-Math.PI/2;m.position.y=0.03;
+  const c=new THREE.Mesh(new THREE.CircleGeometry((r||0.9)*0.45,16),new THREE.MeshStandardMaterial({color:0xc01818,emissive:0x550000,emissiveIntensity:0.9,roughness:0.2}));
+  c.rotation.x=-Math.PI/2;c.position.y=0.035;
+  g.add(m,c);g.position.set(x,0,z);scene.add(g);propMeshes.push(g);return g;
+}
+function makeTornCloth(x,z,ry){
+  const g=new THREE.Group();
+  const c1=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.07,0.45),new THREE.MeshStandardMaterial({color:0x9a8f7a,roughness:1}));
+  c1.position.y=0.04;c1.rotation.y=0.3;
+  const c2=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.06,0.3),new THREE.MeshStandardMaterial({color:0x7a6a55,roughness:1}));
+  c2.position.set(0.15,0.09,0.1);c2.rotation.y=-0.5;
+  g.add(c1,c2);
+  if(Math.random()<0.5){const st=new THREE.Mesh(new THREE.CircleGeometry(0.12,10),new THREE.MeshStandardMaterial({color:0x8a0f0f,emissive:0x2a0000,emissiveIntensity:0.7}));st.rotation.x=-Math.PI/2;st.position.set(0.1,0.13,0.05);g.add(st);}
+  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);propMeshes.push(g);return g;
 }
 function makeKeyMesh(x,z,id){
   const g=new THREE.Group();
@@ -312,7 +326,7 @@ function makeSwitchMesh(x,z,id){
   const sm={id,def:{x,z},mesh:g,btn,pressed:false};
   switchMeshes.push(sm);return sm;
 }
-function makeCorpse(x,z,ry){
+function makeCorpse(x,z,ry,decor){
   const g=new THREE.Group();
   const body=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.3,0.6),new THREE.MeshStandardMaterial({color:0xd8d8d0,roughness:0.95}));
   body.position.y=0.25;
@@ -323,7 +337,7 @@ function makeCorpse(x,z,ry){
   g.add(body,head,sheet);
   g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
   const cm={def:{x,z},mesh:g,touched:false};
-  corpseMeshes.push(cm);return cm;
+  if(decor)propMeshes.push(g);else corpseMeshes.push(cm);return cm;
 }
 function makeLocker(x,z,ry){
   const g=new THREE.Group();
@@ -530,7 +544,8 @@ function buildFloor(){
   for(const r of ROOM_DEFS.filter(r=>isOpen(r.id)).slice(0,2)){const side=r.x<0?-1:1;makeWheelchair(r.x+side*1.4,r.z+(rng()-0.5)*2,rng()*3);}
   for(let i=0;i<8;i++)makeChair((rng()-0.5)*10,(rng()-0.5)*26,rng()*3,rng()<0.5);
   for(let i=0;i<5;i++)makeDebris((rng()-0.5)*10,(rng()-0.5)*26);
-  for(let i=0;i<5;i++)makeBloodPool((rng()-0.5)*9,(rng()-0.5)*26,0.6+rng()*0.7);
+  makeBloodPool(0.3,-6,1.1);makeBloodPool(-0.4,5,0.9);
+  for(let i=0;i<4;i++)makeBloodPool((rng()-0.5)*9,(rng()-0.5)*26,0.7+rng()*0.7);
   for(const r of ROOM_DEFS.filter(r=>isOpen(r.id)).slice(0,3)){const side=r.x<0?-1:1;makeIVStand(r.x+side*1.2,r.z+1.2);}
   for(const r of ROOM_DEFS.filter(r=>isOpen(r.id)).slice(2,4)){const side=r.x<0?-1:1;makeTrolley(r.x+side*1.3,r.z-1.4,rng()*3);}
   for(const r of ROOM_DEFS.filter(r=>isOpen(r.id)).slice(4,6)){const side=r.x<0?-1:1;makeStretcher(r.x+side*1.2,r.z,rng()*3);}
@@ -564,6 +579,13 @@ function buildFloor(){
       makeCorpse(r.x+(rng()-0.5)*2,r.z+(rng()-0.5)*2.5,rng()*3);
     }
   }
+  for(let i=0;i<2;i++){
+    const r=openShuffled[(i+5)%openShuffled.length];
+    const cx=r.x+(rng()-0.5)*2,cz=r.z+(rng()-0.5)*2.5;
+    makeCorpse(cx,cz,rng()*3,true);
+    makeBloodPool(cx+0.3,cz+0.2,0.7);
+  }
+  for(let i=0;i<5;i++)makeTornCloth((rng()-0.5)*10,(rng()-0.5)*26,rng()*3);
   for(const r of ROOM_DEFS)roomZones.push({id:r.id,x:r.x,z:r.z,open:isOpen(r.id)});
   const lightColors=[0xffd9a0,0xa0ffd9,0xffa0a0,0xa0c8ff,0xffe080];
   const lc=lightColors[Math.floor(rng()*lightColors.length)];
@@ -994,9 +1016,9 @@ function nearestGhostDist(){
 function updateScares(dt){
   const fm=floorMission();
   const ngd=nearestGhostDist();
-  if(ngd<12){
+  if(ngd<7){
     S.heartTimer-=dt;
-    if(S.heartTimer<=0){heartbeatSound();S.heartTimer=0.4+ngd/12*1.1;}
+    if(S.heartTimer<=0){heartbeatSound();S.heartTimer=0.9+ngd/7*0.9;}
   }
   S.blackoutTimer-=dt;
   if(S.blackoutTimer<=0&&S.blackout<=0){
