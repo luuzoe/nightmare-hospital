@@ -46,7 +46,11 @@ canvas.game{display:block;width:100%;height:100%}
 #floorBanner.on{display:block}
 #joy{position:absolute;left:18px;bottom:26px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.25);pointer-events:auto}
 #joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;background:rgba(255,42,42,.55);border:2px solid rgba(255,255,255,.5);transform:translate(-50%,-50%)}
-#btns{position:absolute;right:14px;bottom:22px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:auto}
+#btns{position:absolute;right:10px;bottom:14px;width:168px;height:168px;pointer-events:none}
+#btns .rbtn{position:absolute;pointer-events:auto}
+#runBtn{right:0;top:56px}
+#hideBtn{left:0;top:56px}
+#flashBtn{left:50%;bottom:0;transform:translateX(-50%)}
 .rowbtn{display:flex;gap:10px}
 .cbtn{min-width:64px;height:52px;padding:0 12px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);color:#fff;font-size:15px;font-weight:900}
 .cbtn.on{background:rgba(200,30,30,.75)}
@@ -55,7 +59,7 @@ canvas.game{display:block;width:100%;height:100%}
 .rbtn.on{background:rgba(200,30,30,.75)}
 #flashBtn{font-size:20px}
 #flashBtn.on{background:rgba(90,74,0,.8);border-color:#ffd166;color:#ffd166}
-#interactBtn{position:absolute;right:92px;bottom:154px;pointer-events:auto;width:auto;min-width:72px;height:56px;border-radius:28px;padding:0 16px;white-space:nowrap;border:2px solid rgba(255,209,102,.7);background:rgba(120,80,0,.5);color:#ffd166;font-size:15px;font-weight:900}
+#interactBtn{position:absolute;left:50%;top:0;transform:translateX(-50%);pointer-events:auto;width:auto;min-width:72px;height:56px;border-radius:28px;padding:0 16px;white-space:nowrap;border:2px solid rgba(255,209,102,.7);background:rgba(120,80,0,.5);color:#ffd166;font-size:15px;font-weight:900}
 #interactBtn.pulse{animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.5)}50%{box-shadow:0 0 0 12px rgba(255,209,102,0)}}
 #storyCard{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82)}
@@ -100,18 +104,18 @@ canvas.game{display:block;width:100%;height:100%}
   </div>
   <p id="installHint" style="display:none;font-size:11px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V19</p>
+  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V20</p>
   </div>
 </div>
 <div id="hud">
-  <div id="topbar"><div id="hearts">❤️❤️❤️</div><div id="floorInfo">🏢 15 လွှာ • Ep1</div><div><button class="cbtn small" id="fsBtn">⛶</button> <button class="cbtn small" id="pauseBtn">⏸</button></div></div>
+  <div id="topbar"><div id="hearts">❤️❤️❤️</div><div id="floorInfo">🏢 15 လွှာ • Ep1</div><div><button class="cbtn small" id="pauseBtn">⏸</button></div></div>
   <div id="objective">🎯 …</div>
   <div id="staminaWrap"><div id="stamina"></div></div>
   <canvas id="minimap" width="80" height="112"></canvas>
   <div id="toast"></div>
   <div id="joy"><div id="joyKnob"></div></div>
-  <button id="interactBtn">ယူ</button>
   <div id="btns">
+    <button id="interactBtn">ယူ</button>
     <button class="rbtn" id="runBtn">RUN</button>
     <button class="rbtn" id="hideBtn">HIDE</button>
     <button class="rbtn" id="flashBtn">🔦</button>
@@ -133,7 +137,7 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V19';
+const V='V20';
 const $=id=>document.getElementById(id);
 const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
@@ -162,7 +166,7 @@ const GHOST_DEFS=[
   {name:'Doll',file:'ghosts/scary-doll.glb',height:1.8,speed:3.0,chase:3.1,scary:2},
   {name:'Spider Witch',file:'ghosts/spider-witch.glb',height:1.8,speed:2.2,chase:2.6,scary:3,crawl:true,crawlLen:2.0,faceBack:true}
 ];
-const S={playing:false,paused:false,dead:false,won:false,fpp:true,hearts:3,stamina:100,hidden:false,invuln:0,chase:false,floor:15,missionDone:false,missionTimer:0,hideTotal:0,switchIdx:0,corpseIdx:0,distance:0,keys:0,items:0,switchOn:false,time:0,sound:true,flashOn:true,volume:0.6,yaw:Math.PI,pitch:0,joy:{x:0,y:0,active:false,mag:0},run:false,interactTarget:null,hideTarget:null,blackout:0,blackoutTimer:28,heartTimer:0,scareTimer:0,flicker:0,visited:[],corpseTouched:[],dwell:0,escapeReady:false,storyShown:false,eyeT:0,hauntTimer:18,strangle:0,whisperTimer:25,musicTimer:45,watcherTimer:60,watcherT:0};
+const S={playing:false,paused:false,dead:false,won:false,fpp:true,hearts:3,stamina:100,hidden:false,invuln:0,chase:false,floor:15,missionDone:false,missionTimer:0,hideTotal:0,switchIdx:0,corpseIdx:0,distance:0,keys:0,items:0,switchOn:false,time:0,sound:true,flashOn:true,volume:0.6,yaw:Math.PI,pitch:0,joy:{x:0,y:0,active:false,mag:0},run:false,interactTarget:null,hideTarget:null,blackout:0,blackoutTimer:28,heartTimer:0,scareTimer:0,flicker:0,visited:[],corpseTouched:[],dwell:0,escapeReady:false,storyShown:false,eyeT:0,hauntTimer:18,strangle:0,whisperTimer:25,musicTimer:45,watcherTimer:60,watcherT:0,growlCd:0,dreadSoundTimer:35};
 let scene,camera,renderer,clock,hemiLight,flashLight,flashTarget,playerMesh,flashModel,flashBeam;
 let walls=[],ghosts=[],keyMeshes=[],itemMeshes=[],switchMeshes=[],corpseMeshes=[],hideSpots=[],roomZones=[],propMeshes=[],bloodWritings=[],poltergeists=[],bedList=[];
 let redEyes=null;
@@ -196,11 +200,15 @@ function playReal(name,vol){if(!S.sound)return false;const a=realSounds[name];if
 function thump(vol){playTone(55,40,0.16,'sine',vol||0.25);}
 function heartbeatSound(){thump(0.18);setTimeout(()=>thump(0.12),180);}
 function footstepSound(){if(!playReal('footsteps',0.15))playNoise(0.15,'lowpass',220,1,0.12);}
-function growlSound(){if(playReal('growl',0.5))return;playTone(60,35,1.5,'sawtooth',0.3,9);playNoise(1.5,'lowpass',180,1,0.2);}
+function growlSound(){if(playReal('growl',0.3))return;playTone(60,35,1.5,'sawtooth',0.2,9);playNoise(1.5,'lowpass',180,1,0.12);}
 function ghostRoarSound(){if(playReal('growl',0.85)){playTone(55,28,1.6,'sine',0.5);thump(0.5);return;}playTone(70,30,1.6,'sawtooth',0.5,12);playNoise(1.6,'lowpass',220,1,0.4);playTone(55,28,1.6,'sine',0.5);thump(0.5);}
 function creakSound(){if(playReal('creak',0.5))return;playTone(180,320,0.5,'sawtooth',0.05);playNoise(0.5,'bandpass',600,2,0.02);}
+function screamSound(){playTone(1200,380,1.5,'sawtooth',0.09);playTone(1250,400,1.5,'sine',0.06);playNoise(1.5,'bandpass',900,2,0.05);}
+function slamSound(){thump(0.4);playNoise(0.25,'lowpass',300,1,0.3);playTone(90,45,0.3,'sine',0.3);}
+function rumbleSound(){playTone(45,28,3.0,'sine',0.16);}
+function screechSound(){playTone(2400,1800,1.2,'sawtooth',0.04);playNoise(1.2,'highpass',3000,1,0.03);}
 function pickupSound(){beep(880,0.12);setTimeout(()=>beep(1320,0.18),90);}
-function droneStart(){const a=realSounds['drone'];if(!a||!realLoaded['drone'])return;try{a.loop=true;a.volume=0.05;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});}catch(e){}}
+function droneStart(){const a=realSounds['drone'];if(!a||!realLoaded['drone'])return;try{a.loop=true;a.volume=0.02;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});}catch(e){}}
 function droneStop(){try{const a=realSounds['drone'];if(a){a.pause();a.currentTime=0;}}catch(e){}}
 
 let kitParts={},kitBuilt={};
@@ -301,7 +309,7 @@ function makeTornCloth(x,z,ry){
   if(Math.random()<0.5){const st=new THREE.Mesh(new THREE.CircleGeometry(0.12,10),new THREE.MeshStandardMaterial({color:0x8a0f0f,emissive:0x2a0000,emissiveIntensity:0.7}));st.rotation.x=-Math.PI/2;st.position.set(0.1,0.13,0.05);g.add(st);}
   g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);propMeshes.push(g);return g;
 }
-function makeKeyMesh(x,z,id){
+function makeKeyMesh(x,z,id,y,locker){
   const g=new THREE.Group();
   const mat=new THREE.MeshStandardMaterial({color:0xb8b8b8,metalness:0.9,roughness:0.35});
   const ring=new THREE.Mesh(new THREE.TorusGeometry(0.04,0.016,8,16),mat);
@@ -311,8 +319,8 @@ function makeKeyMesh(x,z,id){
   const tooth=new THREE.Mesh(new THREE.BoxGeometry(0.015,0.015,0.035),mat);
   tooth.position.set(0.065,0,0.015);
   g.add(ring,stem,tooth);
-  g.position.set(x,0.03,z);g.rotation.y=Math.random()*Math.PI*2;scene.add(g);
-  const km={id,def:{x,z},mesh:g,taken:false};
+  g.position.set(x,y||0.03,z);g.rotation.y=Math.random()*Math.PI*2;scene.add(g);
+  const km={id,def:{x,z},mesh:g,taken:false,locker:locker||null};
   keyMeshes.push(km);return km;
 }
 function makeItemMesh(x,z,id,label){
@@ -353,14 +361,27 @@ function makeCorpse(x,z,ry,decor){
 }
 function makeLocker(x,z,ry){
   const g=new THREE.Group();
-  const box=new THREE.Mesh(new THREE.BoxGeometry(0.9,2.0,0.6),new THREE.MeshStandardMaterial({color:0x2a4a3a,roughness:0.7,metalness:0.3}));
-  box.position.y=1.0;
+  const mat=new THREE.MeshStandardMaterial({color:0x2a4a3a,roughness:0.7,metalness:0.3});
+  const matD=new THREE.MeshStandardMaterial({color:0x1e352a,roughness:0.8,metalness:0.2});
+  const add=(geo,m,px,py,pz)=>{const ms=new THREE.Mesh(geo,m);ms.position.set(px,py,pz);g.add(ms);return ms;};
+  add(new THREE.BoxGeometry(0.9,2.0,0.05),mat,0,1.0,-0.275);
+  add(new THREE.BoxGeometry(0.05,2.0,0.6),mat,-0.425,1.0,0);
+  add(new THREE.BoxGeometry(0.05,2.0,0.6),mat,0.425,1.0,0);
+  add(new THREE.BoxGeometry(0.9,0.05,0.6),mat,0,1.975,0);
+  add(new THREE.BoxGeometry(0.9,0.05,0.6),mat,0,0.025,0);
+  add(new THREE.BoxGeometry(0.8,0.04,0.5),matD,0,0.7,0);
+  add(new THREE.BoxGeometry(0.8,0.04,0.5),matD,0,1.3,0);
+  add(new THREE.BoxGeometry(0.3,0.14,0.32),new THREE.MeshStandardMaterial({color:0x8a7a5a,roughness:0.9}),-0.18,0.79,0);
+  add(new THREE.BoxGeometry(0.28,0.12,0.3),new THREE.MeshStandardMaterial({color:0x5a6a7a,roughness:0.9}),0.18,0.78,0);
+  add(new THREE.CylinderGeometry(0.05,0.05,0.18,8),new THREE.MeshStandardMaterial({color:0x2a4a2a,roughness:0.3,metalness:0.1}),0.3,0.81,0.12);
+  add(new THREE.BoxGeometry(0.25,0.2,0.3),new THREE.MeshStandardMaterial({color:0x7a6a4a,roughness:0.9}),-0.2,1.42,0);
+  add(new THREE.BoxGeometry(0.2,0.05,0.28),new THREE.MeshStandardMaterial({color:0x6a1a1a,roughness:0.8}),0.2,1.35,0);
   const hinge=new THREE.Group();
   hinge.position.set(-0.4,1.0,0.32);
   const door=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.8,0.05),new THREE.MeshStandardMaterial({color:0x35594a,roughness:0.6,metalness:0.3}));
   door.position.set(0.4,0,0);
   hinge.add(door);
-  g.add(box,hinge);
+  g.add(hinge);
   g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
   const hs={def:{x,z},mesh:g,door:hinge,open:false,angle:0};
   hideSpots.push(hs);return hs;
@@ -581,10 +602,22 @@ function buildFloor(){
   const openShuffled=shuffleArr(ROOM_DEFS.filter(r=>isOpen(r.id)));
   if(fm.type==='keys'||fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='timedorder'||fm.type==='final'){
     const n=fm.need;
+    const lockers=shuffleArr(hideSpots.slice());let li=0;
     for(let i=0;i<n;i++){
       const r=openShuffled[i%openShuffled.length];
       let x=r.x+(rng()-0.5)*2.5,z=r.z+(rng()-0.5)*3;
-      if(fm.type==='keys'){const side=r.x<0?-1:1;x=r.x+side*2.0;z=r.z+(rng()<0.5?-1:1)*(2.5+rng()*0.4);makeKeyMesh(x,z,i+1);}
+      if(fm.type==='keys'){
+        if(rng()<0.5&&li<lockers.length){
+          const lk=lockers[li++];
+          const ry=lk.mesh.rotation.y;
+          const wx=lk.def.x+0.18*Math.sin(ry);
+          const wz=lk.def.z+0.18*Math.cos(ry);
+          makeKeyMesh(wx,wz,i+1,0.73,lk);
+        }else{
+          const side=r.x<0?-1:1;
+          makeKeyMesh(r.x+side*2.0,r.z+(rng()<0.5?-1:1)*(2.5+rng()*0.4),i+1);
+        }
+      }
       else makeItemMesh(x,z,i+1,fm.label);
     }
   }
@@ -731,7 +764,7 @@ function updateGhosts(dt){
     const dist=Math.sqrt(dx*dx+dz*dz);
     const canSee=!S.hidden&&S.invuln<=0&&!S.dead;
     if(canSee&&dist<9&&dist>0.01){
-      if(gh.state!=='chase'){gh.state='chase';gh.chase=true;growlSound();if(dist<8)toast('👻 သရဲ လာနေပြီ!');}
+      if(gh.state!=='chase'){gh.state='chase';gh.chase=true;if(S.growlCd<=0){growlSound();S.growlCd=8;}if(dist<8)toast('👻 သရဲ လာနေပြီ!');}
     }else if(gh.state==='chase'&&(!canSee||dist>14)){
       gh.state='patrol';gh.chase=false;
     }
@@ -927,7 +960,7 @@ function nearestInteract(){
     const d=Math.sqrt((playerPos.x-x)*(playerPos.x-x)+(playerPos.z-z)*(playerPos.z-z));
     if(d<bd){bd=d;best={kind,obj,x,z};}
   };
-  for(const km of keyMeshes)if(!km.taken)check(km.def.x,km.def.z,'key',km);
+  for(const km of keyMeshes)if(!km.taken&&(!km.locker||km.locker.open))check(km.def.x,km.def.z,'key',km);
   for(const im of itemMeshes)if(!im.taken)check(im.def.x,im.def.z,'item',im);
   for(const sm of switchMeshes)if(!sm.pressed)check(sm.def.x,sm.def.z,'switch',sm);
   for(const cm of corpseMeshes)if(!cm.touched)check(cm.def.x,cm.def.z,'corpse',cm);
@@ -1201,6 +1234,7 @@ function showWatcher(){
   }
 }
 function updateScares(dt){
+  if(S.growlCd>0)S.growlCd-=dt;
   const fm=floorMission();
   const ngd=nearestGhostDist();
   if(ngd<7){
@@ -1247,6 +1281,8 @@ function updateScares(dt){
   if(S.whisperTimer<=0){S.whisperTimer=25+Math.random()*25;whisperSound();}
   S.musicTimer-=dt;
   if(S.musicTimer<=0){S.musicTimer=40+Math.random()*30;musicBoxSound();}
+  S.dreadSoundTimer-=dt;
+  if(S.dreadSoundTimer<=0){S.dreadSoundTimer=30+Math.random()*30;const r=Math.random();if(r<0.25)screamSound();else if(r<0.5)slamSound();else if(r<0.75)rumbleSound();else screechSound();}
   S.watcherTimer-=dt;
   if(S.watcherTimer<=0){S.watcherTimer=55+Math.random()*35;showWatcher();}
   if(watcher&&watcher.visible){
@@ -1258,7 +1294,7 @@ function updateScares(dt){
   if(S.hauntTimer<=0){
     S.hauntTimer=20+Math.random()*20;
     if(realSounds['drone'])realSounds['drone'].volume=0;
-    setTimeout(()=>{if(realSounds['drone'])realSounds['drone'].volume=0.05;},5000);
+    setTimeout(()=>{if(realSounds['drone'])realSounds['drone'].volume=0.02;},5000);
     const anyChase=ghosts.some(g=>g.group.visible&&g.state==='chase');
     if(!anyChase&&nearestGhostDist()>6){
       const roll=Math.random();
@@ -1513,12 +1549,6 @@ if('serviceWorker' in navigator){
 $('continueBtn').addEventListener('click',()=>startGame(true));
 $('storyClose').addEventListener('click',()=>{$('storyCard').classList.remove('on');});
 $('pauseBtn').addEventListener('click',pauseGame);
-$('fsBtn').addEventListener('click',()=>{
-  try{
-    if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});}
-    else goFullscreen();
-  }catch(e){}
-});
 $('resumeBtn').addEventListener('click',resumeGame);
 $('quitBtn').addEventListener('click',quitToMenu);
 $('retryBtn').addEventListener('click',retryFloor);
