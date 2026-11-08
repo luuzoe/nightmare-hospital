@@ -1,5 +1,5 @@
 // Ghost Hospital service worker — cache the app shell + assets, network-first for HTML.
-const CACHE = 'ghost-hospital-v8';
+const CACHE = 'ghost-hospital-v9';
 const CORE = [
   './', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png',
   'hospital/modular-kit.glb', 'hospital/abandoned-hospital.glb',
