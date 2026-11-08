@@ -94,7 +94,7 @@ canvas.game{display:block;width:100%;height:100%}
   </div>
   <p id="installHint" style="display:none;font-size:12px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:12px;color:#777">သရဲဆေးရုံ V12</p>
+  <p style="font-size:12px;color:#777">သရဲဆေးရုံ V13</p>
   </div>
 </div>
 <div id="hud">
@@ -125,9 +125,9 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V12';
+const V='V13';
 const $=id=>document.getElementById(id);
-const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633};
+const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':3293824,'props/bed.glb':1899096,'props/clock.glb':2401008,'props/calendar.glb':4411992};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
 const FLOOR_MISSIONS={
   15:{ep:1,type:'keys',label:'သော့',need:4},
@@ -328,13 +328,15 @@ function makeSwitchMesh(x,z,id){
 }
 function makeCorpse(x,z,ry,decor){
   const g=new THREE.Group();
+  if(PROPS.corpse){g.add(PROPS.corpse.clone());}
+  else{
   const body=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.3,0.6),new THREE.MeshStandardMaterial({color:0xd8d8d0,roughness:0.95}));
   body.position.y=0.25;
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8),new THREE.MeshStandardMaterial({color:0xc9a689,roughness:0.8}));
   head.position.set(0.95,0.32,0);
   const sheet=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.55),new THREE.MeshStandardMaterial({color:0xbbbbbb,roughness:1}));
   sheet.position.set(-0.2,0.42,0);
-  g.add(body,head,sheet);
+  g.add(body,head,sheet);}
   g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
   const cm={def:{x,z},mesh:g,touched:false};
   if(decor)propMeshes.push(g);else corpseMeshes.push(cm);return cm;
@@ -355,6 +357,9 @@ function makeLocker(x,z,ry){
 }
 function makeBed(x,z,ry){
   const g=new THREE.Group();
+  const useGLB=!!PROPS.bed;
+  if(useGLB){g.add(PROPS.bed.clone());}
+  else{
   const frame=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.8),new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:0.8}));
   frame.position.y=0.85;
   const mat=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.14,0.7),new THREE.MeshStandardMaterial({color:0x9a9a8a,roughness:1}));
@@ -362,11 +367,12 @@ function makeBed(x,z,ry){
   const pil=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.1,0.5),new THREE.MeshStandardMaterial({color:0xcccccc,roughness:1}));
   pil.position.set(-0.6,1.08,0);
   g.add(frame,mat,pil);
-  for(const px of[-0.8,0.8]){const bar=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.85,0.64),frame.material);bar.position.set(px,0.42,0);g.add(bar);}
-  g.position.set(x,0,z);g.rotation.y=ry||0;scene.add(g);
+  for(const px of[-0.8,0.8]){const bar=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.85,0.64),frame.material);bar.position.set(px,0.42,0);g.add(bar);}}
+  g.position.set(x,0,z);g.rotation.y=useGLB?(ry||0)-Math.PI/2:(ry||0);scene.add(g);
   propMeshes.push(g);bedList.push(g);
   const alongX=Math.abs(Math.cos(ry||0))>0.5;
-  addCollider(x,z,alongX?1.9:0.9,alongX?0.9:1.9);
+  if(useGLB)addCollider(x,z,alongX?2.0:1.54,alongX?1.54:2.0);
+  else addCollider(x,z,alongX?1.9:0.9,alongX?0.9:1.9);
   return g;
 }
 function makeChair(x,z,ry,tipped){
@@ -560,6 +566,7 @@ function buildFloor(){
   const bw=SCARY_TEXTS[Math.floor(rng()*SCARY_TEXTS.length)];
   makeBloodWriting(bw,-0.95,1.7,-4,Math.PI/2);
   makeBloodWriting(SCARY_TEXTS[Math.floor(rng()*SCARY_TEXTS.length)],0.95,1.7,7,-Math.PI/2);
+  placeWallProps();
   const fm=floorMission();
   const openShuffled=shuffleArr(ROOM_DEFS.filter(r=>isOpen(r.id)));
   if(fm.type==='keys'||fm.type==='order'||fm.type==='dark'||fm.type==='timed'||fm.type==='timedorder'||fm.type==='final'){
@@ -636,6 +643,43 @@ async function loadGhosts(){
       scene.add(outer);
       ghosts.push({def,group:outer,inner:g,pos:new THREE.Vector3(0,0,0),state:'patrol',wp:0,speed:def.speed,chase:false,wpList:[],stun:0});
     }catch(e){console.warn('ghost load failed',def.name,e);}
+  }
+}
+const PROPS={};
+function normalizeProp(group,target){
+  const box=new THREE.Box3().setFromObject(group);
+  const size=box.getSize(new THREE.Vector3());
+  const sc=target/Math.max(size.x,size.y,size.z);
+  group.scale.setScalar(sc);
+  const box2=new THREE.Box3().setFromObject(group);
+  const c=box2.getCenter(new THREE.Vector3());
+  group.position.set(-c.x,-box2.min.y,-c.z);
+  return group;
+}
+async function loadProps(){
+  const loader=new GLTFLoader();
+  const defs=[['corpse','props/corpse.glb',1.75],['bed','props/bed.glb',2.0],['clock','props/clock.glb',0.4],['calendar','props/calendar.glb',0.45]];
+  for(const [name,file,target] of defs){
+    try{
+      const gltf=await loader.loadAsync(file);
+      const g=gltf.scene;
+      g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;if(name==='clock'||name==='calendar'){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;});}}});
+      normalizeProp(g,target);
+      PROPS[name]=g;
+    }catch(e){console.warn('prop load failed',name,e);}
+  }
+}
+function placeWallProps(){
+  if(PROPS.clock){
+    const c1=new THREE.Group();c1.add(PROPS.clock.clone());c1.position.set(-0.93,1.8,-9);c1.rotation.y=Math.PI/2;scene.add(c1);propMeshes.push(c1);
+    const c2=new THREE.Group();c2.add(PROPS.clock.clone());c2.position.set(0.93,1.8,9);c2.rotation.y=-Math.PI/2;scene.add(c2);propMeshes.push(c2);
+  }
+  const openRooms=ROOM_DEFS.filter(r=>isOpen(r.id));
+  if(PROPS.calendar&&openRooms.length){
+    for(let i=0;i<Math.min(2,openRooms.length);i++){
+      const r=openRooms[i],sd=r.x<0?-1:1;
+      const k=new THREE.Group();k.add(PROPS.calendar.clone());k.position.set(sd*5.93,1.5,r.z);k.rotation.y=sd<0?Math.PI/2:-Math.PI/2;scene.add(k);propMeshes.push(k);
+    }
   }
 }
 function ghostWaypoints(){
@@ -1340,6 +1384,8 @@ async function init(){
     bump('hospital/abandoned-hospital.glb');
     await loadGhosts();
     for(const def of GHOST_DEFS)bump(def.file);
+    await loadProps();
+    for(const f of ['props/corpse.glb','props/bed.glb','props/clock.glb','props/calendar.glb'])bump(f);
     for(const [name,file] of [['growl','sounds/thevoicejournals__devil-beast.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['creak','sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3'],['drone','sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
       loadRealSound(name,file);
       bump(file);

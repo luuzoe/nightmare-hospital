@@ -21,3 +21,9 @@
 - Ghost normalization (ghost_norm.mjs): Samara 7.1->1.7m, Doll 1.79->1.8m, Nurse 1.83->1.8m.
 - WITCH LESSON (important): the spider-witch's SKELETON stands upright (pelvis y=3.4, head y=5.2) but its MESH renders lying flat (bind pose == rest pose, proven via inverseBindMatrices) — a long low spider creature, 5.3m long x 1.6m tall. Do NOT rotate it upright. It is a CRAWLER: scaled by length to 2.0m long, 0.6m tall, faceBack=true (head at -Z end, best guess). If it looks wrong on Zaw's phone, swap it.
 - Kit wall truth: walls are 3m tall x 2m long (not 2x3) — the raw accessor bbox (0.09x2.00x3.00) is pre-transform; after the FBX node chain they are Y-up 3m tall. extractKitParts bakes matrixWorld + recenters.
+
+## Props (Sketchfab, all CC-BY) — added V13
+- Corpse — tamaldequezo — https://sketchfab.com/3d-models/corpse-be9b034525c246cebab3620acb5a8027 — 3.1MB, 624 tris, lying flat 2.1m -> scaled to 1.75m at runtime
+- Old hospital bed (PBR|GR) — tris09 — https://sketchfab.com/3d-models/old-hospital-bed-pbrgr-3b2ccb0cc5fc4dda8c929300ccd3d49c — 15,922 tris, file in cm (180x130x234) -> scaled to 2.0m long; textures downscaled to 1024px + MR/normal maps stripped (37.8MB -> 1.9MB) for phone load
+- Antique Wall Clock — 3DGunsmith — https://sketchfab.com/3d-models/antique-wall-clock-174a3fc826414bfc9693d9b00f43fe57 — 2.3MB, 1,970 tris, 0.4m round, wall-mounted in corridor
+- Calendar Wall - 3MB — ahmagh2e — https://sketchfab.com/3d-models/calendar-wall-3mb-03df12d6917a406da7a2b3ee333faba6 — 4.2MB, 1,004 tris, 2.8m tall in file -> scaled to 0.45m, wall-mounted in rooms
