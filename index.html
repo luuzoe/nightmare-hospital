@@ -121,7 +121,7 @@ canvas.game{display:block;width:100%;height:100%}
   </div>
   <p id="installHint" style="display:none;font-size:11px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V31</p>
+  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V32</p>
   </div>
 </div>
 <div id="hud">
@@ -157,9 +157,9 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V31';
+const V='V32';
 const $=id=>document.getElementById(id);
-const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3':95709,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852,'props/key.glb':74956};
+const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852,'props/key.glb':74956};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
 const FLOOR_MISSIONS={
   15:{ep:1,type:'keys',label:'သော့',need:4},
@@ -179,9 +179,9 @@ const FLOOR_MISSIONS={
   1:{ep:15,type:'final',label:'ထွက်ပေါက်',need:10,switch:true}
 };
 const DIFF={
-  easy:{label:'လွယ်',chaseMul:0.8,catchDist:1.0,hearts:5,trigger:5},
-  normal:{label:'ပုံမှန်',chaseMul:1,catchDist:1.2,hearts:3,trigger:6},
-  hard:{label:'ခက်',chaseMul:1.2,catchDist:1.5,hearts:2,trigger:8}
+  easy:{label:'လွယ်',chaseMul:0.8,catchDist:1.0,hearts:5,trigger:4},
+  normal:{label:'ပုံမှန်',chaseMul:1,catchDist:1.2,hearts:3,trigger:5},
+  hard:{label:'ခက်',chaseMul:1.2,catchDist:1.5,hearts:2,trigger:7}
 };
 let DIFF_KEY='normal';
 try{const d=localStorage.getItem('nh2_diff');if(d&&DIFF[d])DIFF_KEY=d;}catch(e){}
@@ -236,7 +236,7 @@ const GHOST_DEFS=[
   {name:'Doll',file:'ghosts/scary-doll.glb',height:1.8,speed:3.0,chase:2.5,scary:2},
   {name:'Spider Witch',file:'ghosts/spider-witch.glb',height:1.8,speed:2.2,chase:2.2,scary:3,crawl:true,crawlLen:2.0,faceBack:true}
 ];
-const S={playing:false,paused:false,dead:false,won:false,fpp:true,hearts:3,stamina:100,hidden:false,invuln:0,chase:false,floor:15,missionDone:false,missionTimer:0,hideTotal:0,switchIdx:0,corpseIdx:0,distance:0,keys:0,items:0,switchOn:false,time:0,sound:true,flashOn:true,volume:0.6,yaw:Math.PI,pitch:0,joy:{x:0,y:0,active:false,mag:0},run:false,interactTarget:null,hideTarget:null,blackout:0,blackoutTimer:28,heartTimer:0,scareTimer:0,flicker:0,visited:[],corpseTouched:[],dwell:0,escapeReady:false,storyShown:false,eyeT:0,hauntTimer:45,strangle:0,whisperTimer:60,musicTimer:90,watcherTimer:120,watcherT:0,growlCd:0,dreadSoundTimer:70,clatterTimer:60,droneVol:0,droneSilenced:false,sanity:100,sanityHallu:20,cursed:false,lockerHides:0,ghostChecksLockers:false,repelTaught:false,keepsakes:[],inLocker:null,battery:100,endless:false,endlessLevel:0,endlessMission:null,deaths:0,startTime:0};
+const S={playing:false,paused:false,dead:false,won:false,fpp:true,hearts:3,stamina:100,hidden:false,invuln:0,chase:false,floor:15,missionDone:false,missionTimer:0,hideTotal:0,switchIdx:0,corpseIdx:0,distance:0,keys:0,items:0,switchOn:false,time:0,sound:true,flashOn:true,volume:0.5,yaw:Math.PI,pitch:0,joy:{x:0,y:0,active:false,mag:0},run:false,interactTarget:null,hideTarget:null,blackout:0,blackoutTimer:28,heartTimer:0,scareTimer:0,flicker:0,visited:[],corpseTouched:[],dwell:0,escapeReady:false,storyShown:false,eyeT:0,hauntTimer:60,strangle:0,whisperTimer:80,musicTimer:120,watcherTimer:150,watcherT:0,growlCd:0,dreadSoundTimer:90,clatterTimer:80,droneVol:0,droneSilenced:false,sanity:100,sanityHallu:20,cursed:false,lockerHides:0,ghostChecksLockers:false,repelTaught:false,keepsakes:[],inLocker:null,battery:100,endless:false,endlessLevel:0,endlessMission:null,deaths:0,startTime:0};
 let scene,camera,renderer,clock,hemiLight,flashLight,flashTarget,playerMesh,flashModel,flashBeam;
 let walls=[],ghosts=[],keyMeshes=[],itemMeshes=[],switchMeshes=[],corpseMeshes=[],hideSpots=[],roomZones=[],propMeshes=[],bloodWritings=[],poltergeists=[],bedList=[],batteryMeshes=[],doors=[];
 let redEyes=null;
@@ -270,16 +270,16 @@ function playTone(f0,f1,dur,type,vol,vib){if(!S.sound)return;const c=ac();if(!c)
 function loadRealSound(name,file){try{const a=new Audio(file);a.preload='auto';a.addEventListener('canplaythrough',()=>{realLoaded[name]=true;});a.addEventListener('error',()=>{realLoaded[name]=false;});realSounds[name]=a;}catch(e){}}
 function playReal(name,vol){if(!S.sound)return false;const a=realSounds[name];if(!a||!realLoaded[name])return false;try{const c=a.cloneNode();c.volume=Math.min(1,(vol||0.8)*(S.volume||1));const pr=c.play();if(pr&&pr.catch)pr.catch(()=>{});return true;}catch(e){return false;}}
 function thump(vol){playTone(55,40,0.16,'sine',vol||0.25);}
-function heartbeatSound(){thump(0.18);setTimeout(()=>thump(0.12),180);}
+function heartbeatSound(){thump(0.10);setTimeout(()=>thump(0.07),180);}
 function footstepSound(){if(!playReal('footsteps',0.15))playNoise(0.15,'lowpass',220,1,0.12);}
 function ghostStepSound(vol){if(!playReal('footsteps',vol))playNoise(vol,'lowpass',220,1,0.12);}
 function clatterSound(){playNoise(0.25,'bandpass',900,1,0.07);setTimeout(()=>playNoise(0.2,'bandpass',500,1,0.06),120);setTimeout(()=>thump(0.08),220);}
-function growlSound(){if(playReal('growl',0.15))return;playTone(60,35,1.5,'sawtooth',0.1,9);playNoise(1.5,'lowpass',180,1,0.06);}
-function ghostRoarSound(){if(playReal('growl',0.4)){playTone(55,28,1.6,'sine',0.25);thump(0.25);return;}playTone(70,30,1.6,'sawtooth',0.25,12);playNoise(1.6,'lowpass',220,1,0.2);playTone(55,28,1.6,'sine',0.25);thump(0.25);}
+function growlSound(){if(playReal('growl',0.12))return;playNoise(1.8,'lowpass',120,1,0.12);playTone(48,48,1.8,'sawtooth',0.07,0);}
+function ghostRoarSound(){if(playReal('growl',0.3)){playTone(55,55,1.6,'sine',0.12);thump(0.12);return;}playTone(48,48,1.6,'sawtooth',0.12,0);playNoise(1.6,'lowpass',140,1,0.1);playTone(55,55,1.6,'sine',0.12);thump(0.12);}
 function creakSound(){if(playReal('creak',0.5))return;playTone(180,320,0.5,'sawtooth',0.05);playNoise(0.5,'bandpass',600,2,0.02);}
 function screamSound(){playTone(1200,380,1.5,'sawtooth',0.09);playTone(1250,400,1.5,'sine',0.06);playNoise(1.5,'bandpass',900,2,0.05);}
 function slamSound(){thump(0.4);playNoise(0.25,'lowpass',300,1,0.3);playTone(90,45,0.3,'sine',0.3);}
-function rumbleSound(){playTone(45,28,3.0,'sine',0.16);}
+function rumbleSound(){playTone(45,45,3.0,'sine',0.16);}
 function screechSound(){playTone(2400,1800,1.2,'sawtooth',0.04);playNoise(1.2,'highpass',3000,1,0.03);}
 function laughSound(){for(let i=0;i<3;i++)setTimeout(()=>playTone(1250+Math.random()*200,900,0.18,'sine',0.07),i*220);}
 function crySound(){playTone(800,400,2.0,'sine',0.06);playTone(820,420,2.0,'sine',0.04);}
@@ -919,11 +919,13 @@ async function loadProps(onDone){
     if(onDone)onDone(file);
   }));
 }
+
 function placeWallProps(openList){
   if(PROPS.clock){
     const c1=new THREE.Group();c1.add(PROPS.clock.clone());c1.position.set(-0.93,1.8,-9);c1.rotation.y=Math.PI/2;scene.add(c1);propMeshes.push(c1);
     const c2=new THREE.Group();c2.add(PROPS.clock.clone());c2.position.set(0.93,1.8,9);c2.rotation.y=-Math.PI/2;scene.add(c2);propMeshes.push(c2);
   }
+  for(const r of openList){makeCeilingLight(r.x,r.z,Math.random()<0.75);}
   if(PROPS.calendar&&openList.length){
     for(let i=0;i<Math.min(2,openList.length);i++){
       const r=openList[i],sd=r.x<0?-1:1;
@@ -973,12 +975,12 @@ function updateGhosts(dt){
     if(gh.stalkCd>0)gh.stalkCd-=dt;
     if(gh.state==='stalk'){gh.stalkT-=dt;if(gh.stalkT<=0){gh.state='patrol';gh.stalkCd=10;}}
     if(canSee&&dist<(diffCfg().trigger+(S.cursed?2:0))&&dist>0.01&&gh.chaseCd<=0){
-      if(gh.state!=='chase'){gh.state='chase';gh.chase=true;if(S.growlCd<=0){growlSound();S.growlCd=8;}if(dist<8)toast('👻 သရဲ လာနေပြီ!');}
+      if(gh.state!=='chase'){gh.state='chase';gh.chase=true;if(S.growlCd<=0){growlSound();S.growlCd=12;}if(dist<8)toast('👻 သရဲ လာနေပြီ!');}
     }else if(gh.state==='chase'&&(!canSee||dist>12)){
       gh.state='patrol';gh.chase=false;gh.chaseCd=20;
       if(escapeCd<=0){escapeCd=10;toast('😮‍💨 လွတ်သွားပြီ!');playTone(600,900,0.3,'sine',0.08);}
     }else if(canSee&&dist<10&&gh.state==='patrol'&&gh.stalkCd<=0){
-      gh.state='stalk';gh.stalkT=4+Math.random()*3;
+      gh.state='stalk';gh.stalkT=5+Math.random()*3;
     }else if(gh.state==='stalk'&&(!canSee||dist>12)){
       gh.state='patrol';gh.stalkCd=10;
     }
@@ -1032,7 +1034,7 @@ function catchPlayer(gh){
   gh.state='strangle';
   ghostFaceTarget(gh);
   strangleGhost=gh;S.strangle=1.6;
-  ghostRoarSound();playTone(60,35,1.5,'sawtooth',0.3);
+  ghostRoarSound();playTone(48,48,1.5,'sawtooth',0.15);
   const st=$('strangle');st.style.setProperty('--choke','0.25');st.classList.add('on');
 }
 function updateStrangle(dt){
@@ -1224,7 +1226,7 @@ function doInteract(){
   }
   else if(t.kind==='door'){if(t.obj.open){closeDoor(t.obj);toast('🚪 တံခါး ပိတ်ပြီ');}else{openDoor(t.obj);toast('🚪 တံခါး ဖွင့်ပြီ');}creakSound();}
   else if(t.kind==='switch'){t.obj.pressed=true;t.obj.btn.material.emissive.set(0x00ff00);t.obj.btn.material.color.set(0x00ff00);S.switchIdx++;S.sanity=Math.min(100,S.sanity+8);if(floorMission().type==='final')S.switchOn=true;creakSound();toast('⚡ Switch ဖွင့်ပြီ ('+S.switchIdx+'/'+floorMission().need+')');}
-  else if(t.kind==='corpse'){t.obj.touched=true;S.corpseIdx++;playReal('growl',0.15);toast('🧟 လူသေကောင် စစ်ပြီ ('+S.corpseIdx+'/'+floorMission().need+')');}
+  else if(t.kind==='corpse'){t.obj.touched=true;S.corpseIdx++;playReal('growl',0.08);toast('🧟 လူသေကောင် စစ်ပြီ ('+S.corpseIdx+'/'+floorMission().need+')');}
   else if(t.kind==='locker'){t.obj.open=!t.obj.open;creakSound();toast(t.obj.open?'🚪 ဗီရို ဖွင့်ပြီ':'🚪 ဗီရို ပိတ်ပြီ');}
   updateObjective();
   if(missionComplete())onMissionComplete();
@@ -1418,7 +1420,7 @@ function appearGhostInFront(){
   const fx=-Math.sin(S.yaw),fz=-Math.cos(S.yaw);
   for(const d of[3.5,2.5,2.0]){
     const nx=playerPos.x+fx*d,nz=playerPos.z+fz*d;
-    if(!collideAt(nx,nz)){gh.pos.set(nx,0,nz);gh.group.position.copy(gh.pos);gh.state='haunt';gh.hauntT=2.5;gh.chase=false;ghostFaceTarget(gh);if(!playReal('growl',0.15))playTone(70,45,1.2,'sine',0.09);return;}
+    if(!collideAt(nx,nz)){gh.pos.set(nx,0,nz);gh.group.position.copy(gh.pos);gh.state='haunt';gh.hauntT=2.5;gh.chase=false;ghostFaceTarget(gh);if(!playReal('growl',0.08))playTone(48,48,1.2,'sine',0.06);return;}
   }
 }
 function showRedEyes(){
@@ -1432,7 +1434,7 @@ function showRedEyes(){
   const fx=-Math.sin(S.yaw),fz=-Math.cos(S.yaw);
   for(const d of[4,3,2.5]){
     const nx=playerPos.x+fx*d,nz=playerPos.z+fz*d;
-    if(!collideAt(nx,nz)){redEyes.position.set(nx,1.6,nz);redEyes.visible=true;S.eyeT=2.2;if(!playReal('growl',0.1))playTone(55,35,1.5,'sine',0.08);return;}
+    if(!collideAt(nx,nz)){redEyes.position.set(nx,1.6,nz);redEyes.visible=true;S.eyeT=2.2;if(!playReal('growl',0.06))playTone(48,48,1.5,'sine',0.05);return;}
   }
 }
 let watchEyes=null;
@@ -1468,7 +1470,7 @@ function slideBed(){
   const s=(Math.random()<0.5?-1:1)*0.8;
   b.position.x=Math.max(-5.4,Math.min(5.4,b.position.x+dx*s));
   b.position.z=Math.max(-14.4,Math.min(14.4,b.position.z+dz*s));
-  creakSound();playTone(70,40,0.35,'sine',0.3);
+  creakSound();playTone(70,70,0.35,'sine',0.2);
 }
 function whisperSound(){
   if(!S.sound)return;const c=ac();if(!c)return;
@@ -1588,15 +1590,15 @@ function updateScares(dt){
   }
   if(S.eyeT>0){S.eyeT-=dt;if(S.eyeT<=0&&redEyes)redEyes.visible=false;}
   S.whisperTimer-=dt;
-  if(S.whisperTimer<=0){S.whisperTimer=25+Math.random()*25;whisperSound();}
+  if(S.whisperTimer<=0){S.whisperTimer=35+Math.random()*35;whisperSound();}
   S.musicTimer-=dt;
-  if(S.musicTimer<=0){S.musicTimer=40+Math.random()*30;musicBoxSound();}
+  if(S.musicTimer<=0){S.musicTimer=60+Math.random()*40;musicBoxSound();}
   S.dreadSoundTimer-=dt;
-  if(S.dreadSoundTimer<=0){S.dreadSoundTimer=30+Math.random()*30;const r=Math.random();if(r<0.15)screamSound();else if(r<0.3)slamSound();else if(r<0.45)rumbleSound();else if(r<0.6)screechSound();else if(r<0.72)laughSound();else if(r<0.86)crySound();else phoneSound();}
+  if(S.dreadSoundTimer<=0){S.dreadSoundTimer=45+Math.random()*45;const r=Math.random();if(r<0.15)screamSound();else if(r<0.3)slamSound();else if(r<0.45)rumbleSound();else if(r<0.6)screechSound();else if(r<0.72)laughSound();else if(r<0.86)crySound();else phoneSound();}
   S.clatterTimer-=dt;
-  if(S.clatterTimer<=0){S.clatterTimer=40+Math.random()*40;clatterSound();}
+  if(S.clatterTimer<=0){S.clatterTimer=60+Math.random()*50;clatterSound();}
   S.watcherTimer-=dt;
-  if(S.watcherTimer<=0){S.watcherTimer=55+Math.random()*35;showWatcher();}
+  if(S.watcherTimer<=0){S.watcherTimer=80+Math.random()*50;showWatcher();}
   if(watcher&&watcher.visible){
     S.watcherT-=dt;
     const dx=playerPos.x-watcher.position.x,dz=playerPos.z-watcher.position.z;
@@ -1604,7 +1606,7 @@ function updateScares(dt){
   }
   S.hauntTimer-=dt;
   if(S.hauntTimer<=0){
-    S.hauntTimer=15+Math.random()*20;
+    S.hauntTimer=25+Math.random()*25;
     if(realSounds['drone']){realSounds['drone'].volume=0;S.droneSilenced=true;}
     setTimeout(()=>{S.droneSilenced=false;if(realSounds['drone'])realSounds['drone'].volume=S.droneVol||0;},8000);
     const anyChase=ghosts.some(g=>g.group.visible&&g.state==='chase');
@@ -1697,7 +1699,6 @@ function startGame(fromSave){
   $('winScreen').classList.remove('on');
   if(playerMesh)playerMesh.visible=!S.fpp;
   startFloorUI();
-  droneStart();
   try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}
   toast('👻 Ep'+floorEp()+' — '+S.floor+' လွှာ');
 }
@@ -1747,7 +1748,6 @@ function retryFloor(){
   $('deadScreen').classList.remove('on');
   $('hud').classList.add('on');
   startFloorUI();
-  droneStart();
   toast('🔄 အထပ် '+S.floor+' ကနေ ပြန်စမယ်');
 }
 function quitToMenu(){
@@ -1770,8 +1770,6 @@ function animate(){
   }else if(!S.paused&&!S.dead){
     S.time+=dt;
     if(escapeCd>0)escapeCd-=dt;
-    if(S.droneVol<0.012)S.droneVol=Math.min(0.012,S.droneVol+dt*0.012/180);
-    const _dr=realSounds['drone'];if(_dr&&!_dr.paused&&!S.droneSilenced)_dr.volume=S.droneVol;
     if(S.invuln>0)S.invuln-=dt;
     movePlayer(dt);
     updateGhosts(dt);
@@ -1850,7 +1848,7 @@ async function init(){
     bump('hospital/abandoned-hospital.glb');
     await loadGhosts(bump);
     await loadProps(bump);
-    for(const [name,file] of [['growl','sounds/thevoicejournals__devil-beast.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['creak','sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3'],['drone','sounds/kkenny101__loopable-filtered-rain-resonance-drone.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
+    for(const [name,file] of [['growl','sounds/thevoicejournals__devil-beast.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['creak','sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
       loadRealSound(name,file);
       bump(file);
     }
