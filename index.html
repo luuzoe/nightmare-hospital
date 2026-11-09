@@ -121,7 +121,7 @@ canvas.game{display:block;width:100%;height:100%}
   </div>
   <p id="installHint" style="display:none;font-size:11px;color:#888">App လို တင်ချင်ရင် browser menu (⋮) → "Add to Home screen" ကို နှိပ်ပါ</p>
   <div id="startError"></div>
-  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V32</p>
+  <p style="font-size:11px;color:#777;margin:4px auto">သရဲဆေးရုံ V33</p>
   </div>
 </div>
 <div id="hud">
@@ -157,9 +157,9 @@ canvas.game{display:block;width:100%;height:100%}
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-const V='V32';
+const V='V33';
 const $=id=>document.getElementById(id);
-const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3':56541,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852,'props/key.glb':74956};
+const LOAD_SIZES={'hospital/abandoned-hospital.glb':6874640,'hospital/modular-kit.glb':2367728,'ghosts/samara.glb':4605332,'ghosts/bubble-head-nurse.glb':2129856,'ghosts/scary-doll.glb':2434440,'ghosts/spider-witch.glb':2143012,'sounds/thevoicejournals__devil-beast.mp3':112742,'sounds/daandraait__slow-heartbeat.mp3':61253,'sounds/ienba__footsteps-on-tile.mp3':32633,'props/corpse.glb':176568,'props/bed.glb':1899096,'props/clock.glb':176012,'props/calendar.glb':180852,'props/key.glb':74956};
 const TOTAL_MB=Object.values(LOAD_SIZES).reduce((a,b)=>a+b,0)/1048576;
 const FLOOR_MISSIONS={
   15:{ep:1,type:'keys',label:'သော့',need:4},
@@ -276,7 +276,7 @@ function ghostStepSound(vol){if(!playReal('footsteps',vol))playNoise(vol,'lowpas
 function clatterSound(){playNoise(0.25,'bandpass',900,1,0.07);setTimeout(()=>playNoise(0.2,'bandpass',500,1,0.06),120);setTimeout(()=>thump(0.08),220);}
 function growlSound(){if(playReal('growl',0.12))return;playNoise(1.8,'lowpass',120,1,0.12);playTone(48,48,1.8,'sawtooth',0.07,0);}
 function ghostRoarSound(){if(playReal('growl',0.3)){playTone(55,55,1.6,'sine',0.12);thump(0.12);return;}playTone(48,48,1.6,'sawtooth',0.12,0);playNoise(1.6,'lowpass',140,1,0.1);playTone(55,55,1.6,'sine',0.12);thump(0.12);}
-function creakSound(){if(playReal('creak',0.5))return;playTone(180,320,0.5,'sawtooth',0.05);playNoise(0.5,'bandpass',600,2,0.02);}
+function creakSound(){playTone(140,110,0.45,'sawtooth',0.05);playNoise(0.45,'bandpass',400,2,0.03);}
 function screamSound(){playTone(1200,380,1.5,'sawtooth',0.09);playTone(1250,400,1.5,'sine',0.06);playNoise(1.5,'bandpass',900,2,0.05);}
 function slamSound(){thump(0.4);playNoise(0.25,'lowpass',300,1,0.3);playTone(90,45,0.3,'sine',0.3);}
 function rumbleSound(){playTone(45,45,3.0,'sine',0.16);}
@@ -537,7 +537,7 @@ function makeLocker(x,z,ry){
 function makeDoor(x,z,side){
   const hinge=new THREE.Group();
   hinge.position.set(x,0,z-0.6);
-  const panel=new THREE.Mesh(new THREE.BoxGeometry(0.08,2.4,1.15),new THREE.MeshStandardMaterial({color:0x4a3220,roughness:0.8,metalness:0.1}));
+  const panel=new THREE.Mesh(new THREE.BoxGeometry(0.08,2.4,1.15),new THREE.MeshStandardMaterial({color:0x8a6a45,roughness:0.8,metalness:0.1}));
   panel.position.set(0,1.2,0.575);
   const knob=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),new THREE.MeshStandardMaterial({color:0x888888,roughness:0.3,metalness:0.8}));
   knob.position.set(0.07,1.1,1.0);
@@ -920,12 +920,28 @@ async function loadProps(onDone){
   }));
 }
 
+const photoTex=[];
+function loadPhotos(){
+  const tl=new THREE.TextureLoader();
+  for(let i=1;i<=3;i++){const t=tl.load('photos/photo'+i+'.jpg');t.colorSpace=THREE.SRGBColorSpace;photoTex.push(t);}
+}
+function makeScaryPhoto(x,y,z,ry,tex){
+  const g=new THREE.Group();
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(0.66,0.86,0.04),new THREE.MeshStandardMaterial({color:0x1a1210,roughness:0.7}));
+  g.add(frame);
+  const pic=new THREE.Mesh(new THREE.PlaneGeometry(0.56,0.76),new THREE.MeshStandardMaterial({map:tex,roughness:0.9}));
+  pic.position.z=0.025;g.add(pic);
+  g.position.set(x,y,z);g.rotation.y=ry;
+  scene.add(g);propMeshes.push(g);
+  return g;
+}
 function placeWallProps(openList){
   if(PROPS.clock){
     const c1=new THREE.Group();c1.add(PROPS.clock.clone());c1.position.set(-0.93,1.8,-9);c1.rotation.y=Math.PI/2;scene.add(c1);propMeshes.push(c1);
     const c2=new THREE.Group();c2.add(PROPS.clock.clone());c2.position.set(0.93,1.8,9);c2.rotation.y=-Math.PI/2;scene.add(c2);propMeshes.push(c2);
   }
   for(const r of openList){makeCeilingLight(r.x,r.z,Math.random()<0.75);}
+  for(const r of openList){const sd=r.x<0?-1:1;if(photoTex.length)makeScaryPhoto(sd*5.9,1.6,r.z,sd>0?-Math.PI/2:Math.PI/2,photoTex[Math.floor(Math.random()*photoTex.length)]);}
   if(PROPS.calendar&&openList.length){
     for(let i=0;i<Math.min(2,openList.length);i++){
       const r=openList[i],sd=r.x<0?-1:1;
@@ -1848,10 +1864,11 @@ async function init(){
     bump('hospital/abandoned-hospital.glb');
     await loadGhosts(bump);
     await loadProps(bump);
-    for(const [name,file] of [['growl','sounds/thevoicejournals__devil-beast.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['creak','sounds/kyles__gate-big-rusty-metal-door-garage-open-heavy-creak-rattle.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
+    for(const [name,file] of [['growl','sounds/thevoicejournals__devil-beast.mp3'],['heartbeat','sounds/daandraait__slow-heartbeat.mp3'],['footsteps','sounds/ienba__footsteps-on-tile.mp3']]){
       loadRealSound(name,file);
       bump(file);
     }
+    loadPhotos();
     makePlayerMesh();
     setupControls();
     buildFloor();
